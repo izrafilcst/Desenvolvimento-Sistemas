@@ -1,48 +1,47 @@
 # MeshTracker Central
 
-Painel web para acompanhar ao vivo a posição e o estado de operadores em campo (atualizado a cada beacon, 30 s por padrão), alimentado por MQTT a partir da malha LoRa do MeshTracker. Projeto do Ciclo 2 de Desenvolvimento de Sistemas (Engenharia de Computação, CEUB, 2026/2).
+Painel web para acompanhar ao vivo a posição e o estado dos operadores em operações de airsoft, a partir da rede LoRa do MeshTracker. É o meu projeto do Ciclo 2 de Desenvolvimento de Sistemas (Engenharia de Computação, CEUB, 2026/2).
 
-## Problema
+**Aluno:** Rafael Alves de Sousa Costa · **RA:** 22304563
 
-Pelo desenho do firmware MeshTracker (em desenvolvimento), cada nó só enxerga os vizinhos que alcança por até 2 minutos. O desenho não prevê visão consolidada, histórico nem ordens confirmadas para quem coordena a operação. O contexto é o de operações de airsoft no Distrito Federal e entorno, onde, sem perfil permanente, o operador teria de se cadastrar de novo a cada operação.
+## Por que este projeto existe
 
-## Status
+Nas operações de airsoft da Federação do Distrito Federal e entorno, o organizador precisa inscrever os jogadores e acompanhar o que acontece em campo. Eu desenvolvo o operational-command, um sistema web para gerir operações, e o MeshTracker, um dispositivo com GPS e rádio LoRa que forma uma rede entre os jogadores sem depender de internet. Faltava ligar os dois.
 
-Fase de proposta (Aula 7). **Ainda não há código executável:** a Iteração 1 começa depois da aula.
+Dois problemas me motivaram. O primeiro é que, sem um perfil permanente, o operador teria de se cadastrar de novo a cada operação, mesmo sendo a mesma pessoa. O segundo é que, pelo desenho do firmware, cada dispositivo só enxerga os vizinhos que alcança e esquece quem some por 2 minutos, então o organizador não tem uma visão geral. Ainda não conversei com a federação sobre isso: é o que percebo olhando para o meu próprio projeto.
 
-## Integrantes
+## Em que ponto está
 
-**[a preencher]**
+Fase de proposta (Aula 7). Ainda não há código executável: a primeira iteração começa depois da aula.
 
-## Escopo atual
+## O que entra na primeira iteração
 
-**Iteração 1 (Essencial):**
-- Contrato MQTT v1 e simulador de gateway.
-- Cadastro permanente de operador e inscrição por operação (time, classe e dispositivo), sem recadastro.
-- Ingest idempotente de nós inscritos, com estado do operador (ATIVO, ATRASADO, PERDIDO).
-- Mapa ao vivo com marcador por time e estado.
+- Contrato de mensagens MQTT e um simulador de gateway no lugar do hardware.
+- Cadastro permanente do operador e inscrição em cada operação (time, classe e dispositivo), sem recadastro.
+- Recebimento dos sinais só dos dispositivos inscritos, sem duplicatas, com o estado de cada operador (ativo, atrasado ou perdido).
+- Mapa ao vivo com um marcador por operador, na cor do time.
 
-**Depois:** ordens com ciclo de vida e ack, geofence de objetivos e trilha (Iteração 2); gateway real com HMAC e replay (Desejável). **Fora:** topologia da malha.
+Ficam para depois: ordens com confirmação, objetivos com alerta de chegada e trilha de posição (Iteração 2), gateway real com autenticação das ordens e replay da operação (Iteração 3, se houver tempo). Fica de fora, por enquanto, o desenho da topologia da malha.
 
 ## Como executar
 
-Não se aplica nesta fase. Quando a Iteração 1 existir, este campo terá os comandos para subir o ambiente.
+Ainda não se aplica. Quando a primeira iteração existir, os comandos para subir o ambiente entram aqui.
 
 ## Estrutura
 
 ```
 README.md
 docs/
-  proposta.md                        # proposta de uma página (Ficha 8)
-  backlog.md                         # escopo E/I/D/F, fluxo e critérios de aceite
-  dinamicas.md                       # mapa do método, cartões, matriz e pitch
-  adr/ADR-001-perfil-e-inscricao.md  # modelo de dados (primeira decisão)
-  adr/ADR-002-ponte-mqtt-backend.md  # ponte MQTT para o navegador
+  Caderno_Aula7_MeshTracker_Central.pdf   caderno de dinâmicas preenchido
+  proposta.md                             proposta de uma página
+  backlog.md                              escopo, fluxo e critérios de aceite
+  dinamicas.md                            método, matriz de decisão e pitch
+  adr/ADR-001-perfil-e-inscricao.md       primeira decisão de arquitetura
 src/
 tests/
 ```
 
 ## Projetos relacionados
 
-- MeshTracker: firmware ESP32-S3 com GPS e mesh LoRa 433 MHz, do autor.
-- operational-command: aplicação MEVN de operações, do autor, cuja stack serve de referência.
+- **MeshTracker:** firmware para ESP32-S3 com GPS e rede mesh LoRa de 433 MHz.
+- **operational-command:** aplicação web (MongoDB, Express, Vue e Node) para gerir operações; a stack dela serve de referência para este projeto.

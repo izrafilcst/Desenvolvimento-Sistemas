@@ -1,84 +1,75 @@
-# Escopo mínimo e backlog da Iteração 1
+# Escopo e backlog da primeira iteração
 
-> Rascunho da Ficha 6. Regra da aula: funcionalidade nova que surgir vai para Importante, Desejável ou Fora.
+Esta é a Ficha 6 do caderno. Quando surgir uma funcionalidade nova, ela entra como Importante, Desejável ou Fora, sem mexer no que já é essencial.
 
 ## Modelo de dados inicial
 
 O perfil do operador é permanente. O que muda a cada operação fica na inscrição.
 
-| Entidade | Conteúdo | Observação |
+| Entidade | O que guarda | Observação |
 |---|---|---|
-| Operador | apelido (único), nome, identificador estável **[a validar com a federação]** | Cadastrado uma única vez e mantido entre operações |
-| Operação | nome, data, local, situação (planejada, em curso, encerrada) | |
-| Inscrição | operador × operação, time, classe, dispositivo (`node_id`), consentimento de rastreamento | Time, classe e dispositivo valem só para aquela operação |
-| Posição | inscrição, lat, lon, velocidade, bateria, rssi, snr, hop, pkt_id, recebido_em | Gravada só para inscrições de operação em curso |
+| Operador | apelido (único), nome e um identificador estável | Cadastrado uma só vez e mantido entre operações |
+| Operação | nome, data, local e situação (planejada, em curso ou encerrada) |  |
+| Inscrição | operador × operação, time, classe, dispositivo e consentimento de rastreamento | Time, classe e dispositivo valem só para aquela operação |
+| Posição | inscrição, latitude, longitude, velocidade, bateria, qualidade do sinal e horário de chegada | Gravada só para inscrições de operação em curso |
 
-Regras de negócio:
+As regras que vou testar:
 
-1. **Reinscrição sem recadastro:** inscrever um operador já cadastrado em uma nova operação usa o perfil existente.
-2. Um operador só pode ter uma inscrição por operação.
-3. Um dispositivo só pode estar em uma inscrição por operação.
-4. Alterar time ou classe muda só a inscrição, nunca o perfil.
-5. A inscrição exige consentimento de rastreamento.
-6. Beacon de nó sem inscrição em operação em curso é descartado e contado, nunca gravado.
-7. Dedup por `(src_id, pkt_id)` e estado ATIVO, ATRASADO ou PERDIDO pelo tempo desde o último beacon.
+1. Inscrever um operador já cadastrado em uma nova operação não exige novo cadastro.
+2. Um operador tem no máximo uma inscrição por operação.
+3. Um dispositivo pertence a no máximo uma inscrição por operação.
+4. Mudar time ou classe altera só a inscrição, nunca o perfil.
+5. A inscrição exige o consentimento de rastreamento.
+6. Sinal de dispositivo sem inscrição em operação em curso é descartado e contado, nunca gravado.
+7. O mesmo sinal (mesma origem e mesmo número de pacote) vale uma vez só, e o operador é classificado como ativo, atrasado ou perdido pelo tempo sem sinal.
 
-## Ficha 6 · Funcionalidades
+## Funcionalidades
 
-| # | Funcionalidade | Classe | Justificativa |
-|---|---|---|---|
-| B1 | Contrato MQTT v1 + simulador de gateway | E | Sem ele não há dado atravessando o sistema nem independência do firmware |
-| B2 | Cadastro permanente de operador e inscrição por operação (time, classe, dispositivo) | E | É a ação real do organizador e evita o recadastro a cada operação |
-| B3 | Ingest idempotente só de nós inscritos + estado do operador | E | É a regra de negócio central e protege a privacidade |
-| B4 | Mapa ao vivo com marcador por time e estado | E | É a resposta visível ao organizador |
-| B5 | Ordens com ciclo de vida e ack | I | Diferencial da central, mas não é o núcleo da Iteração 1 |
-| B6 | Geofence de objetivos, alertas e trilha | I | Agrega valor real, mas pode esperar |
-| B7 | Gateway real ESP32-S3 + HMAC nas ordens | D | Depende da mesh do firmware, hoje em stubs |
-| B8 | Topologia da malha | F | Exige mudar o protocolo do pacote (relayer no cabeçalho) |
+| Funcionalidade | Classe | Justificativa |
+|---|---|---|
+| Contrato MQTT + simulador de gateway | E | Sem ele nenhum dado atravessa o sistema, e eu não dependo do firmware pronto. |
+| Cadastro permanente do operador e inscrição por operação (time, classe e dispositivo) | E | É a ação real do organizador e evita o recadastro a cada operação. |
+| Recebimento só de dispositivos inscritos, sem duplicatas, com estado do operador | E | É a regra de negócio central e protege a privacidade de quem não está inscrito. |
+| Mapa ao vivo com marcador por time e estado | E | É o que o organizador vê. |
+| Ordens com ciclo de vida e confirmação | I | É o diferencial da central, mas não é o núcleo da primeira iteração. |
+| Objetivos com alerta de chegada, alertas e trilha | I | Agrega valor, mas pode esperar. |
+| Gateway real no ESP32-S3, com autenticação das ordens | D | Depende de o firmware estar pronto, e hoje ele não está. |
+| Topologia da malha | F | Exige mudar o protocolo do pacote do firmware. |
 
-Registrados como Desejável, fora da tabela: replay da operação e importação de operações e objetivos do operational-command.
+E é essencial, I é importante, D é desejável e F fica fora. Também anotei como desejáveis o replay da operação e a importação de operações e objetivos do operational-command.
 
-## Fluxo completo da Iteração 1
+## Fluxo completo da primeira iteração
 
-Usuário → Interface → Regra de negócio → Persistência → Resposta
+Usuário → interface → regra de negócio → persistência → resposta.
 
-- **Ação do usuário:** o organizador inscreve um operador já cadastrado em uma operação, com time, classe e dispositivo, e acompanha o mapa enquanto um simulador de gateway publica beacons.
-- **Tela ou rota:** telas "Inscrição na operação" e "Mapa ao vivo" (WebSocket), com `GET /api/operators` para o estado inicial.
-- **Regra principal:** inscrição sem recadastro, com as unicidades e o consentimento das regras 1 a 5. O ingest aceita só nós inscritos em operação em curso, com dedup e estado pelo tempo sem sinal.
-- **Dado gravado ou consultado:** operadores, operações, inscrições e posições, em MongoDB.
-- **Resposta apresentada:** o marcador aparece com a cor do time e o estado, e se move conforme os beacons. Um painel lista os operadores da operação.
-- **Critério de demonstração:** com `docker compose up` e o simulador rodando:
-  1. cadastrar 5 operadores uma única vez;
-  2. inscrevê-los na operação 1 e depois na operação 2, sem novo cadastro e com times e classes diferentes;
-  3. com a operação 1 em curso, os inscritos aparecem no mapa e um nó não inscrito é descartado;
-  4. parar um operador o leva a ATRASADO aos 60 s e a PERDIDO aos 120 s;
-  5. o mesmo beacon vindo de 2 gateways simulados gera 1 posição;
-  6. os testes automatizados passam.
+| Etapa | Como fica |
+|---|---|
+| Ação do usuário | O organizador inscreve um operador já cadastrado em uma operação, escolhendo time, classe e dispositivo, e acompanha o mapa enquanto um simulador de gateway envia os sinais. |
+| Tela ou rota | Duas telas: “Inscrição na operação” e “Mapa ao vivo”, que recebe as atualizações por WebSocket. O estado inicial vem de GET /api/operators. |
+| Regra principal | O operador se cadastra uma vez só. Cada operador tem uma única inscrição por operação, cada dispositivo pertence a uma única inscrição por operação e a inscrição exige o consentimento de rastreamento. O sistema só aceita sinais de dispositivos inscritos em operação em curso, ignora sinais repetidos e classifica o operador como ativo, atrasado ou perdido pelo tempo sem sinal. |
+| Dado gravado ou consultado | Operadores, operações, inscrições e posições, no MongoDB. |
+| Resposta apresentada | O marcador aparece no mapa na cor do time, com o estado do operador, e se move a cada sinal. Um painel ao lado lista os operadores da operação. |
+| Critério de demonstração | Com o ambiente no ar e o simulador rodando, vou cadastrar 5 operadores uma única vez, inscrevê-los na operação 1 e depois na operação 2 sem novo cadastro, e mostrar no mapa os inscritos da operação em curso enquanto um dispositivo não inscrito é descartado. Depois paro um operador e mostro o estado passar para atrasado aos 60 segundos e para perdido aos 120 segundos. Por fim, mostro que o mesmo sinal recebido por dois gateways gera uma única posição e que os testes automatizados passam. |
 
-## Backlog com critérios de aceite
+## Critérios de aceite
 
-| # | Item | Iteração | Critério de aceite |
-|---|---|---|---|
-| B1 | Contrato MQTT v1 + simulador | 1 | Documento com tópicos, QoS e payloads. O simulador publica 5 operadores em `mt/v1/up/{node}/beacon`. Mensagem fora do formato é rejeitada. |
-| B2 | Cadastro e inscrição | 1 | O operador é cadastrado uma vez (apelido único) e inscrito nas operações 1 e 2 sem novo cadastro, com times e classes diferentes. Segunda inscrição na mesma operação é rejeitada. O mesmo dispositivo em duas inscrições da mesma operação é rejeitado. Inscrição sem consentimento é rejeitada. Editar time ou classe não altera o perfil. Coberto por testes automatizados. |
-| B3 | Ingest idempotente + estado | 1 | Mesmo `(src_id, pkt_id)` gera um registro só. Beacon de nó sem inscrição em operação em curso é descartado e contado. ATRASADO após 60 s e PERDIDO após 120 s sem beacon (valores iniciais, configuráveis). Coberto por testes automatizados. |
-| B4 | Mapa ao vivo | 1 | Com 5 operadores simulados inscritos, os marcadores atualizam sem recarregar a página. A cor do marcador indica o time, e o estado aparece no marcador e no painel lateral. |
-| B5 | Ordens com ciclo de vida | 2 | Uma ordem percorre criada, enfileirada, transmitida, entregue e cumprida ou recusada, ou expira no fim do TTL. Transição inválida é rejeitada. Coberto por testes. |
-| B6 | Geofence, alertas e trilha | 2 | Objetivo marcado como atingido quando a distância (Haversine) ≤ 25 m por 10 s. Alertas de operador perdido e de bateria abaixo de 20% (valores iniciais, configuráveis). A trilha mostra os últimos 10 pontos. |
-| B7 | Gateway real + HMAC | 3 (se a mesh estiver pronta) | O gateway publica beacons reais no contrato v1. Ordens sem HMAC válido são descartadas. |
-| B8 | Topologia da malha | Fora | Registrada e descartada agora. |
+| Item | Iteração | Critério |
+|---|---|---|
+| B1 Contrato MQTT e simulador | 1 | Existe um documento com os tópicos, a qualidade de serviço e o formato das mensagens. O simulador publica 5 operadores e uma mensagem fora do formato é rejeitada. |
+| B2 Cadastro e inscrição | 1 | O operador é cadastrado uma vez (apelido único) e inscrito nas operações 1 e 2 sem novo cadastro, com times e classes diferentes. Uma segunda inscrição na mesma operação é recusada, assim como o mesmo dispositivo em duas inscrições da mesma operação e a inscrição sem consentimento. Mudar time ou classe não altera o perfil. Tudo coberto por testes automatizados. |
+| B3 Recebimento e estado | 1 | O mesmo sinal gera um único registro. Sinal de dispositivo sem inscrição em operação em curso é descartado e contado. O operador fica atrasado após 60 s e perdido após 120 s sem sinal (valores iniciais, ajustáveis). Coberto por testes. |
+| B4 Mapa ao vivo | 1 | Com 5 operadores simulados inscritos, os marcadores se atualizam sem recarregar a página, a cor indica o time e o estado aparece no marcador e na lista lateral. |
+| B5 Ordens | 2 | Uma ordem passa por criada, enfileirada, transmitida, entregue e cumprida ou recusada, ou expira ao fim do prazo. Transições inválidas são recusadas. Coberto por testes. |
+| B6 Objetivos, alertas e trilha | 2 | O objetivo é marcado como atingido quando o operador fica a até 25 m por 10 s. Há alertas de operador perdido e de bateria abaixo de 20% (valores iniciais, ajustáveis), e a trilha mostra os últimos 10 pontos. |
+| B7 Gateway real e autenticação | 3, se o firmware estiver pronto | O gateway publica sinais reais no mesmo contrato. Ordens sem autenticação válida são descartadas. |
+| B8 Topologia da malha | fora | Registrada e descartada por ora. |
 
-## Dúvidas registradas (a investigar)
+## Dúvidas em aberto
 
-1. Mapa: Leaflet ou MapLibre, e como ter tiles offline para o campo sem internet.
-2. Broker: TLS e ACL por usuário, em especial para o tópico de ordens.
-3. Posição de pessoas é dado pessoal (LGPD). Além do consentimento na inscrição, definir por quanto tempo as trilhas são guardadas depois da operação.
-4. Tempo no ar do beacon: pelo layout do README (cerca de 53 B) calculei ≈330 ms no ar, com preâmbulo, ou ≈1,1% a cada 30 s. Conferir em `test_native_airtime` no repositório do firmware.
-5. Cadastro de operador: independente desta aplicação na Iteração 1 ou compartilhado com o operational-command (fonte única)? Decidir depois; candidato a ADR.
-6. Identificador estável do operador: a federação tem número de registro? **[a validar com a federação]** Sem ele, o apelido precisa ser único.
-7. Times e classes: lista fixa definida pela federação ou livre por operação? **[a validar com a federação]**
-8. Jogo competitivo: pelo desenho do firmware, o beacon aberto mostra a posição de todos os nós aos dispositivos dos jogadores, inclusive adversários. Filtro por time ou criptografia no firmware, e visão completa só para o organizador, ficam fora desta entrega.
-
-## Pendências do fechamento
-
-**[a preencher em sala]**
+1. Qual biblioteca de mapas usar (Leaflet ou MapLibre) e como ter o mapa offline em campo, sem internet.
+2. Como proteger o broker MQTT, com TLS e permissões por usuário, principalmente no tópico de ordens.
+3. Posição de pessoa é dado pessoal (LGPD): além do consentimento na inscrição, preciso definir por quanto tempo guardar as trilhas depois da operação.
+4. O cadastro de operadores fica só neste sistema ou será compartilhado com o operational-command, como fonte única?
+5. A federação tem um número de registro que identifique cada operador? Times e classes são uma lista fixa da federação ou livres a cada operação?
+6. Em jogo competitivo, o sinal aberto do dispositivo mostra a posição dos adversários aos jogadores. Seria preciso filtrar por time ou criptografar no firmware e deixar a visão completa só para o organizador. Isso fica fora desta entrega.
+7. Tempo no ar do sinal: pelo layout do README do firmware (cerca de 53 bytes), calculei por volta de 330 ms por sinal, ou 1,1% do tempo a cada 30 s. Preciso conferir no teste de tempo no ar do firmware.

@@ -1,0 +1,5 @@
+# Arquivos temporários do Word
+~$*
+
+# O .docx é arquivo de trabalho; a entrega é o PDF
+docs/*.docx

@@ -1,46 +1,31 @@
 # ADR-001: Perfil permanente do operador separado da inscrição por operação
 
-- **Status:** proposto (rascunho da Aula 7)
-- **Data:** 2026-09-30
+**Status:** proposto · **Data:** 01/10/2026 · **Autor:** Rafael Alves de Sousa Costa
 
 ## Contexto
 
-O mesmo operador participa de várias operações de airsoft da Federação do Distrito Federal e entorno **[a validar com a federação]**. O autor identificou que, sem perfil permanente, o operador teria de se cadastrar de novo a cada operação. Time, classe e o dispositivo MeshTracker (`node_id`) podem mudar de uma operação para outra **[a validar]**. Além disso, a posição de pessoas é dado pessoal, então o consentimento e o rastreamento valem por operação. O modelo de dados precisa decidir onde cada atributo mora.
+Os operadores de airsoft costumam participar de várias operações da federação. Se o sistema guardasse tudo dentro de cada operação, a mesma pessoa teria de se cadastrar de novo a cada vez. Além disso, time, classe e o dispositivo MeshTracker que a pessoa usa podem mudar de uma operação para outra, e a posição de alguém em campo é dado pessoal: o consentimento e o rastreamento valem só para a operação em que a pessoa está inscrita. Ainda não confirmei com a federação como isso funciona na prática; parto do que percebi ao desenhar o operational-command.
 
 ## Decisão
 
-Modelar o **Operador** como perfil permanente (apelido único, nome, identificador estável) e criar a **Inscrição** como entidade própria, ligando operador e operação, com time, classe, dispositivo e consentimento de rastreamento. As posições pertencem à inscrição e só são gravadas para inscrições de operações em curso.
+Vou separar duas coisas. O **operador** é um perfil permanente, com apelido único, nome e um identificador estável, cadastrado uma única vez. A **inscrição** liga um operador a uma operação e guarda o que vale só ali: time, classe, dispositivo e consentimento de rastreamento. As posições pertencem à inscrição e só são gravadas enquanto a operação está em curso.
 
-Regras que decorrem da decisão:
+Isso gera quatro regras que vou testar: um operador tem no máximo uma inscrição por operação; um dispositivo pertence a no máximo uma inscrição por operação; mudar time ou classe altera só a inscrição; e inscrever um operador que já existe em uma nova operação não pede novo cadastro. A escolha entre banco relacional e de documentos fica para outra decisão; aqui trato só do modelo lógico.
 
-- uma inscrição por operador por operação;
-- um dispositivo por inscrição em cada operação;
-- alterar time ou classe muda só a inscrição, nunca o perfil;
-- inscrever um operador já cadastrado em nova operação não exige novo cadastro.
+## Alternativas que descartei
 
-A escolha da tecnologia de persistência (relacional ou documentos) fica para outra decisão. Este ADR trata apenas do modelo lógico.
-
-## Alternativas consideradas
-
-1. **Cadastro dentro de cada operação** (o operador é recriado a cada operação, com time e classe no próprio registro). Descartada inicialmente porque **[a fundamentar após a leitura]**. Argumentos candidatos, ainda não validados: causa o recadastro, duplica dados e impede o histórico do operador entre operações.
-2. **Perfil permanente com time, classe e dispositivo no próprio perfil** (sem inscrição). Descartada inicialmente porque **[a fundamentar após a leitura]**. Argumentos candidatos, ainda não validados: esses atributos podem mudar por operação, e o valor anterior se perderia.
+- **Cadastrar o operador dentro de cada operação**, com time e classe no próprio registro. Descartei porque força o recadastro, duplica dados e impede ver o histórico de uma mesma pessoa.
+- **Guardar time, classe e dispositivo no perfil**, sem inscrição. Descartei porque esses dados podem mudar de uma operação para outra, e o valor anterior se perderia.
 
 ## Justificativa
 
-Frase de ligação:
+Com base no CEUBOOK (2024), que a aula indica para decisões de modelo de dados, decidi separar o perfil permanente do operador da inscrição por operação porque o operador se cadastra uma única vez e tudo o que muda a cada operação fica registrado na inscrição. A alternativa de cadastrar o operador dentro de cada operação foi descartada porque obrigaria o recadastro e duplicaria dados. Ainda não li o capítulo correspondente: a leitura não foi realizada, e a fundamentação com o conceito do livro será completada depois dela.
 
-> Com base em **[autor e obra, após a Ficha 7]**, decidimos **separar o perfil permanente do operador da inscrição por operação** porque **[a fundamentar com o conceito lido]**. A alternativa **de cadastrar o operador dentro de cada operação** foi inicialmente descartada porque **[a fundamentar]**.
+## Consequências
 
-A referência precisa estar ligada a esta decisão, não apenas listada no fim.
+O que ganho: fim do recadastro, histórico do operador entre operações, consentimento por inscrição e regras de unicidade fáceis de testar. O que pago: mais entidades e mais telas, a necessidade de um identificador estável para o operador (ainda não sei se a federação tem um número de registro) e uma política de quanto tempo guardar as posições depois da operação.
 
-## Consequências esperadas
+## Referências
 
-- **Positivas:** fim do recadastro, histórico do operador entre operações, consentimento e rastreamento por inscrição, e regras de unicidade claras e testáveis.
-- **Negativas:** mais entidades e telas (perfil e inscrição), o que já pesou na matriz (escopo mínimo 1). Exige um identificador estável do operador **[a validar com a federação]** e uma política de retenção das posições (dúvida 3 do backlog).
-
-## Referências consultadas
-
-- CEUBOOK. *Engenharia da Computação — Desenvolvimento de Sistemas*. Brasília: CEUB, 2024. **[capítulo a confirmar na biblioteca]**
-- PRIMO, A. L. G.; MURARI, M. L.; OLIVEIRA, L. R. A. de. Desenvolvimento de um sistema de informação web para quantificação da arborização urbana. *Revista AIDIS de Ingeniería y Ciencias Ambientales*, v. 15, n. 1, p. 465, 2022. **[confirmar se trata de modelo de dados]**
-
-Observação: o slide 22 agrupa "CEUBOOK; PRIMO et al." sob o título "Desenvolvimento de Sistemas, CEUB, 2024", mas o slide 29 lista duas obras distintas (o CEUBOOK de 2024 e um artigo de 2022). Confira qual delas trata de modelo de dados antes de citar.
+- CEUBOOK. Engenharia da Computação — Desenvolvimento de Sistemas. Brasília: CEUB, 2024. Capítulo ainda não lido.
+- PRIMO, A. L. G.; MURARI, M. L.; OLIVEIRA, L. R. A. de. Desenvolvimento de um sistema de informação web para quantificação da arborização urbana. Revista AIDIS de Ingeniería y Ciencias Ambientales, v. 15, n. 1, p. 465, 2022. Também indicada pela aula; ainda não consultada.
