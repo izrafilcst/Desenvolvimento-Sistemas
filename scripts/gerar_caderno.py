@@ -52,6 +52,10 @@ CABECALHO = (
 MARGEM_SUP, MARGEM_ESQ, MARGEM_INF, MARGEM_DIR = 3.0, 3.0, 2.0, 2.0
 LARGURA_UTIL = 21.0 - MARGEM_ESQ - MARGEM_DIR  # 16 cm
 LARGURA_LOGO = 4.5
+# Como na versão 1, o logo encosta na borda de cima da página: as linhas
+# magenta do desenho saem pela borda superior da imagem.
+DISTANCIA_CABECALHO = 0.0
+RECUO_CABECALHO = 34  # pt até a primeira linha da FATECS
 
 FONTE = "Arial"
 FONTE_CABECALHO = "Calibri"
@@ -150,7 +154,8 @@ def _sombrear(celula, cor):
         _elemento("w:shd", val="clear", color="auto", fill=cor))
 
 
-def _preparar_tabela(tabela, larguras, cor_borda=COR_BORDA, margem=100):
+def _preparar_tabela(tabela, larguras, cor_borda=COR_BORDA, margem=100,
+                     vertical=28):
     """Largura fixa por coluna, bordas finas e margens internas."""
     tabela.alignment = WD_TABLE_ALIGNMENT.CENTER
     tabela.autofit = False
@@ -166,8 +171,8 @@ def _preparar_tabela(tabela, larguras, cor_borda=COR_BORDA, margem=100):
         tblPr.insert_element_before(bordas, "w:shd", "w:tblLayout",
                                     "w:tblCellMar", "w:tblLook")
     margens = OxmlElement("w:tblCellMar")
-    for lado, valor in (("top", 28), ("left", margem),
-                        ("bottom", 28), ("right", margem)):
+    for lado, valor in (("top", vertical), ("left", margem),
+                        ("bottom", vertical), ("right", margem)):
         margens.append(_elemento(f"w:{lado}", w=valor, type="dxa"))
     tblPr.insert_element_before(margens, "w:tblLook")
     for coluna, largura in zip(tabela._tbl.tblGrid.findall(qn("w:gridCol")),
@@ -240,9 +245,8 @@ class _Caderno:
         secao.top_margin, secao.left_margin = Cm(MARGEM_SUP), Cm(MARGEM_ESQ)
         secao.bottom_margin = Cm(MARGEM_INF)
         secao.right_margin = Cm(MARGEM_DIR)
-        secao.header_distance = Cm(0.8)
+        secao.header_distance = Cm(DISTANCIA_CABECALHO)
         secao.footer_distance = Cm(1.25)
-        secao.different_first_page_header_footer = True
         self._cabecalho(secao)
         propriedades = self.doc.core_properties
         propriedades.title = TITULO
@@ -253,23 +257,23 @@ class _Caderno:
         propriedades.created = propriedades.modified = datetime.now()
 
     def _cabecalho(self, secao):
-        """Textos da FATECS à esquerda e logo à direita; a capa fica sem."""
-        secao.first_page_header.is_linked_to_previous = False
+        """Textos da FATECS à esquerda e logo à direita, em todas as páginas."""
         cabecalho = secao.header
         esquerda = LARGURA_UTIL - LARGURA_LOGO
         tabela = cabecalho.add_table(1, 2, Cm(LARGURA_UTIL))
         _preparar_tabela(tabela, [esquerda, LARGURA_LOGO], cor_borda=None,
-                         margem=0)
+                         margem=0, vertical=0)
         tabela.alignment = WD_TABLE_ALIGNMENT.LEFT
         vazio = cabecalho.paragraphs[0]
         vazio._p.addprevious(tabela._tbl)
         _formatar(vazio, entrelinha=Pt(1))
         texto, logo = tabela.rows[0].cells
         texto.width, logo.width = Cm(esquerda), Cm(LARGURA_LOGO)
-        texto.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+        texto.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
         for n, linha in enumerate(CABECALHO):
             par = texto.paragraphs[0] if n == 0 else texto.add_paragraph()
-            _formatar(par, depois=6)
+            _formatar(par, antes=RECUO_CABECALHO if n == 0 else 0,
+                      depois=10 if n == 0 else 0)
             _fonte(par.add_run(linha), FONTE_CABECALHO, 9)
         par = logo.paragraphs[0]
         _formatar(par, DIREITA)
@@ -309,11 +313,7 @@ class _Caderno:
         linha(CAPA["versao"], 11, antes=6)
         for n, texto in enumerate(CAPA["aluno"]):
             linha(texto, alinhar=ESQUERDA, antes=110 if n == 0 else 6)
-        rodape = self.doc.sections[0].first_page_footer
-        rodape.is_linked_to_previous = False
-        par = rodape.paragraphs[0]
-        _formatar(par, CENTRO, depois=40)
-        _escrever(par, CAPA["local_data"], 12)
+        linha(CAPA["local_data"], antes=150)  # pé da capa, como na versão 1
         self.quebrar = True
 
     def titulo(self, texto):
