@@ -29,7 +29,7 @@ O próprio autor, no papel de organizador. Isso fica escrito assim nas Fichas 11
 
 ## Definição de Pronto
 
-Os 6 itens do Kit, sem alteração. O item 6 ("Outra pessoa consegue executar seguindo apenas o Book") é verificado com o clone limpo do Incremento 3. No planejamento, a coluna "Atende?" fica em branco e é preenchida em cada go/no-go.
+Os 6 itens do Kit, sem alteração. O item 6 ("Outra pessoa consegue executar seguindo apenas o Book") é verificado com o clone limpo do Incremento 3, que eu mesmo faço; se mais ninguém tiver executado o Book, o go/no-go registra isso na observação do item 6 em vez de dar o item como atendido sem ressalva, e um colega, se houver, entra como evidência adicional. No planejamento, a coluna "Atende?" fica em branco e é preenchida em cada go/no-go.
 
 | # | Item da Definição de Pronto | Atende? |
 |---|---|---|
