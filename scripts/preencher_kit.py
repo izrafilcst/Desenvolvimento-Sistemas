@@ -27,11 +27,15 @@ MODELO_PADRAO = RAIZ.parent / NOME_MODELO
 DESTINO_PADRAO = RAIZ / "docs" / "Kit_Aula10_MeshTracker_Central.xlsx"
 
 DATA_REVISAO = "01/11/2026"
+AUTOR = "Rafael Alves de Sousa Costa"
 
 # --- 02_Book_Fichas: controle do Book (Fichas 1 a 20) -----------------------
 
 LINHA_FICHA_1 = 5  # a Ficha n fica na linha 4 + n
-FICHAS_SIM = 13  # Fichas 1 a 13
+FICHAS_COM_OBSERVACAO = 13  # Fichas 1 a 13 têm caminho ou observação
+# Fichas 3 e 7 têm observação, mas o Status é "Não": a evidência delas
+# (enunciado revisado da entrevista; ficha do CEUBOOK) ainda não existe.
+FICHAS_NAO = (3, 7)
 FICHAS_TOTAL = 20
 
 CADERNO = f"docs/Caderno_Aula7_MeshTracker_Central.pdf (v2, {DATA_REVISAO})"
@@ -112,10 +116,10 @@ HIPOTESES = [
         2,
     ),
     (  # H4
-        "expor a situação e o recebimento de sinais em `/api/v1` permite "
+        "expor a situação e o recebimento de sinais em /api/v1 permite "
         "trocar o simulador pelo gateway real sem mudar a regra",
         "Organizador (e o futuro gateway)",
-        "o simulador e um cliente `curl` usam só a API, sem tocar no banco",
+        "o simulador e um cliente curl usam só a API, sem tocar no banco",
         "Teste de API e reprodução pelo Guia",
         "Baixo",
         2,
@@ -153,9 +157,9 @@ INCREMENTOS = [
         "nenhuma escrita indevida passar nos testes",
     ),
     (  # Incremento 3
-        "`/api/v1` documentada com token, Guia de reprodução e release v1.0",
+        "/api/v1 documentada com token, Guia de reprodução e release v1.0",
         "H4",
-        "Endpoints em `docs/api.md`; 401 sem token; tag `v1.0`",
+        "Endpoints em docs/api.md; 401 sem token; tag v1.0",
         "Go para o Demo Day se o MVP for reproduzido do zero, num clone "
         "limpo e num venv novo, seguindo só o Guia",
     ),
@@ -183,7 +187,7 @@ def _exigir_valor(ws, coordenada: str, esperado: str) -> None:
 
 def _validar_dados() -> None:
     """Confere as constantes antes de tocar na planilha."""
-    if sorted(OBSERVACAO_BOOK) != list(range(1, FICHAS_SIM + 1)):
+    if sorted(OBSERVACAO_BOOK) != list(range(1, FICHAS_COM_OBSERVACAO + 1)):
         raise ValueError("OBSERVACAO_BOOK deve cobrir as Fichas 1 a 13.")
     if len(DECISOES_ANCORAS) != 4:
         raise ValueError("São 4 âncoras: Pressman, Sommerville, Cohn, Gothelf.")
@@ -247,9 +251,10 @@ def _preencher_book(wb) -> None:
     _exigir_valor(ws, "B24", "Retrospectiva e pitch final")
     for ficha in range(1, FICHAS_TOTAL + 1):
         linha = LINHA_FICHA_1 + ficha - 1
-        concluida = ficha <= FICHAS_SIM
+        com_observacao = ficha <= FICHAS_COM_OBSERVACAO
+        concluida = com_observacao and ficha not in FICHAS_NAO
         ws[f"E{linha}"] = "Sim" if concluida else "Não"
-        if concluida:
+        if com_observacao:
             ws[f"F{linha}"] = OBSERVACAO_BOOK[ficha]
             _ajustar_altura(ws, linha, "F")
 
@@ -316,6 +321,7 @@ def preencher(modelo: Path, destino: Path) -> None:
     _preencher_ancoras(wb)
     _preencher_hipoteses(wb)
     _preencher_incrementos(wb)
+    wb.properties.lastModifiedBy = AUTOR
     wb.calculation.fullCalcOnLoad = True  # o Excel recalcula ao abrir
     wb.save(destino)
 
