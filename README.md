@@ -12,20 +12,31 @@ Dois problemas me motivaram. O primeiro é que, sem um perfil permanente, o oper
 
 ## Em que ponto está
 
-Fase de proposta (Aula 7). Ainda não há código executável: a primeira iteração começa depois da aula.
+Book v1 revisado em 01/11/2026: o escopo foi recortado para caber nos incrementos do Ciclo 2 (ADR-002 e ADR-003). O Incremento 1 está em construção, com entrega em 10/11.
 
-## O que entra na primeira iteração
+## O que entra em cada incremento
 
-- Contrato de mensagens MQTT e um simulador de gateway no lugar do hardware.
-- Cadastro permanente do operador e inscrição em cada operação (time, classe e dispositivo), sem recadastro.
-- Recebimento dos sinais só dos dispositivos inscritos, sem duplicatas, com o estado de cada operador (ativo, atrasado ou perdido).
-- Mapa ao vivo com um marcador por operador, na cor do time.
+- **Incremento 1 (até 10/11):** cadastro permanente do operador, operação com situação e inscrição por operação (time, classe, dispositivo e consentimento), com as regras R1 a R6 testadas e os dados persistidos no SQLite.
+- **Incremento 2 (até 24/11):** simulador, sinais só de dispositivos inscritos e sem duplicata, estado do operador (ativo, atrasado ou perdido), mapa ao vivo e papel de observador (regras R7 a R10).
+- **Incremento 3 (até 08/12):** API `/api/v1` documentada, com token do gateway (R11), Guia de reprodução e release v1.0.
 
-Ficam para depois: ordens com confirmação, objetivos com alerta de chegada e trilha de posição (Iteração 2), gateway real com autenticação das ordens e replay da operação (Iteração 3, se houver tempo). Fica de fora, por enquanto, o desenho da topologia da malha.
+O Demo Day é em 15/12.
+
+## O que fica de fora
+
+MQTT, gateway real, ordens, objetivos, topologia da malha e integração com o operational-command. Exigem hardware, infraestrutura ou outro sistema, e a troca de stack e de contrato está registrada nos ADR-002 e ADR-003.
 
 ## Como executar
 
-Ainda não se aplica. Quando a primeira iteração existir, os comandos para subir o ambiente entram aqui.
+A partir do Incremento 1, o projeto instala, testa e roda com três comandos:
+
+```
+pip install -r requirements.txt
+python -m pytest -q
+python src/app.py
+```
+
+Ainda não há código executável: hoje `src/` e `tests/` estão vazios, e os comandos acima só valem depois da entrega do Incremento 1.
 
 ## Estrutura
 
@@ -33,10 +44,17 @@ Ainda não se aplica. Quando a primeira iteração existir, os comandos para sub
 README.md
 docs/
   Caderno_Aula7_MeshTracker_Central.pdf   caderno de dinâmicas preenchido
-  proposta.md                             proposta de uma página
-  backlog.md                              escopo, fluxo e critérios de aceite
+  Kit_Aula10_MeshTracker_Central.xlsx     kit de artefatos da Aula 10 preenchido
+  proposta.md                             proposta de uma página (Ficha 8)
+  backlog.md                              escopo, regras, fluxo e critérios de aceite (Ficha 6)
   dinamicas.md                            método, matriz de decisão e pitch
-  adr/ADR-001-perfil-e-inscricao.md       primeira decisão de arquitetura
+  historias.md                            histórias de usuário e critérios de aceitação (Ficha 13)
+  hipoteses-e-incrementos.md              hipóteses, incrementos e go/no-go (Fichas 11 e 12)
+  adr/
+    ADR-001-perfil-e-inscricao.md         perfil permanente separado da inscrição
+    ADR-002-stack-flask-sqlite.md         Flask e SQLite no lugar da stack MEVN
+    ADR-003-gateway-por-http.md           sinais do gateway por HTTP no lugar de MQTT
+scripts/                                  gerador do Caderno e do Kit
 src/
 tests/
 ```
@@ -44,4 +62,4 @@ tests/
 ## Projetos relacionados
 
 - **MeshTracker:** firmware para ESP32-S3 com GPS e rede mesh LoRa de 433 MHz.
-- **operational-command:** aplicação web (MongoDB, Express, Vue e Node) para gerir operações; a stack dela serve de referência para este projeto.
+- **operational-command:** aplicação web para gerir operações. A demo é independente: não integra nem reaproveita código do operational-command (ADR-002).
