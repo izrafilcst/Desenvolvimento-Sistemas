@@ -4,9 +4,6 @@
 # O .docx é arquivo de trabalho; a entrega é o PDF
 docs/*.docx
 
-# Specs e planos de trabalho (ficam só locais)
-docs/superpowers/
-
 # Ambiente virtual e cache do Python
 .venv/
 __pycache__/
