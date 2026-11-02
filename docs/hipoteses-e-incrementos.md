@@ -23,6 +23,8 @@ A prioridade é risco × incerteza, como no Kit: risco Alto vale 3, Médio vale 
 
 O Demo Day é em 15/12 (Aula 19). Nenhum go/no-go foi registrado até 01/11/2026.
 
+O teste da H2 acontece na Aula 15 (17/11), uma semana antes da entrega do Incremento 2 (24/11): o mapa precisa estar em protótipo funcional até 17/11 (Aula 15) para o teste da H2.
+
 ## Quem valida
 
 O próprio autor, no papel de organizador. Isso fica escrito assim nas Fichas 11, 12, 16 e 18, com a limitação declarada: quem construiu o sistema conhece as telas, então o teste mede o fluxo, não a primeira impressão de um organizador real. A validação com a federação continua como a pendência principal, e a Ficha 3 continua "não realizada". Se um colega ou organizador aparecer depois, ele entra como evidência adicional, sem mudar o critério.

@@ -19,7 +19,7 @@ Isso gera quatro regras que vou testar: um operador tem no máximo uma inscriç�
 
 ## Justificativa
 
-Com base no CEUBOOK (2024), que a aula indica para decisões de modelo de dados, decidi separar o perfil permanente do operador da inscrição por operação porque o operador se cadastra uma única vez e tudo o que muda a cada operação fica registrado na inscrição. A alternativa de cadastrar o operador dentro de cada operação foi descartada porque obrigaria o recadastro e duplicaria dados. Ainda não li o capítulo correspondente: a leitura não foi realizada, e a fundamentação com o conceito do livro será completada depois dela.
+Com base no CEUBOOK (2024), que a aula indica para decisões de modelo de dados, decidi separar o perfil permanente do operador da inscrição por operação porque o operador se cadastra uma única vez e tudo o que muda a cada operação fica registrado na inscrição. A alternativa de cadastrar o operador dentro de cada operação foi descartada porque obrigaria o recadastro e duplicaria dados. Ainda não li o capítulo correspondente: a leitura não foi realizada. Se a leitura for registrada, ela entra como complemento datado, sem mudar a decisão.
 
 ## Consequências
 

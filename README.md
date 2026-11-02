@@ -1,6 +1,6 @@
 # MeshTracker Central
 
-Painel web para acompanhar ao vivo a posição e o estado dos operadores em operações de airsoft, a partir da rede LoRa do MeshTracker. É o meu projeto do Ciclo 2 de Desenvolvimento de Sistemas (Engenharia de Computação, CEUB, 2026/2).
+Painel web para acompanhar ao vivo a posição e o estado dos operadores em operações de airsoft, a partir da rede LoRa do MeshTracker (nesta demo, com sinais simulados). É o meu projeto do Ciclo 2 de Desenvolvimento de Sistemas (Engenharia de Computação, CEUB, 2026/2).
 
 **Aluno:** Rafael Alves de Sousa Costa · **RA:** 22304563
 
@@ -37,6 +37,19 @@ python src/app.py
 ```
 
 Ainda não há código executável: hoje `src/` e `tests/` estão vazios, e os comandos acima só valem depois da entrega do Incremento 1.
+
+## Como regenerar o Caderno e o Kit
+
+O Caderno (PDF) e o Kit (Excel) são gerados por scripts em `scripts/`. O Caderno precisa do LibreOffice Writer (`sudo apt install libreoffice-writer`) e os dois, de um ambiente virtual:
+
+```
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements.txt
+.venv/bin/python scripts/preencher_kit.py
+.venv/bin/python scripts/gerar_caderno.py
+```
+
+O modelo do Kit precisa estar na pasta pai do repositório, com o nome padrão (`Kit_Artefatos_Aula_10_Jornada_do_Conhecimento_Ciclo_2_CEUB_v1.2.xlsx`), ou ser indicado com `--modelo CAMINHO`.
 
 ## Estrutura
 

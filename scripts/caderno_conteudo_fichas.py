@@ -105,7 +105,8 @@ def _ficha_7(data):
             ["Dúvida a investigar",
              "Qual identificador estável usar para o operador (por exemplo, um "
              "número de registro da federação, se existir) e se a persistência "
-             "será relacional ou de documentos."],
+             "será relacional ou de documentos (a segunda parte foi resolvida "
+             "em 01/11/2026 no ADR-002: banco relacional, SQLite)."],
             ["Frase de ligação",
              "Com base no CEUBOOK (2024), decidi separar o perfil permanente "
              "do operador da inscrição por operação porque o operador se "
@@ -134,7 +135,12 @@ def _ficha_7(data):
              "inscrição liga o operador a uma operação e guarda o que vale só "
              "ali: time, classe, dispositivo e consentimento. As posições "
              "pertencem à inscrição e só são gravadas com a operação em "
-             "curso."],
+             "curso. A escolha entre banco relacional e de documentos, que "
+             "este ADR deixou em aberto, foi feita no ADR-002: banco "
+             "relacional SQLite, com as regras R2 e R3 (no máximo uma "
+             "inscrição por operador e por dispositivo em cada operação) "
+             "garantidas por restrições de unicidade no próprio banco. Aqui "
+             "trato só do modelo lógico."],
             ["Alternativas que descartei",
              "Cadastrar o operador dentro de cada operação, porque força o "
              "recadastro, duplica dados e impede ver o histórico. Guardar "
@@ -288,7 +294,8 @@ def _ficha_9():
              "O repositório criado no GitHub já tinha um commit inicial, só "
              "com o README, que eu não tinha na minha máquina.",
              "git fetch origin, depois git merge origin/main "
-             "--allow-unrelated-histories, resolver o conflito do README "
+             "\u2011\u2011allow\u2011unrelated\u2011histories, resolver o "
+             "conflito do README "
              "mantendo o do projeto e repetir o git push."],
             ["Arquivo ~$derno_...docx no commit",
              "O Word criou um arquivo temporário enquanto o caderno estava "
@@ -392,15 +399,16 @@ def _conclusao(data):
         ("paragrafo",
          "O ponto mais fraco continua sendo a validação. A Feira, a "
          "entrevista e o semáforo não foram realizados, e a federação ainda "
-         "não foi ouvida. Por enquanto, quem vai validar as hipóteses sou eu, "
+         "não foi ouvida. Quem vai validar as hipóteses sou eu, "
          "no papel de organizador, com roteiros cronometrados: inscrever 5 "
          "operadores já cadastrados numa segunda operação em até 3 minutos "
          "(H1) e apontar no mapa quem está perdido e há quanto tempo em até "
-         "10 segundos (H2). Essa limitação está declarada nas Fichas 11 e 12 "
-         "do Kit. A leitura do CEUBOOK para fundamentar o ADR-001 também "
-         "continua pendente. Os riscos que vejo são resolver um problema que "
-         "o organizador não sente e o cuidado com a posição das pessoas, que "
-         "é dado pessoal e exige consentimento."),
+         "10 segundos (H2). Essa limitação está declarada em "
+         "docs/hipoteses-e-incrementos.md (Fichas 11 e 12). A leitura do "
+         "CEUBOOK para fundamentar o ADR-001 continua pendente. Os "
+         "riscos que vejo são resolver um problema que o organizador não "
+         "sente e o cuidado com a posição das pessoas, que é dado pessoal e "
+         "exige consentimento."),
         ("subtitulo", "Dúvidas que ficaram"),
         ("lista", [
             "Como ter os tiles do mapa offline em campo, sem internet. O "
@@ -422,13 +430,8 @@ def _conclusao(data):
 REFERENCIAS = [
     ("titulo", "7. REFERÊNCIAS BIBLIOGRÁFICAS"),
     ("paragrafo",
-     "CEUBOOK. Engenharia da Computação — Desenvolvimento de Sistemas. "
-     "Brasília: CEUB, 2024."),
-    ("paragrafo",
-     "PRIMO, A. L. G.; MURARI, M. L.; OLIVEIRA, L. R. A. de. Desenvolvimento "
-     "de um sistema de informação web para quantificação da arborização "
-     "urbana. Revista AIDIS de Ingeniería y Ciencias Ambientales, v. 15, n. "
-     "1, p. 465, 2022."),
+     "AMARAL, Uender. Aula 10 · Jornada do Conhecimento · Ciclo 2. "
+     "Desenvolvimento de Sistemas, CEUB, 2026/2."),
     ("paragrafo",
      "AMARAL, Uender. Aula 7 · Da ideia ao projeto: descoberta, escolha, "
      "recorte e documentação do projeto do Ciclo 2. Desenvolvimento de "
@@ -437,15 +440,8 @@ REFERENCIAS = [
      "AMARAL, Uender. Caderno de Dinâmicas e Modelos de Entrega: Aula 7 · Da "
      "ideia ao projeto, v1.1. CEUB, 2026/2."),
     ("paragrafo",
-     "MeshTracker: dispositivo embarcado de rastreamento GPS com rede mesh "
-     "LoRa 433 MHz. README do firmware. Projeto do autor."),
-    ("paragrafo",
-     "operational-command: aplicação MEVN para gestão de operações. README do "
-     "projeto. Projeto do autor."),
-    ("paragrafo",
-     "SOMMERVILLE, Ian. *Engenharia de software*. Tradução: Luiz Cláudio "
-     "Queiroz. Revisão técnica: Fábio Levy Siqueira. 10. ed. São Paulo: "
-     "Pearson Education do Brasil, 2018."),
+     "CEUBOOK. Engenharia da Computação — Desenvolvimento de Sistemas. "
+     "Brasília: CEUB, 2024."),
     ("paragrafo",
      "KUNCE, Darius; GOBY, Dominik. *Usar registros de decisão de arquitetura "
      "para agilizar a tomada de decisões técnicas para um projeto de "
@@ -454,8 +450,20 @@ REFERENCIAS = [
      "https://docs.aws.amazon.com/pt_br/prescriptive-guidance/latest/"
      "architectural-decision-records/. Acesso em: 1 nov. 2026."),
     ("paragrafo",
-     "AMARAL, Uender. Aula 10 · Jornada do Conhecimento · Ciclo 2. "
-     "Desenvolvimento de Sistemas, CEUB, 2026/2."),
+     "MeshTracker: dispositivo embarcado de rastreamento GPS com rede mesh "
+     "LoRa 433 MHz. README do firmware. Projeto do autor."),
+    ("paragrafo",
+     "operational-command: aplicação MEVN para gestão de operações. README do "
+     "projeto. Projeto do autor."),
+    ("paragrafo",
+     "PRIMO, A. L. G.; MURARI, M. L.; OLIVEIRA, L. R. A. de. Desenvolvimento "
+     "de um sistema de informação web para quantificação da arborização "
+     "urbana. Revista AIDIS de Ingeniería y Ciencias Ambientales, v. 15, n. "
+     "1, p. 465, 2022."),
+    ("paragrafo",
+     "SOMMERVILLE, Ian. *Engenharia de software*. Tradução: Luiz Cláudio "
+     "Queiroz. Revisão técnica: Fábio Levy Siqueira. 10. ed. São Paulo: "
+     "Pearson Education do Brasil, 2018."),
 ]
 
 

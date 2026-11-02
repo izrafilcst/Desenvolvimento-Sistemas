@@ -62,17 +62,19 @@ OBSERVACAO_BOOK = {
 DECISOES_ANCORAS = [
     # Pressman e Maxim
     "Cada incremento termina em go/no-go registrado na Ficha 16, "
-    "com critério definido antes.",
+    "com critério definido antes (ligação indicada pela Aula 10; obra "
+    "não lida).",
     # Sommerville
     "O recorte em 3 incrementos (2.3.2), a máquina de estados da operação "
     "e do operador (5.4.2) e as camadas rotas → serviços → repositório "
     "(6.3.1).",
     # Cohn
     "O backlog em histórias com critérios de aceitação e iterações de "
-    "duas semanas.",
+    "duas semanas (ligação indicada pela Aula 10; obra não lida).",
     # Gothelf e Seiden
     "As hipóteses H1 a H4 com sinal mensurável e a validação com o "
-    "organizador antes de crescer o escopo.",
+    "autor no papel de organizador antes de crescer o escopo (ligação "
+    "indicada pela Aula 10; obra não lida).",
 ]
 
 # --- 04_Ficha11_Hipoteses: "Minha equipe", linhas 12 a 15 -------------------
