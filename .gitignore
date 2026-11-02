@@ -3,3 +3,7 @@
 
 # O .docx é arquivo de trabalho; a entrega é o PDF
 docs/*.docx
+
+# Ambiente virtual e cache do Python
+.venv/
+__pycache__/

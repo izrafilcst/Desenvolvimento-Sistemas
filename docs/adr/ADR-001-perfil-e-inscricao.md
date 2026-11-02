@@ -1,6 +1,6 @@
 # ADR-001: Perfil permanente do operador separado da inscrição por operação
 
-**Status:** proposto · **Data:** 01/10/2026 · **Autor:** Rafael Alves de Sousa Costa
+**Status:** aceito em 01/11/2026 (proposto em 01/10/2026) · **Data:** 01/10/2026 · **Autor:** Rafael Alves de Sousa Costa
 
 ## Contexto
 
@@ -10,7 +10,7 @@ Os operadores de airsoft costumam participar de várias operações da federaç�
 
 Vou separar duas coisas. O **operador** é um perfil permanente, com apelido único, nome e um identificador estável, cadastrado uma única vez. A **inscrição** liga um operador a uma operação e guarda o que vale só ali: time, classe, dispositivo e consentimento de rastreamento. As posições pertencem à inscrição e só são gravadas enquanto a operação está em curso.
 
-Isso gera quatro regras que vou testar: um operador tem no máximo uma inscrição por operação; um dispositivo pertence a no máximo uma inscrição por operação; mudar time ou classe altera só a inscrição; e inscrever um operador que já existe em uma nova operação não pede novo cadastro. A escolha entre banco relacional e de documentos fica para outra decisão; aqui trato só do modelo lógico.
+Isso gera quatro regras que vou testar: um operador tem no máximo uma inscrição por operação; um dispositivo pertence a no máximo uma inscrição por operação; mudar time ou classe altera só a inscrição; e inscrever um operador que já existe em uma nova operação não pede novo cadastro. A escolha entre banco relacional e de documentos, que este ADR deixou em aberto, foi feita no [ADR-002](ADR-002-stack-flask-sqlite.md): banco relacional SQLite, com as duas primeiras regras acima (R2 e R3) garantidas por restrições de unicidade no próprio banco. Aqui trato só do modelo lógico.
 
 ## Alternativas que descartei
 
@@ -19,7 +19,7 @@ Isso gera quatro regras que vou testar: um operador tem no máximo uma inscriç�
 
 ## Justificativa
 
-Com base no CEUBOOK (2024), que a aula indica para decisões de modelo de dados, decidi separar o perfil permanente do operador da inscrição por operação porque o operador se cadastra uma única vez e tudo o que muda a cada operação fica registrado na inscrição. A alternativa de cadastrar o operador dentro de cada operação foi descartada porque obrigaria o recadastro e duplicaria dados. Ainda não li o capítulo correspondente: a leitura não foi realizada, e a fundamentação com o conceito do livro será completada depois dela.
+Com base no CEUBOOK (2024), que a aula indica para decisões de modelo de dados, decidi separar o perfil permanente do operador da inscrição por operação porque o operador se cadastra uma única vez e tudo o que muda a cada operação fica registrado na inscrição. A alternativa de cadastrar o operador dentro de cada operação foi descartada porque obrigaria o recadastro e duplicaria dados. Ainda não li o capítulo correspondente: a leitura não foi realizada. Se a leitura for registrada, ela entra como complemento datado, sem mudar a decisão.
 
 ## Consequências
 
