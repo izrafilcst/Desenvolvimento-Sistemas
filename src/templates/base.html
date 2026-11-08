@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}MeshTracker Central{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/pico/pico.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong>MeshTracker Central</strong></li>
+      </ul>
+      {% if current_user.is_authenticated %}
+      <ul>
+        <li><a href="{{ url_for('paginas.operadores') }}">Operadores</a></li>
+        <li><a href="{{ url_for('paginas.operacoes') }}">Operações</a></li>
+        <li><small>{{ current_user.login }} ({{ current_user.papel }})</small></li>
+        <li>
+          <form method="post" action="{{ url_for('paginas.logout') }}" class="form-sair">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="secondary outline">Sair</button>
+          </form>
+        </li>
+      </ul>
+      {% endif %}
+    </nav>
+  </header>
+  <main class="container">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% for categoria, mensagem in mensagens %}
+        <p class="mensagem mensagem-{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</p>
+      {% endfor %}
+    {% endwith %}
+    {% block conteudo %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

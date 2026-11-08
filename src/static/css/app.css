@@ -1,0 +1,4 @@
+/* Ajustes sobre o Pico. Dono: agente web. */
+.mensagem-erro { color: var(--pico-del-color); }
+.mensagem-sucesso { color: var(--pico-ins-color); }
+.form-sair { margin: 0; }
