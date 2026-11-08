@@ -43,7 +43,7 @@ source .venv/Scripts/activate
 .\.venv\Scripts\Activate.ps1
 ```
 
-No Windows, se o `python` não for o 3.12, use `py -3.12 -m venv .venv`.
+No Windows, só se o `python` for anterior ao 3.12, use `py -3.12 -m venv .venv` (ou instale o 3.12 ou mais novo).
 
 ## 3. Instalar as dependências
 
@@ -120,8 +120,9 @@ Abra outro terminal, ative o ambiente e exporte o mesmo `MESHTRACKER_TOKEN`
 python src/simulador.py --url http://127.0.0.1:5000 --parar MT-03 --apos 20
 ```
 
-O simulador pega o token do ambiente. Se preferir, passe o token direto com
-`--token <valor>`.
+O simulador pega o token do ambiente. Recomendamos isso: use a variável
+`MESHTRACKER_TOKEN`. Se preferir passar `--token <valor>`, saiba que o valor
+fica visível no histórico do shell e na lista de processos do sistema.
 
 O simulador manda posições dos dispositivos MT-01 a MT-05 para a Operação Bravo.
 Ele também manda sinais de um dispositivo sem inscrição (MT-99), que o sistema
@@ -169,6 +170,22 @@ Para ver a situação da operação em curso:
 ```bash
 curl -s http://127.0.0.1:5000/api/v1/situacao \
   -H "Authorization: Bearer $MESHTRACKER_TOKEN"
+```
+
+No PowerShell, use `curl.exe`. O nome `curl` ali é outro comando. O corpo vai
+para um arquivo, para não misturar aspas dentro do JSON:
+
+```powershell
+'{"dispositivo": "MT-01", "pacote": 99, "lat": -15.799, "lon": -47.907, "bateria": 80}' | Set-Content -Encoding ascii "$env:TEMP\sinal.json"
+
+# sem token (401)
+curl.exe -i -X POST http://127.0.0.1:5000/api/v1/sinais -H "Content-Type: application/json" -d "@$env:TEMP\sinal.json"
+
+# com token (201)
+curl.exe -i -X POST http://127.0.0.1:5000/api/v1/sinais -H "Authorization: Bearer $env:MESHTRACKER_TOKEN" -H "Content-Type: application/json" -d "@$env:TEMP\sinal.json"
+
+# situação da operação em curso
+curl.exe -s http://127.0.0.1:5000/api/v1/situacao -H "Authorization: Bearer $env:MESHTRACKER_TOKEN"
 ```
 
 Mais exemplos e todos os códigos de erro estão em `docs/api.md`.
