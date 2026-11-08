@@ -37,8 +37,9 @@ git log -p --no-textconv --no-ext-diff HEAD -- . ':!src/static/vendor' \
 `--no-textconv` é necessário: sem ele, o filtro de diff dos `.docx` falha e o
 `git log -p` para no meio do histórico.
 
-**Resultado em 71df3bf:** `pytest -q` dá 448 passed e 1 xfailed. O xfail é o S-4, que
-ainda está aberto.
+**Resultado em 71df3bf:** `pytest -q` dá 448 passed e 1 xfailed. O xfail era o S-4, que
+ainda estava aberto. Depois da integração da correção do S-4 (`6bc0608`), a suíte
+inteira passa sem xfail.
 
 ## Checklist
 
@@ -64,7 +65,7 @@ ainda está aberto.
 | Extra: cabeçalhos CSP, X-Frame-Options, nosniff e Referrer-Policy | `test_seg_cabecalhos_de_seguranca` (página, API e 404) | ok: `script-src 'self'`, `frame-ancestors 'none'` |
 | Extra: DoS trivial com corpo enorme | `test_seg_corpo_enorme_na_api_recebe_413`, `test_seg_corpo_enorme_no_login_recebe_413` | ok depois do S-1 |
 | Extra: dados pessoais em log | `test_seg_modulos_do_servidor_nao_registram_dados_em_log`, `test_seg_simulador_nao_imprime_token_nem_posicao` | ok |
-| Extra: o que o simulador faz com o token | `test_seg_simulador_nao_imprime_token_nem_posicao`, `test_seg_simulador_nao_reenvia_token_em_redirecionamento` | o simulador não imprime o token; o reenvio em redirecionamento (S-4) está pendente |
+| Extra: o que o simulador faz com o token | `test_seg_simulador_nao_imprime_token_nem_posicao`, `test_seg_simulador_nao_reenvia_token_em_redirecionamento` | ok depois do S-4: o simulador não imprime o token nem segue redirecionamento |
 
 ## Achados
 
@@ -73,7 +74,7 @@ ainda está aberto.
 | S-1 | Baixa | `src/config.py`, `src/app.py` | Não havia `MAX_CONTENT_LENGTH`. Um `POST /login` multipart de 2 MB, sem sessão, era lido inteiro, porque o CSRF lê o formulário antes da view. Um JSON de 2 MB com token era aceito (202). | Corrigido pela líder em `45b0305`: limite de 64 KB e 413 `corpo_grande` em JSON na API. |
 | S-2 | Baixa | `src/api.py` (`receber_sinal`) | Com JSON aninhado em cerca de 20 mil níveis, o `json.loads` levanta `RecursionError`, que o `get_json(silent=True)` não captura. O resultado era 500 em vez de 400. Só quem tem o token chega lá. | Corrigido pelo mapa-api em `65ed6c1`. |
 | S-3 | Baixa | `src/servicos.py` (`autenticar`) | Com um login que não existe, o scrypt não rodava: a resposta levava ~0,12 ms, contra ~128 ms com um login válido. O tempo revelava quais logins existem; a mensagem e o status já eram iguais. | Corrigido pelo regras em `ae6ce0a`: confere a senha contra um hash falso. |
-| S-4 | Baixa | `src/simulador.py:172-173` (`chamar`) | `urllib.request.urlopen` segue 301/302 e reenvia `Authorization: Bearer` para o host do `Location`. Reproduzido em loopback, entre duas portas. | Pendente com o mapa-api (dono do simulador). O teste está com xfail strict e a líder tira a marca quando a correção entrar. Correção sugerida: um opener com um `HTTPRedirectHandler` que não redireciona. |
+| S-4 | Baixa | `src/simulador.py:172-173` (`chamar`) | `urllib.request.urlopen` segue 301/302 e reenvia `Authorization: Bearer` para o host do `Location`. Reproduzido em loopback, entre duas portas. | Corrigido pelo mapa-api em `6bc0608`: o simulador abre as URLs com um opener que não segue redirecionamento. A líder tirou o xfail na integração. |
 | S-5 | Baixa | `src/simulador.py:235` (`--token`), `docs/guia-de-reproducao.md` | O token passado em `--token` aparece na lista de processos e no histórico do shell. | Aceito com justificativa: o notebook tem um só usuário e a variável `MESHTRACKER_TOKEN` é o caminho principal. O docs acrescenta no Guia a frase que recomenda a variável e avisa que `--token` fica no histórico e na lista de processos. |
 
 ## Observações aceitas para a demo
@@ -98,6 +99,10 @@ o sistema sair do notebook.
 | B311 (`random` não criptográfico) | Baixa | `src/simulador.py:278` | O `random` só sorteia o percurso simulado. Não é segredo nem token. Aceito. |
 
 Total: 0 alto, 1 médio e 1 baixo, ambos com justificativa. Nenhum `# nosec` foi usado.
+
+Depois da correção do S-4 (`6bc0608`), o simulador deixou de chamar `urlopen` e passou a
+usar um opener próprio. Com isso, o B310 sumiu: o `bandit -q -r src` atual dá 0 alto,
+0 médio e 1 baixo (o B311).
 
 ## pip-audit (`pip-audit -r requirements.txt`)
 

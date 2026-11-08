@@ -12,7 +12,9 @@ Dois problemas me motivaram. O primeiro é que, sem um perfil permanente, o oper
 
 ## Em que ponto está
 
-Book v1 revisado em 01/11/2026: o escopo foi recortado para caber nos incrementos do Ciclo 2 (ADR-002 e ADR-003). O Incremento 1 está em construção, com entrega em 10/11.
+Book v1 revisado em 01/11/2026: o escopo foi recortado para caber nos incrementos do Ciclo 2 (ADR-002 e ADR-003).
+
+Em 08/11/2026 ficou pronta a demo do MVP para a Aula 14 (10/11), no branch `demo/mvp-10-11`. Ela já cobre os três incrementos: cadastro permanente do operador, operação com situação, inscrição por operação, sinais filtrados e sem duplicata, estado do operador, mapa ao vivo, papel de observador, API `/api/v1` com token e Guia de reprodução. As regras R1 a R11 têm testes. Os operadores são simulados; a validação foi feita só pelo autor. A tag `v1.0` fica para a entrega do Incremento 3, em 08/12.
 
 ## O que entra em cada incremento
 
@@ -28,7 +30,7 @@ MQTT, gateway real, ordens, objetivos, topologia da malha e integração com o o
 
 ## Como executar
 
-A partir do Incremento 1, o projeto instala, testa e roda com três comandos:
+Com Python 3.12 ou mais novo, num ambiente virtual, o projeto instala, testa e roda com três comandos:
 
 ```
 pip install -r requirements.txt
@@ -36,7 +38,7 @@ python -m pytest -q
 python src/app.py
 ```
 
-Ainda não há código executável: hoje `src/` e `tests/` estão vazios, e os comandos acima só valem depois da entrega do Incremento 1.
+O app abre em http://127.0.0.1:5000. Para ver o mapa ao vivo com os operadores simulados, siga o [Guia de reprodução](docs/guia-de-reproducao.md): ele cobre o token do gateway (`MESHTRACKER_TOKEN`), os dados da demo (`python src/demo_seed.py`), o simulador (`python src/simulador.py`) e a criação de usuários (`python src/app.py criar-usuario <login> <papel>`). A API está documentada em [docs/api.md](docs/api.md).
 
 ## Como regenerar o Caderno e o Kit
 
@@ -63,13 +65,28 @@ docs/
   dinamicas.md                            método, matriz de decisão e pitch
   historias.md                            histórias de usuário e critérios de aceitação (Ficha 13)
   hipoteses-e-incrementos.md              hipóteses, incrementos e go/no-go (Fichas 11 e 12)
+  api.md                                  contrato da API /api/v1, com exemplos em curl
+  guia-de-reproducao.md                   do clone ao mapa com o simulador
   adr/
     ADR-001-perfil-e-inscricao.md         perfil permanente separado da inscrição
     ADR-002-stack-flask-sqlite.md         Flask e SQLite no lugar da stack MEVN
     ADR-003-gateway-por-http.md           sinais do gateway por HTTP no lugar de MQTT
+  evidencias/                             prints, tempos e revisão de segurança da demo
+  apresentacao/                           roteiro e slides da demo de 10/11
+requirements.txt                          dependências para instalar, testar e rodar
+requirements-dev.txt                      bandit e pip-audit, para a revisão de segurança
 scripts/                                  gerador do Caderno e do Kit
 src/
-tests/
+  app.py                                  create_app(), servidor e comando criar-usuario
+  config.py                               variáveis de ambiente
+  paginas.py  api.py                      rotas das páginas e da API (sem regra de negócio)
+  auth.py                                 login, papéis (R10) e token do gateway (R11)
+  servicos.py                             regras de negócio R1 a R9
+  repositorio.py  db.py  schema.sql       todo o SQL, conexão e esquema do SQLite
+  simulador.py                            operadores simulados, só pela API
+  demo_seed.py                            dados da demo
+  templates/  static/                     páginas Jinja, CSS, mapa.js, Leaflet e Pico
+tests/                                    pytest: serviços, páginas, API, simulador, segurança e roteiro
 ```
 
 ## Projetos relacionados

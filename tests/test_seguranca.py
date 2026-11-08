@@ -450,7 +450,6 @@ def test_seg_simulador_nao_imprime_token_nem_posicao(monkeypatch, capsys):
     assert segredo not in saida.out + saida.err
 
 
-@pytest.mark.xfail(strict=True, reason="S-4: o simulador segue 302 e reenvia o token a outro host")
 def test_seg_simulador_nao_reenvia_token_em_redirecionamento():
     recebidos = []
 
