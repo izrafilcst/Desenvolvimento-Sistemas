@@ -10,7 +10,7 @@ import getpass
 import sys
 from pathlib import Path
 
-from flask import Flask
+from flask import Flask, jsonify, render_template, request
 from flask_wtf.csrf import CSRFProtect
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -36,6 +36,26 @@ POLITICA_DE_CONTEUDO = "; ".join([
 ])
 
 
+ERROS_HTTP = {
+    400: ("requisicao_invalida", "Requisição inválida."),
+    403: ("proibido", "Seu papel não permite esta ação."),
+    404: ("nao_encontrado", "Página ou recurso não encontrado."),
+    405: ("metodo_nao_permitido", "Método não permitido."),
+    500: ("erro_interno", "Erro interno. Tente de novo."),
+}
+
+
+def _tratador_de_erro(status: int, codigo: str, mensagem: str):
+    """Em /api/ responde {"erro", "codigo"}; nas páginas, mostra templates/erro.html."""
+
+    def tratar(_erro):
+        if request.path.startswith("/api/"):
+            return jsonify(erro=mensagem, codigo=codigo), status
+        return render_template("erro.html", status=status, mensagem=mensagem), status
+
+    return tratar
+
+
 def create_app(sobrescrever: dict | None = None) -> Flask:
     """Monta o app. `sobrescrever` troca chaves da configuração (os testes usam)."""
     pasta = Path(__file__).resolve().parent
@@ -52,6 +72,9 @@ def create_app(sobrescrever: dict | None = None) -> Flask:
     app.register_blueprint(paginas.bp)
     app.register_blueprint(api.bp)
     csrf.exempt(api.bp)
+
+    for status, (codigo, mensagem) in ERROS_HTTP.items():
+        app.register_error_handler(status, _tratador_de_erro(status, codigo, mensagem))
 
     @app.after_request
     def _cabecalhos_de_seguranca(resposta):

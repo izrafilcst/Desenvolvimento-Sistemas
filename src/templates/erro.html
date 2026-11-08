@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block titulo %}Erro {{ status }} · MeshTracker Central{% endblock %}
+{% block conteudo %}
+<article>
+  <h2>Erro {{ status }}</h2>
+  <p>{{ mensagem }}</p>
+  <p><a href="{{ url_for('paginas.operacoes') }}">Voltar para as operações</a></p>
+</article>
+{% endblock %}
