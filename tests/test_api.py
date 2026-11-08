@@ -142,6 +142,16 @@ def test_sinal_com_formato_invalido_devolve_400(client, cabecalho_token, servico
     assert servico_falso.chamadas == []
 
 
+def test_sinal_json_muito_aninhado_recebe_400(client, cabecalho_token, servico_falso):
+    corpo = "[" * 20000 + "]" * 20000          # json.loads estoura a pilha (RecursionError), abaixo de 64 KB
+    resposta = postar(client, corpo, cabecalho_token)
+    assert resposta.status_code == 400
+    dados = resposta.get_json()
+    assert dados["codigo"] == "formato_invalido"
+    assert dados["erro"] == "O corpo precisa ser um objeto JSON."
+    assert servico_falso.chamadas == []
+
+
 @pytest.mark.parametrize("mudancas", [
     dict(lat=90), dict(lat=-90), dict(lon=180), dict(lon=-180), dict(bateria=0), dict(bateria=100),
     dict(pacote=0), dict(dispositivo="M" * 32), dict(dispositivo=" mt-01 "), dict(extra="ignorado"),
