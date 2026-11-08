@@ -9,7 +9,7 @@
 {% block conteudo %}
   <hgroup>
     <h1>{{ operacao.nome }}</h1>
-    <p>{{ operacao.local }} - {{ operacao.data }} - {{ operacao.situacao | replace('_', ' ') }}</p>
+    <p>{{ operacao.data|data_br }} · {{ operacao.local }} · {{ operacao.situacao|rotulo_situacao }}</p>
   </hgroup>
 
   <section id="mapa-pagina" class="mapa-pagina"

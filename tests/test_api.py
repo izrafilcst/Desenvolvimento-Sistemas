@@ -411,6 +411,13 @@ def test_mapa_usa_leaflet_e_dados_da_operacao_sem_script_inline(app, obs_client)
     assert not re.search(r"<script(?![^>]*\bsrc=)", html)       # a CSP não aceita script inline
 
 
+def test_mapa_mostra_data_e_situacao_no_formato_da_pagina_da_operacao(app, obs_client):
+    operacao = preparar(app)                               # a data da operação de teste é 2026-11-10
+    html = obs_client.get(f"/operacoes/{operacao}/mapa").get_data(as_text=True)
+    assert "10/11/2026" in html and "Em curso" in html
+    assert "2026-11-10" not in html and "em_curso" not in html and "em curso" not in html
+
+
 def test_mapa_js_so_escreve_texto_do_servidor_por_textcontent(client):
     codigo = (RAIZ / "src/static/js/mapa.js").read_text(encoding="utf-8")
     assert not re.search(r"\.(innerHTML|outerHTML)\b|insertAdjacentHTML|document\.write", codigo)
