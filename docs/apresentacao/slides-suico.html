@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeshTracker Central</title>
+<script>
+/* Esconde o palco até o JS preparar a primeira cena; se algo falhar, solta em 3 s. */
+(function(){var d=document.documentElement;if(!/[?&]estatico/.test(location.search)){d.classList.add('anima');setTimeout(function(){d.classList.remove('anima')},3000);}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-viewport { position: fixed; inset: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: var(--slide-bg, #fff); }
+.slide { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; display: block; visibility: hidden; opacity: 0; pointer-events: none; background: var(--slide-bg, #fff); }
+.slide.active, .slide.visible { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+.deck-controls { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 1000; }
+@media print {
+  html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+  .deck-viewport { position: static; overflow: visible; background: #fff; }
+  .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+  .slide { position: relative; display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; width: 1920px; height: 1080px; break-after: page; page-break-after: always; }
+  .slide:last-child { break-after: auto; page-break-after: auto; }
+  .deck-controls { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+}
+
+/* ===========================================
+   TEMA: SUÍÇO. Branco, tinta e um único vermelho.
+   =========================================== */
+:root {
+  --stage-bg: #dcdcd8; --slide-bg: #ffffff;
+  --ink: #0b0b0b; --ink-2: #4a4a46; --red: #ff3300;
+  --rule: rgba(11,11,11,.075); --fio: rgba(11,11,11,.28);
+  --f-tit: 'Archivo', 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+  --f-txt: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+* { box-sizing: border-box; }
+.anima .deck-stage { visibility: hidden; }
+
+/* grade visível de 12 colunas de 160 px */
+.slide { font: 600 32px/1.3 var(--f-txt); color: var(--ink); }
+.slide::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(to right, var(--rule) 0 1px, transparent 1px 160px); }
+.slide > * { position: absolute; margin: 0; }
+.slide > aside.notas { display: none; }
+
+/* títulos com máscara de linha */
+.titulo { font: 900 120px/.9 var(--f-tit); letter-spacing: -.05em; word-spacing: .16em; white-space: nowrap; }
+.lm { display: block; overflow: hidden; padding: .16em .06em .18em; margin: -.16em -.06em -.18em; }
+.lm > span { display: block; }
+
+/* texto */
+.tx { font: 600 32px/1.3 var(--f-txt); text-wrap: pretty; }
+.tx b { font-weight: 700; }
+.peq { font-size: 28px; }
+.verm { color: var(--red); }
+.mudo { color: var(--ink-2); }
+.cod { font: 900 64px/1 var(--f-tit); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.num { font: 900 88px/1 var(--f-tit); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.num small { font-size: 40px; letter-spacing: 0; margin-left: .3em; }
+.rot { font: 800 30px/1 var(--f-tit); letter-spacing: .03em; }
+
+/* bloco vermelho com os 5 operadores e o perdido */
+.bloco { background: var(--red); overflow: hidden; }
+.bloco i { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: #fff; }
+.bloco i.parado { right: 36px; top: 36px; background: transparent; border: 6px solid #fff; }
+.bloco .lbl { position: absolute; left: 36px; bottom: 24px; color: #fff; font: 800 28px/1.15 var(--f-tit); letter-spacing: .14em; text-transform: uppercase; }
+.bloco .lbl small { display: block; margin-top: 6px; font: 700 26px/1.1 var(--f-txt); letter-spacing: 0; text-transform: none; }
+
+/* linhas de razão: código grande, texto, nota */
+.lin { display: grid; grid-template-columns: var(--c); align-items: center; border-top: 2px solid var(--ink); }
+.lin.forte { border-top-width: 4px; }
+.lin .tag { font: 600 28px/1.2 var(--f-txt); color: var(--ink-2); }
+
+/* prints: moldura de fio preto */
+.print { border: 2px solid var(--ink); background: #fff; overflow: hidden; }
+.print img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
+
+.reg { background: var(--ink); height: 4px; }
+
+/* S1 */
+.prob { border-top: 4px solid var(--ink); padding-top: 22px; }
+.marca { display: flex; gap: 16px; align-items: flex-start; font: 700 26px/1.3 var(--f-txt); color: var(--ink-2); }
+.marca i { flex: none; width: 24px; height: 24px; margin-top: 4px; border: 5px solid var(--ink); border-radius: 50%; }
+.rodape { display: flex; justify-content: space-between; border-top: 4px solid var(--ink); padding-top: 26px; font: 600 26px/1 var(--f-txt); }
+
+/* S2 */
+.nomes { display: grid; grid-template-columns: repeat(5, 160px); border-top: 4px solid var(--ink); }
+.nomes span { padding-top: 16px; font: 800 30px/1 var(--f-tit); }
+
+/* S3 */
+.seg { height: 56px; }
+.seg.seta { clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 50%, calc(100% - 30px) 100%, 0 100%); }
+.seg.tracejado { border: 3px dashed var(--ink); }
+.tk { display: flex; gap: 0; height: 30px; }
+.tk i { position: absolute; top: 0; width: 2px; height: 30px; background: var(--ink); }
+.lb b { display: block; font: 800 28px/1.1 var(--f-tit); }
+.lb span { display: block; margin-top: 6px; font: 600 26px/1.2 var(--f-txt); color: var(--ink-2); }
+
+/* S5: barras assentadas nas linhas da grade */
+.col { width: 72px; bottom: 130px; height: calc(var(--v) * 7px); }
+.col .bar { position: absolute; inset: 0; background: var(--ink); transform-origin: 50% 100%; }
+.col .bn { position: absolute; left: -20px; right: -20px; bottom: 100%; margin-bottom: 8px; text-align: center; font: 800 30px/1 var(--f-tit); font-variant-numeric: tabular-nums; }
+.col .bl { position: absolute; left: -20px; right: -20px; top: 100%; margin-top: 12px; text-align: center; font: 800 26px/1 var(--f-tit); }
+.col.r9 .bar { background: var(--red); }
+.col.r9 .bn, .col.r9 .bl { color: var(--red); }
+
+/* S6 */
+.lst { list-style: none; padding: 0; }
+.lst li { padding: 26px 0; border-top: 1px solid var(--fio); font: 600 38px/1.3 var(--f-txt); text-wrap: pretty; }
+.lst b { font-weight: 700; }
+.lst .dt { font: 800 38px/1.3 var(--f-tit); }
+
+/* S7 */
+.pista { border-top: 4px solid var(--ink); padding-top: 20px; }
+.pista span { display: block; font: 700 26px/1.2 var(--f-txt); color: var(--ink-2); }
+.pista code { display: block; margin-top: 10px; font: 500 24px/1.2 var(--f-mono); color: var(--ink); }
+
+/* varredura: 12 barras, uma por coluna da grade */
+.varredura { position: absolute; inset: 0; z-index: 50; pointer-events: none; }
+.varredura i { position: absolute; top: 0; width: 161px; height: 100%; background: var(--red); transform: scaleY(0); will-change: transform; }
+.estatico .varredura { display: none; }
+
+/* cromo da apresentação, fora do palco */
+.deck-controls { left: auto; right: 22px; bottom: 12px; transform: none; font: 700 16px/1 var(--f-tit); color: var(--ink); opacity: .65; letter-spacing: .08em; }
+.progresso { position: fixed; left: 0; bottom: 0; height: 4px; width: 100%; background: transparent; z-index: 1000; }
+.progresso i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .5s cubic-bezier(.7,0,.2,1); }
+.painel-notas { display: none; position: fixed; left: 0; right: 0; bottom: 0; max-height: 46vh; overflow: auto; z-index: 2000;
+  background: var(--ink); color: #fff; padding: 18px 28px 22px; font: 400 20px/1.45 var(--f-txt); }
+.mostra-notas .painel-notas { display: block; }
+.painel-notas h2 { margin: 0 0 8px; font: 800 14px/1 var(--f-tit); letter-spacing: .2em; text-transform: uppercase; color: #fff; opacity: .7; }
+.painel-notas p { margin: 0 0 .6em; max-width: 110ch; }
+.editando [contenteditable] { outline: 2px dashed var(--red); outline-offset: 4px; cursor: text; }
+.aviso-edicao { display: none; position: fixed; left: 12px; top: 10px; z-index: 2000; padding: 6px 10px; background: var(--ink); color: #fff; font: 700 14px/1 var(--f-txt); }
+.editando .aviso-edicao { display: block; }
+@media (prefers-reduced-motion: reduce) { .progresso i { transition: none; } }
+</style>
+</head>
+<body>
+<div class="deck-viewport" id="vp"><div class="deck-stage" id="palco">
+
+<!-- ================= SLIDE 1: ABERTURA ================= -->
+<section class="slide active" data-n="1" aria-label="Abertura">
+  <h1 class="titulo" style="left:150px;top:96px;font-size:232px;line-height:.84"><span class="lm"><span>MeshTracker</span></span><span class="lm"><span>Central</span></span></h1>
+  <p class="tx" data-a="fade" style="left:160px;top:552px;width:1080px;font-size:38px;font-weight:600;text-wrap:balance">Quem está em campo, onde e há quanto tempo sem sinal: o painel do organizador de operações de airsoft do DF.</p>
+  <div class="prob tx" data-a="fade" style="left:160px;top:722px;width:480px">O operador teria de <b>se cadastrar de novo</b> a cada operação.</div>
+  <div class="prob tx" data-a="fade" style="left:720px;top:722px;width:480px">Cada dispositivo <b>esquece quem some por 2 minutos</b>, e ninguém vê o conjunto.</div>
+  <div class="bloco" data-a="bloco" data-pts="56,28 180,70 316,26 262,84 96,96" style="left:1280px;top:530px;width:480px;height:220px"><span class="lbl">5 em sinal<br>1 perdido</span></div>
+  <p class="marca" data-a="fade" style="left:1280px;top:790px;width:480px"><i></i><span>Sinais simulados. Problema ainda não confirmado com a federação.</span></p>
+  <footer class="rodape" data-a="fade" style="left:160px;width:1600px;bottom:90px"><span>Rafael Alves de Sousa Costa</span><span>Desenvolvimento de Sistemas · CEUB · Aula 14 · 10/11/2026</span></footer>
+  <aside class="notas"><p>Este é o MeshTracker Central, um painel web para o organizador de operações de airsoft do Distrito Federal.</p><p>Percebi dois problemas olhando para o meu projeto. O operador teria de se cadastrar de novo a cada operação. E cada dispositivo esquece quem some por 2 minutos, então ninguém vê o conjunto.</p><p>Não confirmei isso com a federação. Mostro o que está pronto, com sinais simulados.</p></aside>
+</section>
+
+<!-- ================= SLIDE 2: DEMO AO VIVO, H1 ================= -->
+<section class="slide" data-n="2" aria-label="Demonstração ao vivo: inscrição">
+  <h1 class="titulo" style="left:150px;top:100px;font-size:128px"><span class="lm"><span>Inscrever sem</span></span><span class="lm"><span>recadastrar</span></span></h1>
+  <div class="bloco" data-a="bloco" data-pts="40,16 104,50 168,16 232,50 296,16" style="left:1280px;top:100px;width:480px;height:176px"><span class="lbl">Demo ao vivo<small>acontece no navegador</small></span></div>
+  <div class="nomes" data-a="fade" style="left:160px;top:384px;width:800px"><span>Falcão</span><span>Lobo</span><span>Coruja</span><span>Raposa</span><span>Pantera</span></div>
+  <p class="tx" data-a="fade" style="left:160px;top:466px;width:1000px">Já cadastrados, os 5 entram na Operação Charlie só com time, classe, dispositivo e consentimento.</p>
+  <p class="rot verm" data-a="fade" style="left:160px;top:640px">Três recusas</p>
+  <div class="lin" data-a="fade" style="--c:160px 1fr auto;left:160px;top:690px;width:1080px;height:96px"><b class="cod verm">R2</b><span class="tx">operador repetido</span><span class="tag">UNIQUE no banco</span></div>
+  <div class="lin" data-a="fade" style="--c:160px 1fr auto;left:160px;top:786px;width:1080px;height:96px"><b class="cod verm">R3</b><span class="tx">dispositivo repetido</span><span class="tag">UNIQUE no banco</span></div>
+  <div class="lin" data-a="fade" style="--c:160px 1fr auto;left:160px;top:882px;width:1080px;height:96px"><b class="cod verm">R5</b><span class="tx">sem consentimento</span><span class="tag"></span></div>
+  <figure class="print" data-a="print" style="left:1280px;top:300px;width:480px;height:440px"><img src="../evidencias/02-inscricao-charlie.png" alt="Tela da Operação Charlie com os cinco operadores inscritos e o formulário de inscrição"></figure>
+  <div data-a="fade" style="left:1280px;top:770px;width:480px"><p class="tx peq" style="margin:0">Meta da H1: até 3 min</p><p class="num" style="margin:6px 0 4px"><span data-cnt="554">554</span><small>ms</small></p><p class="tx peq mudo" style="margin:0;font-size:26px;line-height:1.25">por script; mede o fluxo, não uma pessoa</p></div>
+  <aside class="notas"><p>Esta é a Operação Charlie, vazia. Os cinco operadores já estão cadastrados. Inscrever pede só time, classe, dispositivo e consentimento: nenhum dado pessoal de novo. É a hipótese 1.</p><p>Primeira recusa: o mesmo operador de novo. Regra R2. Segunda: o Lobo com o dispositivo do Falcão. Regra R3. As duas são restrições UNIQUE no banco, não só no código. Terceira: o Lobo sem consentimento. Regra R5. Sem consentimento, não há inscrição.</p><p>Cinco inscritos, nenhum cadastro refeito. Rodei esse fluxo por script: 554 milissegundos, para uma meta de 3 minutos. Isso mede o sistema, não um organizador real.</p></aside>
+</section>
+
+<!-- ================= SLIDE 3: DEMO AO VIVO, H2 (MAPA) ================= -->
+<section class="slide" data-n="3" aria-label="Demonstração ao vivo: mapa">
+  <h1 class="titulo" style="left:150px;top:100px;font-size:104px"><span class="lm"><span>Quem está</span></span><span class="lm"><span>perdido, e há</span></span><span class="lm"><span>quanto tempo</span></span></h1>
+  <div class="bloco" data-a="bloco" data-pts="34,50 110,16 196,52 282,18 348,50" style="left:1280px;top:100px;width:480px;height:176px"><span class="lbl">Demo ao vivo<small>acontece no navegador</small></span></div>
+  <p class="tx peq" data-a="fade" style="left:160px;top:458px;width:900px;font-weight:700">Estado pelo tempo desde o último sinal (R9)</p>
+  <div class="tk" data-a="fade" style="left:0;top:500px;width:1px"><i style="left:316px"></i><i style="left:319px"></i><i style="left:322px"></i><i style="left:476px"></i><i style="left:479px"></i><i style="left:482px"></i></div>
+  <i class="seg" data-a="regua" style="left:160px;top:536px;width:160px;background:var(--ink)"></i>
+  <i class="seg" data-a="regua" style="left:320px;top:536px;width:160px;background:#8c8c88"></i>
+  <i class="seg seta" data-a="regua" style="left:480px;top:536px;width:320px;background:var(--red)"></i>
+  <i class="seg tracejado" data-a="regua" style="left:840px;top:536px;width:120px"></i>
+  <div class="lb" data-a="fade" style="left:160px;top:608px;width:160px"><b>ativo</b><span>até 60 s</span></div>
+  <div class="lb" data-a="fade" style="left:320px;top:608px;width:160px"><b>atrasado</b><span>até 120 s</span></div>
+  <div class="lb" data-a="fade" style="left:480px;top:608px;width:320px"><b class="verm">perdido</b><span>acima de 120 s</span></div>
+  <div class="lb" data-a="fade" style="left:840px;top:608px;width:240px"><b>sem sinal</b></div>
+  <p class="tx peq mudo" data-a="fade" style="left:160px;top:726px;width:960px">O relógio é injetado nos testes: 59, 60, 61, 119, 120 e 121 s.</p>
+  <div data-a="fade" style="left:160px;top:800px;width:960px;display:flex;align-items:center;gap:44px"><p class="num" style="margin:0"><span data-cnt="94">94</span><small>ms</small></p><p class="tx" style="margin:0;width:640px">Por script, mediana. Meta da H2: apontar o perdido em até 10 s.</p></div>
+  <figure class="print" data-a="print" style="left:1120px;top:300px;width:640px;height:400px"><img src="../evidencias/07-mapa-perdido.png" alt="Mapa da Operação Bravo com a Coruja perdida, no topo da lista"></figure>
+  <p class="tx peq" data-a="fade" style="left:1120px;top:718px;width:640px">A lista põe o perdido no topo. O mapa atualiza a cada 3 s.</p>
+  <div class="lin" data-a="fade" style="--c:160px 1fr;left:1120px;top:800px;width:640px;height:88px"><b class="cod"><span data-cnt="202">202</span></b><span class="tx peq">MT-99, não inscrito: só conta como descartado (R7)</span></div>
+  <div class="lin" data-a="fade" style="--c:160px 1fr;left:1120px;top:888px;width:640px;height:88px"><b class="cod"><span data-cnt="200">200</span></b><span class="tx peq">Pacote repetido: duplicado, não grava de novo (R8)</span></div>
+  <aside class="notas"><p>Esta é a Operação Bravo, em curso. O simulador envia a posição de cinco dispositivos por HTTP, no contrato do ADR-003. As setas se movem sem recarregar a página. Ela consulta a API a cada 3 segundos, porque não usei WebSocket. A cor é o time.</p><p>A primeira da lista é a Coruja, perdida há mais de 2 minutos. O simulador parou o dispositivo dele, o MT-03, de propósito. Perdido é mais de 120 segundos sem sinal. Atrasado, de 60 a 120. A lista põe os perdidos primeiro.</p><p>Hipótese 2: apontar o perdido em até 10 segundos. Por script, a mediana foi 94 milissegundos. De novo, isso mede o fluxo, não uma pessoa. O relógio é injetado nos testes: 59, 60, 61, 119, 120 e 121 segundos.</p><p>O MT-99 não está inscrito. O sistema responde 202, descarta e só conta. É a regra R7. Pacote repetido: 200, duplicado, e não grava de novo. Regra R8.</p></aside>
+</section>
+
+<!-- ================= SLIDE 4: DEMO AO VIVO, H3 E H4 ================= -->
+<section class="slide" data-n="4" aria-label="Demonstração ao vivo: acesso e API">
+  <h1 class="titulo" style="left:150px;top:100px;font-size:104px"><span class="lm"><span>Observador só lê.</span></span><span class="lm"><span>API exige token.</span></span></h1>
+  <div class="bloco" data-a="bloco" data-pts="40,16 92,50 250,16 302,50 354,16" style="left:1280px;top:100px;width:480px;height:176px"><span class="lbl">Demo ao vivo<small>acontece no navegador</small></span></div>
+  <div class="lin forte" data-a="fade" style="--c:320px 1fr;left:160px;top:350px;width:880px;height:170px"><b class="cod" style="font-size:96px"><span data-cnt="403">403</span></b><span class="tx"><b>Observador (R10).</b> Só lê: vê a lista e o mapa, sem formulários. Toda escrita dele recebe 403.</span></div>
+  <div class="lin forte" data-a="fade" style="--c:320px 1fr;left:160px;top:520px;width:880px;height:130px"><b class="cod verm" style="font-size:96px"><span data-cnt="401">401</span></b><span class="tx"><b>API (R11).</b> Sem token.</span></div>
+  <div class="lin" data-a="fade" style="--c:320px 1fr;left:160px;top:650px;width:880px;height:130px"><b class="cod" style="font-size:96px"><span data-cnt="201">201</span></b><span class="tx">Com token: pacote gravado.</span></div>
+  <div class="lin" data-a="fade" style="--c:320px 1fr;left:160px;top:780px;width:880px;height:130px"><b class="cod" style="font-size:96px"><span data-cnt="200">200</span></b><span class="tx">O mesmo pacote de novo: duplicado.</span></div>
+  <figure class="print" data-a="print" style="left:1120px;top:310px;width:640px;height:500px"><img src="../evidencias/08-observador.png" alt="Tela do observador na Operação Bravo: lista de inscritos, sem formulários"></figure>
+  <p class="tx peq" data-a="fade" style="left:1120px;top:838px;width:640px">É o mesmo contrato HTTP que o simulador usa e que um gateway real usaria (ADR-003).</p>
+  <aside class="notas"><p>Agora o acesso. Esta aba é o observador. Ele vê a lista e o mapa. Não tem botão de iniciar, alterar ou inscrever. É a hipótese 3: o observador só lê.</p><p>Como a tela não tem formulário, o 403 aparece no teste: toda escrita do observador é recusada. Passou.</p><p>Hipótese 4: a API. Sem token, 401. Com token, 201. O mesmo sinal de novo, 200, duplicado. É o contrato que o simulador usa e que um gateway real usaria.</p></aside>
+</section>
+
+<!-- ================= SLIDE 5: DECISÕES ================= -->
+<section class="slide" data-n="5" aria-label="Decisões">
+  <h1 class="titulo" style="left:150px;top:100px;font-size:112px"><span class="lm"><span>Quatro decisões</span></span></h1>
+  <div class="bloco" data-a="bloco" data-pts="40,12 110,46 180,12 250,46 320,12" style="left:1280px;top:100px;width:480px;height:96px"></div>
+  <div class="lin" data-a="fade" style="--c:160px 400px 1fr;left:160px;top:250px;width:1600px;height:90px"><b class="cod" style="font-size:56px">1</b><b class="rot" style="font-size:34px">Recorte</b><span class="tx peq">Fica fora o que exige hardware ou outro sistema: MQTT, gateway real, integração com o operational-command.</span></div>
+  <div class="lin" data-a="fade" style="--c:160px 400px 1fr;left:160px;top:340px;width:1600px;height:90px"><b class="cod" style="font-size:56px">2</b><b class="rot" style="font-size:34px">Flask e SQLite</b><span class="tx peq">No lugar de Vue, Express e MongoDB: eram quatro serviços e um build de front-end para nove dias, trabalhando sozinho (ADR-002).</span></div>
+  <div class="lin" data-a="fade" style="--c:160px 400px 1fr;left:160px;top:430px;width:1600px;height:90px"><b class="cod" style="font-size:56px">3</b><b class="rot" style="font-size:34px">HTTP</b><span class="tx peq">No lugar de MQTT: o menor contrato que leva o sinal à regra e ao mapa. O MQTT volta com o gateway real (ADR-003).</span></div>
+  <div class="lin" data-a="fade" style="--c:160px 400px 1fr;left:160px;top:520px;width:1600px;height:100px"><b class="cod" style="font-size:56px">4</b><b class="rot" style="font-size:34px">Testes por regra</b><span class="tx peq"><b class="cod" style="font-size:56px;vertical-align:-6px"><span data-cnt="474">474</span></b> testes verdes, 66 deles de segurança. As barras contam pelo nome do teste: é o piso.</span></div>
+  <i class="reg" data-a="regua" style="left:100px;top:950px;width:1720px"></i>
+  <div class="col" style="left:124px;--v:16" data-v="16"><i class="bar"></i><b class="bn" data-cnt="16">16</b><span class="bl">R1</span></div>
+  <div class="col" style="left:284px;--v:5" data-v="5"><i class="bar"></i><b class="bn" data-cnt="5">5</b><span class="bl">R2</span></div>
+  <div class="col" style="left:444px;--v:6" data-v="6"><i class="bar"></i><b class="bn" data-cnt="6">6</b><span class="bl">R3</span></div>
+  <div class="col" style="left:604px;--v:7" data-v="7"><i class="bar"></i><b class="bn" data-cnt="7">7</b><span class="bl">R4</span></div>
+  <div class="col" style="left:764px;--v:4" data-v="4"><i class="bar"></i><b class="bn" data-cnt="4">4</b><span class="bl">R5</span></div>
+  <div class="col" style="left:924px;--v:17" data-v="17"><i class="bar"></i><b class="bn" data-cnt="17">17</b><span class="bl">R6</span></div>
+  <div class="col" style="left:1084px;--v:13" data-v="13"><i class="bar"></i><b class="bn" data-cnt="13">13</b><span class="bl">R7</span></div>
+  <div class="col" style="left:1244px;--v:11" data-v="11"><i class="bar"></i><b class="bn" data-cnt="11">11</b><span class="bl">R8</span></div>
+  <div class="col r9" style="left:1404px;--v:39" data-v="39"><i class="bar"></i><b class="bn" data-cnt="39">39</b><span class="bl">R9</span></div>
+  <div class="col" style="left:1564px;--v:16" data-v="16"><i class="bar"></i><b class="bn" data-cnt="16">16</b><span class="bl">R10</span></div>
+  <div class="col" style="left:1724px;--v:14" data-v="14"><i class="bar"></i><b class="bn" data-cnt="14">14</b><span class="bl">R11</span></div>
+  <aside class="notas"><p>Quatro decisões. Primeira, o recorte. Ficou fora o que exige hardware ou outro sistema: MQTT, gateway real e integração com o operational-command.</p><p>Segunda, Flask e SQLite no lugar de Vue, Express e MongoDB. Eram quatro serviços e um build de front-end para nove dias, e eu trabalho sozinho.</p><p>Terceira, HTTP no lugar de MQTT: o menor contrato que leva o sinal até a regra e ao mapa. O MQTT volta com o gateway real.</p><p>Quarta, os testes. Cada regra tem de 4 a 39 testes com o nome dela: a R5 tem 4, a R9, a do tempo, tem 39. A suíte tem 474 testes verdes.</p></aside>
+</section>
+
+<!-- ================= SLIDE 6: LIMITES E PRÓXIMOS PASSOS ================= -->
+<section class="slide" data-n="6" aria-label="Limites e próximos passos">
+  <i class="reg" data-a="regua" style="left:160px;top:100px;width:720px"></i>
+  <i class="reg" data-a="regua" style="left:960px;top:100px;width:800px"></i>
+  <h2 class="titulo" style="left:150px;top:128px;font-size:88px"><span class="lm"><span>Limites</span></span></h2>
+  <h2 class="titulo" style="left:950px;top:128px;font-size:88px"><span class="lm"><span>Próximos passos</span></span></h2>
+  <ul class="lst" style="left:160px;top:290px;width:720px">
+    <li data-a="fade">Quem executou os roteiros foi <b>o autor</b>, no papel de organizador.</li>
+    <li data-a="fade">Os sinais são <b>simulados</b> e os tempos vieram de script.</li>
+    <li data-a="fade">O fundo do mapa precisa de internet.</li>
+    <li data-a="fade">Falta definir por quanto tempo guardar as posições (LGPD).</li>
+  </ul>
+  <ul class="lst" style="left:960px;top:290px;width:800px">
+    <li data-a="fade">Um app de celular ou um gateway MeshTracker por MQTT, enviando ao <b>mesmo contrato HTTP</b>.</li>
+    <li data-a="fade">Conversar com a federação.</li>
+    <li data-a="fade">Incremento 3 e tag v1.0 em <span class="dt">08/12</span>.</li>
+    <li data-a="fade">Demo Day em <span class="dt">15/12</span>.</li>
+  </ul>
+  <div class="bloco" data-a="bloco" data-pts="320,46 250,12 180,46 110,12 40,46" style="left:1280px;top:890px;width:480px;height:96px"></div>
+  <aside class="notas"><p>Limites. Quem executou os roteiros fui eu, no papel de organizador. Os sinais são simulados, e os tempos vieram de script. O fundo do mapa precisa de internet. Falta definir por quanto tempo guardar as posições.</p><p>Próximos passos. Um app de celular ou um gateway MeshTracker, por MQTT, enviando ao mesmo contrato HTTP. E conversar com a federação, que ainda não aconteceu. Incremento 3 e tag v1.0 em 8 de dezembro; Demo Day em 15 de dezembro.</p></aside>
+</section>
+
+<!-- ================= SLIDE 7: OBRIGADO ================= -->
+<section class="slide" data-n="7" aria-label="Obrigado e perguntas">
+  <h1 class="titulo" style="left:150px;top:92px;font-size:260px;line-height:.84"><span class="lm"><span>Obrigado.</span></span></h1>
+  <h2 class="titulo" style="left:155px;top:400px;font-size:88px"><span class="lm"><span>Perguntas?</span></span></h2>
+  <div class="bloco" data-a="bloco" data-pts="110,60 168,96 226,60 284,96 342,60" style="left:1280px;top:520px;width:480px;height:220px"></div>
+  <div class="pista" data-a="fade" style="left:160px;top:850px;width:360px"><span>Código no branch</span><code>demo/mvp-10-11</code></div>
+  <div class="pista" data-a="fade" style="left:560px;top:850px;width:360px"><span>API</span><code>docs/api.md</code></div>
+  <div class="pista" data-a="fade" style="left:960px;top:850px;width:400px"><span>Para reproduzir</span><code>docs/guia-de-reproducao.md</code></div>
+  <div class="pista" data-a="fade" style="left:1400px;top:850px;width:360px"><span>Evidências</span><code>docs/evidencias/</code></div>
+  <aside class="notas"><p>Obrigado. Perguntas?</p><p>Pistas na tela: o código está no branch demo/mvp-10-11; a API, em docs/api.md; o passo a passo, em docs/guia-de-reproducao.md; os prints e medições, em docs/evidencias/.</p></aside>
+</section>
+
+<div class="varredura" id="varredura"></div>
+</div></div>
+
+<div class="progresso" aria-hidden="true"><i id="prog"></i></div>
+<div class="deck-controls" id="cont" aria-live="off">1 / 7</div>
+<div class="painel-notas" id="painel" role="complementary" aria-label="Notas do apresentador"></div>
+<div class="aviso-edicao">Edição ativa. Tecla E para sair.</div>
+
+<script src="vendor/motion.js"></script>
+<script>
+(function () {
+  'use strict';
+  var M = window.Motion;
+  var ESTATICO = /[?&]estatico/.test(location.search) || !M;
+  var REDUZ = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement;
+  var palco = document.getElementById('palco');
+  var vp = document.getElementById('vp');
+  var slides = Array.prototype.slice.call(palco.querySelectorAll('.slide'));
+  var N = slides.length;
+  var prog = document.getElementById('prog');
+  var cont = document.getElementById('cont');
+  var painel = document.getElementById('painel');
+  var E = [0.7, 0, 0.2, 1];                       /* easing mecânico e preciso */
+  var animate = M && M.animate, stagger = M && M.stagger;
+  if (ESTATICO) root.classList.add('estatico');
+
+  /* ---------- palco fixo 1920x1080, escalado por inteiro ---------- */
+  function escala() {
+    var f = Math.min(innerWidth / 1920, innerHeight / 1080);
+    palco.style.transform = 'translate(' + (innerWidth - 1920 * f) / 2 + 'px,' + (innerHeight - 1080 * f) / 2 + 'px) scale(' + f + ')';
+  }
+  escala();
+  addEventListener('resize', escala);
+
+  /* ---------- bloco vermelho: 5 operadores (pontos brancos) e 1 perdido (vazado, parado) ---------- */
+  var pts = [];
+  slides.forEach(function (s, i) {
+    var b = s.querySelector('.bloco');
+    if (!b) return;
+    pts[i] = b.dataset.pts.split(' ').map(function (p) { return p.split(',').map(Number); });
+    pts[i].forEach(function (p) {
+      var d = document.createElement('i');
+      d.style.left = p[0] + 'px'; d.style.top = p[1] + 'px';
+      b.appendChild(d);
+    });
+    var anel = document.createElement('i'); anel.className = 'parado'; b.appendChild(anel);
+  });
+
+  /* ---------- varredura: 12 barras, uma por coluna da grade ---------- */
+  var varr = document.getElementById('varredura');
+  for (var k = 0; k < 12; k++) { var bi = document.createElement('i'); bi.style.left = k * 160 + 'px'; varr.appendChild(bi); }
+  var barras = Array.prototype.slice.call(varr.children);
+
+  /* ---------- estados iniciais e finais de cada slide ---------- */
+  function $$(s, sel) { return Array.prototype.slice.call(s.querySelectorAll(sel)); }
+
+  function preparar(i, prev) {
+    var s = slides[i];
+    $$(s, '.lm>span').forEach(function (e) { e.style.transform = 'translateY(130%)'; });
+    $$(s, '[data-a="fade"]').forEach(function (e) { e.style.opacity = 0; e.style.transform = 'translateY(28px)'; });
+    $$(s, '[data-a="regua"]').forEach(function (e) { e.style.transformOrigin = '0 50%'; e.style.transform = 'scaleX(0)'; });
+    $$(s, '[data-a="print"]').forEach(function (e) { e.style.clipPath = 'inset(0% 100% 0% 0%)'; });
+    $$(s, '[data-a="bloco"]').forEach(function (e) { e.style.clipPath = 'inset(0% 0% 0% 100%)'; });
+    $$(s, '.col').forEach(function (c) {
+      var h = c.dataset.v * 7;
+      c.querySelector('.bar').style.transform = 'scaleY(0)';
+      var bn = c.querySelector('.bn'); bn.style.opacity = 0; bn.style.transform = 'translateY(' + h + 'px)';
+      c.querySelector('.bl').style.opacity = 0;
+    });
+    $$(s, '[data-cnt]').forEach(function (e) { e.textContent = '0'; });
+    /* pontos: partem de onde estavam no slide anterior */
+    $$(s, '.bloco i:not(.parado)').forEach(function (d, j) {
+      var a = prev >= 0 && pts[prev] ? pts[prev][j] : [-80, pts[i][j][1]];
+      var b = pts[i][j];
+      d._de = [a[0] - b[0], a[1] - b[1]];
+      d.style.transform = 'translate(' + d._de[0] + 'px,' + d._de[1] + 'px)';
+    });
+  }
+
+  function limpar(s) {
+    $$(s, '.lm>span,[data-a],.col .bar,.col .bn,.col .bl,.bloco i').forEach(function (e) {
+      ['opacity', 'transform', 'transform-origin', 'clip-path'].forEach(function (p) { e.style.removeProperty(p); });
+    });
+    $$(s, '[data-cnt]').forEach(function (e) { e.textContent = e.dataset.cnt; });
+  }
+
+  function contar(el, atraso, dur) {
+    var para = +el.dataset.cnt;
+    return animate(0, para, {
+      duration: dur || .8, delay: atraso, ease: E,
+      onUpdate: function (v) { el.textContent = Math.round(v); },
+      onComplete: function () { el.textContent = para; }
+    });
+  }
+
+  /* entradas internas em sequência; devolve os controles para poder concluir */
+  function entrar(i, base) {
+    var s = slides[i], A = [];
+    $$(s, '.lm>span').forEach(function (e, j) {      /* títulos: cada linha sobe do próprio corte */
+      A.push(animate(e, { transform: ['translateY(130%)', 'translateY(0%)'] }, { duration: .7, delay: base + j * .09, ease: E }));
+    });
+    var bl = s.querySelector('[data-a="bloco"]');
+    if (bl) A.push(animate(bl, { clipPath: ['inset(0% 0% 0% 100%)', 'inset(0% 0% 0% 0%)'] }, { duration: .7, delay: base + .05, ease: E }));
+    $$(s, '.bloco i:not(.parado)').forEach(function (d, j) {   /* operadores se deslocando (spring) */
+      if (d._de[0] || d._de[1])
+        A.push(animate(d, { x: [d._de[0], 0], y: [d._de[1], 0] }, { type: 'spring', stiffness: 150, damping: 15, delay: base + .3 + j * .06 }));
+    });
+    var its = $$(s, '[data-a]:not([data-a="bloco"])');
+    var passo = Math.min(.07, .45 / Math.max(its.length, 1));
+    its.forEach(function (e, j) {
+      var d = base + .1 + j * passo, t = e.dataset.a;
+      if (t === 'fade') A.push(animate(e, { opacity: [0, 1], transform: ['translateY(28px)', 'translateY(0px)'] }, { duration: .5, delay: d, ease: E }));
+      else if (t === 'regua') A.push(animate(e, { transform: ['scaleX(0)', 'scaleX(1)'] }, { duration: .5, delay: d, ease: E }));
+      else if (t === 'print') A.push(animate(e, { clipPath: ['inset(0% 100% 0% 0%)', 'inset(0% 0% 0% 0%)'] }, { duration: .8, delay: base + .35, ease: E }));
+      $$(e, '[data-cnt]').forEach(function (n) { A.push(contar(n, d)); });
+    });
+    $$(s, '.col').forEach(function (c, j) {          /* barras assentadas na grade */
+      var d = base + .35 + j * .06, h = c.dataset.v * 7;
+      A.push(animate(c.querySelector('.bar'), { transform: ['scaleY(0)', 'scaleY(1)'] }, { duration: .7, delay: d, ease: E }));
+      A.push(animate(c.querySelector('.bn'), { opacity: [0, 1], transform: ['translateY(' + h + 'px)', 'translateY(0px)'] }, { duration: .7, delay: d, ease: E }));
+      A.push(animate(c.querySelector('.bl'), { opacity: [0, 1] }, { duration: .5, delay: d, ease: E }));
+      A.push(contar(c.querySelector('[data-cnt]'), d, .7));
+    });
+    return A;
+  }
+
+  /* ---------- navegação ---------- */
+  var cur = -1, busy = false, tok = 0, alvo = -1, trocado = true, anims = [];
+
+  /* slide de referência para o próximo comando: o destino, se a troca ainda não aconteceu */
+  function atual() { return (busy && !trocado) ? alvo : cur; }
+
+  function mostrar(n) {
+    cur = n;
+    slides.forEach(function (s, i) { s.classList.toggle('active', i === n); });
+    prog.style.width = ((n + 1) / N * 100) + '%';
+    cont.textContent = (n + 1) + ' / ' + N;
+    try { history.replaceState(null, '', '#' + (n + 1)); } catch (e) {}
+    var nt = slides[n].querySelector('.notas');
+    painel.innerHTML = '<h2>Notas do slide ' + (n + 1) + ' de ' + N + '</h2>' + (nt ? nt.innerHTML : '');
+  }
+
+  function concluir() {
+    if (!busy) return;
+    tok++;
+    anims.forEach(function (a) { try { a.complete(); } catch (e) {} });
+    if (!trocado) { mostrar(alvo); trocado = true; }
+    limpar(slides[cur]);
+    barras.forEach(function (b) { b.style.transform = 'scaleY(0)'; });
+    busy = false;
+  }
+
+  function fadeCurto(n) {
+    var velho = slides[cur];
+    velho.classList.add('visible');
+    mostrar(n);
+    var novo = slides[n];
+    novo.style.zIndex = 2;
+    var a = animate(novo, { opacity: [0, 1] }, { duration: .2 });
+    busy = true; trocado = true; anims = [a];
+    var my = ++tok;
+    a.then(function () {
+      if (my !== tok) return;
+      velho.classList.remove('visible'); novo.style.zIndex = ''; novo.style.removeProperty('opacity'); busy = false;
+    });
+  }
+
+  function ir(n, dir) {
+    n = Math.max(0, Math.min(N - 1, n));
+    if (busy) {
+      if (REDUZ) { tok++; busy = false; slides.forEach(function (s) { s.classList.remove('visible'); s.style.zIndex = ''; s.style.removeProperty('opacity'); }); }
+      else concluir();
+    }
+    if (n === cur) return;
+    var prev = cur;
+    dir = dir || (n > prev ? 1 : -1);
+    if (ESTATICO) { mostrar(n); return; }
+    if (REDUZ) { fadeCurto(n); return; }
+    busy = true; trocado = false; alvo = n;
+    var my = ++tok;
+    var from = dir > 0 ? 'last' : 'first';          /* a varredura começa pelo lado da navegação */
+    barras.forEach(function (b) { b.style.transformOrigin = '50% 100%'; });
+    var c = animate(barras, { transform: ['scaleY(0)', 'scaleY(1)'] }, { duration: .26, delay: stagger(.018, { from: from }), ease: E });
+    anims = [c];
+    c.then(function () {
+      if (my !== tok) return;
+      mostrar(n); preparar(n, prev); trocado = true;
+      barras.forEach(function (b) { b.style.transformOrigin = '50% 0%'; });
+      var r = animate(barras, { transform: ['scaleY(1)', 'scaleY(0)'] }, { duration: .26, delay: stagger(.018, { from: from }), ease: E });
+      anims = [r].concat(entrar(n, .25));
+      Promise.all(anims).then(function () { if (my === tok) busy = false; });
+    });
+  }
+
+  /* O slide de abertura (ou o do #n) aparece pronto, sem varredura: serve à sala, à captura de tela e ao plano B.
+     As animações começam na primeira troca de slide. */
+  function iniciar(n) {
+    mostrar(n);
+    root.classList.remove('anima');
+  }
+
+  function daHash() {
+    var n = parseInt(location.hash.replace('#', ''), 10);
+    return (n >= 1 && n <= N) ? n - 1 : 0;
+  }
+
+  /* ---------- teclado, clique, toque, notas, edição ---------- */
+  var edit = false;
+  function editar() {
+    edit = !edit;
+    document.body.classList.toggle('editando', edit);
+    slides.forEach(function (s) {
+      $$(s, 'h1 .lm>span,h2 .lm>span,p.tx,li,.prob,.lb b,.lb span').forEach(function (e) {
+        if (edit) e.setAttribute('contenteditable', 'true'); else e.removeAttribute('contenteditable');
+      });
+    });
+  }
+
+  addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (e.target && e.target.isContentEditable) { if (k === 'Escape') { editar(); } return; }
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === ' ' || k === 'Enter') { e.preventDefault(); ir(atual() + 1, 1); }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); ir(atual() - 1, -1); }
+    else if (k === 'Home') { e.preventDefault(); ir(0, -1); }
+    else if (k === 'End') { e.preventDefault(); ir(N - 1, 1); }
+    else if (k === 'n' || k === 'N') { document.body.classList.toggle('mostra-notas'); }
+    else if (k === 'e' || k === 'E') { editar(); }
+  });
+
+  vp.addEventListener('click', function (e) {
+    if (edit) return;
+    if (e.clientX < innerWidth * 0.2) ir(atual() - 1, -1); else ir(atual() + 1, 1);
+  });
+
+  var tx0 = null;
+  addEventListener('touchstart', function (e) { tx0 = e.touches[0].clientX; }, { passive: true });
+  addEventListener('touchend', function (e) {
+    if (tx0 === null) return;
+    var dx = e.changedTouches[0].clientX - tx0; tx0 = null;
+    if (Math.abs(dx) > 60) { ir(atual() + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); }
+  }, { passive: true });
+
+  addEventListener('hashchange', function () { var n = daHash(); if (n !== cur) ir(n); });
+
+  iniciar(daHash());
+})();
+</script>
+</body>
+</html>
