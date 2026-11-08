@@ -163,6 +163,14 @@ def _como_json(bruto: bytes) -> dict:
     return dados if isinstance(dados, dict) else {}
 
 
+class _SemRedirecionamento(urllib.request.HTTPRedirectHandler):
+    """Não segue 301/302/...: o urlopen reenviaria o Authorization ao host do Location.
+    Sem pedido novo, o 3xx vira HTTPError e chamar() devolve o status."""
+
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
 def chamar(metodo: str, url: str, token: str, corpo: dict | None = None,
            timeout: float = 5.0) -> tuple:
     """Uma requisição HTTP. Devolve (status, json); (None, {"erro": ...}) se a rede falhou."""
@@ -170,7 +178,7 @@ def chamar(metodo: str, url: str, token: str, corpo: dict | None = None,
     cabecalhos = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     try:
         pedido = urllib.request.Request(url, data=dados, method=metodo, headers=cabecalhos)
-        with urllib.request.urlopen(pedido, timeout=timeout) as resposta:
+        with urllib.request.build_opener(_SemRedirecionamento).open(pedido, timeout=timeout) as resposta:
             return resposta.status, _como_json(resposta.read())
     except urllib.error.HTTPError as erro:
         return erro.code, _como_json(erro.read())

@@ -3,9 +3,12 @@ passada contra a API de verdade. Só o último teste usa as regras reais (R6 a R
 os demais não dependem de servicos.py nem de rede.
 """
 
+import http.server
 import math
 import random
 import re
+import threading
+from contextlib import contextmanager
 from urllib.parse import urlparse
 
 import pytest
@@ -210,6 +213,54 @@ def test_simulador_erro_de_rede_nao_derruba_o_laco():
                 enviar=lambda url, token, sinal: (None, {"erro": "erro de rede: recusou"}))
     assert len(mundo.linhas) == 5
     assert all(linha.endswith("-> erro de rede: recusou") for linha in mundo.linhas)
+
+
+@contextmanager
+def servidor_http(resposta):
+    """http.server em thread no 127.0.0.1. `resposta(handler)` responde; `recebidos` guarda
+    (método, caminho, cabeçalhos) de cada pedido. Devolve (porta, recebidos)."""
+    recebidos = []
+
+    class Tratador(http.server.BaseHTTPRequestHandler):
+        def _tratar(self):
+            self.rfile.read(int(self.headers.get("Content-Length") or 0))
+            recebidos.append((self.command, self.path, dict(self.headers)))
+            resposta(self)
+
+        do_GET = do_POST = _tratar
+
+        def log_message(self, *args):
+            pass
+
+    servidor = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Tratador)
+    thread = threading.Thread(target=servidor.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield servidor.server_address[1], recebidos
+    finally:
+        servidor.shutdown()
+        servidor.server_close()
+
+
+@pytest.mark.parametrize("metodo, corpo", [("GET", None), ("POST", SINAL)])
+def test_simulador_nao_segue_redirecionamento(metodo, corpo):
+    def vazio(h):
+        h.send_response(200)
+        h.send_header("Content-Length", "0")
+        h.end_headers()
+
+    with servidor_http(vazio) as (porta_alvo, no_alvo):
+        def redirecionar(h):
+            h.send_response(302)
+            h.send_header("Location", f"http://127.0.0.1:{porta_alvo}/roubo")
+            h.send_header("Content-Length", "0")
+            h.end_headers()
+
+        with servidor_http(redirecionar) as (porta, recebidos):
+            status, dados = simulador.chamar(metodo, f"http://127.0.0.1:{porta}/api/v1/x", "segredo", corpo, timeout=3)
+    assert (status, dados) == (302, {})
+    assert len(recebidos) == 1 and recebidos[0][2]["Authorization"] == "Bearer segredo"
+    assert no_alvo == []                       # o token nunca chegou ao host do Location
 
 
 def test_simulador_chamar_sem_servidor_devolve_none_em_vez_de_levantar():
