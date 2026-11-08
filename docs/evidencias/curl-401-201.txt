@@ -1,0 +1,117 @@
+# Evidência de API: 401 sem token e 201 com token (MeshTracker Central)
+# Servidor de teste em http://127.0.0.1:5001, banco temporário. O token real está em $MESHTRACKER_TOKEN e não aparece aqui.
+# Gerado em: 2026-11-08 11:03:54
+
+## 1. Sem token: a API recusa (401)
+
+$ curl -i http://127.0.0.1:5001/api/v1/situacao
+HTTP/1.1 401 UNAUTHORIZED
+Server: Werkzeug/3.1.9 Python/3.14.6
+Date: Sun, 08 Nov 2026 14:03:55 GMT
+Content-Type: application/json
+Content-Length: 69
+WWW-Authenticate: Bearer
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: same-origin
+Vary: Cookie
+Connection: close
+
+{"codigo":"nao_autorizado","erro":"Token ausente ou inv\u00e1lido."}
+
+
+$ curl -i -X POST http://127.0.0.1:5001/api/v1/sinais -H "Content-Type: application/json" -d '{"dispositivo": "MT-01", "pacote": 99, "lat": -15.799, "lon": -47.907, "bateria": 80}'
+HTTP/1.1 401 UNAUTHORIZED
+Server: Werkzeug/3.1.9 Python/3.14.6
+Date: Sun, 08 Nov 2026 14:03:55 GMT
+Content-Type: application/json
+Content-Length: 69
+WWW-Authenticate: Bearer
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: same-origin
+Vary: Cookie
+Connection: close
+
+{"codigo":"nao_autorizado","erro":"Token ausente ou inv\u00e1lido."}
+
+
+$ curl -i -X POST http://127.0.0.1:5001/api/v1/sinais -H "Authorization: Bearer token-errado" -H "Content-Type: application/json" -d '{"dispositivo": "MT-01", "pacote": 99, "lat": -15.799, "lon": -47.907, "bateria": 80}'
+HTTP/1.1 401 UNAUTHORIZED
+Server: Werkzeug/3.1.9 Python/3.14.6
+Date: Sun, 08 Nov 2026 14:03:55 GMT
+Content-Type: application/json
+Content-Length: 69
+WWW-Authenticate: Bearer
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: same-origin
+Vary: Cookie
+Connection: close
+
+{"codigo":"nao_autorizado","erro":"Token ausente ou inv\u00e1lido."}
+
+
+## 2. Com token: a posição é gravada (201)
+
+$ curl -i -X POST http://127.0.0.1:5001/api/v1/sinais -H "Authorization: Bearer $MESHTRACKER_TOKEN" -H "Content-Type: application/json" -d '{"dispositivo": "MT-01", "pacote": 99, "lat": -15.799, "lon": -47.907, "bateria": 80}'
+HTTP/1.1 201 CREATED
+Server: Werkzeug/3.1.9 Python/3.14.6
+Date: Sun, 08 Nov 2026 14:03:55 GMT
+Content-Type: application/json
+Content-Length: 21
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: same-origin
+Vary: Cookie
+Connection: close
+
+{"status":"gravado"}
+
+
+## 3. Mesmo pacote de novo: duplicado (200), nada novo é guardado (R8)
+
+$ curl -i -X POST http://127.0.0.1:5001/api/v1/sinais -H "Authorization: Bearer $MESHTRACKER_TOKEN" -H "Content-Type: application/json" -d '{"dispositivo": "MT-01", "pacote": 99, "lat": -15.799, "lon": -47.907, "bateria": 80}'
+HTTP/1.1 200 OK
+Server: Werkzeug/3.1.9 Python/3.14.6
+Date: Sun, 08 Nov 2026 14:03:55 GMT
+Content-Type: application/json
+Content-Length: 23
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: same-origin
+Vary: Cookie
+Connection: close
+
+{"status":"duplicado"}
+
+
+## 4. Dispositivo sem inscrição (MT-99): descartado (202), não vira posição (R7)
+
+$ curl -i -X POST http://127.0.0.1:5001/api/v1/sinais -H "Authorization: Bearer $MESHTRACKER_TOKEN" -H "Content-Type: application/json" -d '{"dispositivo": "MT-99", "pacote": 1, "lat": -15.799, "lon": -47.907, "bateria": 80}'
+HTTP/1.1 202 ACCEPTED
+Server: Werkzeug/3.1.9 Python/3.14.6
+Date: Sun, 08 Nov 2026 14:03:55 GMT
+Content-Type: application/json
+Content-Length: 24
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: same-origin
+Vary: Cookie
+Connection: close
+
+{"status":"descartado"}
+
+
+## 5. Situação da operação em curso, com token (200)
+
+$ curl -s http://127.0.0.1:5001/api/v1/situacao -H "Authorization: Bearer $MESHTRACKER_TOKEN"
+{"descartados":106,"inscritos":[{"apelido":"Coruja","bateria":79.0,"classe":"Suporte","cor":"#d4a72c","dispositivo":"MT-03","estado":"perdido","inscricao_id":8,"lat":-15.799285,"lon":-47.907023,"rumo":239.3,"segundos":168,"time":"Amarelo"},{"apelido":"Falc\u00e3o","bateria":80.0,"classe":"M\u00e9dico","cor":"#d1242f","dispositivo":"MT-01","estado":"ativo","inscricao_id":6,"lat":-15.799,"lon":-47.907,"rumo":166.7,"segundos":0,"time":"Vermelho"},{"apelido":"Lobo","bateria":81.1,"classe":"Fuzileiro","cor":"#1a7f37","dispositivo":"MT-02","estado":"ativo","inscricao_id":7,"lat":-15.798602,"lon":-47.905978,"rumo":245.5,"segundos":0,"time":"Verde"},{"apelido":"Pantera","bateria":71.5,"classe":"Fuzileiro","cor":"#d4a72c","dispositivo":"MT-05","estado":"ativo","inscricao_id":10,"lat":-15.798422,"lon":-47.906755,"rumo":17.8,"segundos":0,"time":"Amarelo"},{"apelido":"Raposa","bateria":90.8,"classe":"Atirador designado","cor":"#1f6feb","dispositivo":"MT-04","estado":"ativo","inscricao_id":9,"lat":-15.799948,"lon":-47.90735,"rumo":98.9,"segundos":0,"time":"Azul"}],"operacao":{"centro_lat":-15.799,"centro_lon":-47.907,"data":"2026-11-10","id":2,"local":"Parque da Cidade","nome":"Opera\u00e7\u00e3o Bravo","situacao":"em_curso"}}
+
+
