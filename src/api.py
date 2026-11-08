@@ -92,6 +92,15 @@ def validar_sinal(corpo) -> dict:
     }
 
 
+def _corpo_json():
+    """O corpo como JSON, ou None se não for JSON. Aninhamento enorme ("[" * 20000)
+    estoura a pilha do json.loads com RecursionError, que get_json(silent=True) não pega."""
+    try:
+        return request.get_json(silent=True)
+    except RecursionError:
+        return None
+
+
 def _id_da_operacao(bruto: str) -> int:
     try:
         return int(bruto)
@@ -106,7 +115,7 @@ def _id_da_operacao(bruto: str) -> int:
 def receber_sinal():
     """US05, R7, R8, R11. O formato é conferido aqui; as regras ficam em servicos.py."""
     try:
-        sinal = validar_sinal(request.get_json(silent=True))
+        sinal = validar_sinal(_corpo_json())
     except FormatoInvalido as erro:
         return _erro(str(erro), "formato_invalido", 400)
     agora = current_app.config["RELOGIO"]()
