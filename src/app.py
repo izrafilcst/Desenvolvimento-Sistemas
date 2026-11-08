@@ -41,6 +41,7 @@ ERROS_HTTP = {
     403: ("proibido", "Seu papel não permite esta ação."),
     404: ("nao_encontrado", "Página ou recurso não encontrado."),
     405: ("metodo_nao_permitido", "Método não permitido."),
+    413: ("corpo_grande", "Corpo da requisição grande demais."),
     500: ("erro_interno", "Erro interno. Tente de novo."),
 }
 

@@ -51,6 +51,8 @@ def carregar(ambiente=None) -> dict:
         "RELOGIO": agora_utc,
         "SESSION_COOKIE_HTTPONLY": True,
         "SESSION_COOKIE_SAMESITE": "Lax",
+        # Achado S-1: corpo maior que isso recebe 413 antes de ser lido.
+        "MAX_CONTENT_LENGTH": 64 * 1024,
     }
 
 
