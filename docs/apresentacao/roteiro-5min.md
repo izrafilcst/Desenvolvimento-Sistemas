@@ -131,9 +131,9 @@ Como ler este arquivo: as linhas que começam com `>` são o que eu digo em voz 
 
 *Fonte:* `docs/adr/ADR-003-gateway-por-http.md` (Justificativa).
 
-> Quarta, os testes. Cada regra tem de 4 a 39 testes com o nome dela: a R5 tem 4, a R9, a do tempo, tem 39. A suíte tem 407 testes verdes.
+> Quarta, os testes. Cada regra tem de 4 a 39 testes com o nome dela: a R5 tem 4, a R9, a do tempo, tem 39. A suíte tem 474 testes verdes.
 
-*Fonte:* contagem por prefixo do nome do teste na pasta `tests/` (R1 16, R2 5, R3 6, R4 7, R5 4, R6 17, R7 13, R8 11, R9 39, R10 16, R11 14; são o piso, porque outros testes também cobrem as regras); total conferido com `python -m pytest --collect-only -q` (407 testes coletados em 08/11/2026). A lista de regras está em `docs/backlog.md`; a Definição de Pronto, em `docs/hipoteses-e-incrementos.md` (Ficha 12).
+*Fonte:* contagem por prefixo do nome do teste na pasta `tests/` (R1 16, R2 5, R3 6, R4 7, R5 4, R6 17, R7 13, R8 11, R9 39, R10 16, R11 14; são o piso, porque outros testes também cobrem as regras); total conferido com `python -m pytest --collect-only -q` (474 testes coletados em 08/11/2026, com os 66 de segurança). A lista de regras está em `docs/backlog.md`; a Definição de Pronto, em `docs/hipoteses-e-incrementos.md` (Ficha 12).
 
 ### Bloco 6: Limites e próximos passos (4:30–5:00)
 
@@ -176,7 +176,7 @@ Se mudar uma fala, conte de novo: o bloco 5 já é o mais apertado (cerca de 140
 
 **Na véspera (e de novo na manhã):**
 
-1. Ramo `demo/mvp-10-11` no ar, com o ambiente virtual ativo. Rode `python -m pytest -q` e confira que tudo passa e qual é o total. Se não for 407, troque o número na fala do bloco 5 e na tabela do slide 5.
+1. Ramo `demo/mvp-10-11` no ar, com o ambiente virtual ativo. Rode `python -m pytest -q` e confira que tudo passa e qual é o total. Se não for 474, troque o número na fala do bloco 5 e na tabela do slide 5.
 2. Defina `MESHTRACKER_SENHA_ORGANIZADOR` e `MESHTRACKER_SENHA_OBSERVADOR` antes do seed, para saber as senhas (sem isso, elas aparecem uma única vez).
 3. Defina o mesmo `MESHTRACKER_TOKEN` nos três terminais (app, simulador e terminal da demo).
 
@@ -285,8 +285,6 @@ As setas e a lista continuam, mas o fundo do mapa fica cinza, porque os tiles v�
 
 ## Antes de apresentar, confirmar
 
-- `docs/evidencias/seguranca.md` ainda não estava no ramo `demo/mvp-10-11` quando este roteiro foi escrito (está sendo integrado). Confirme que o arquivo chegou antes de citá-lo.
-- O total de 407 testes e a contagem por regra mudam se os testes de segurança entrarem. Reconfira com `python -m pytest --collect-only -q` e atualize o bloco 5.
 - Os tempos de H1 (554 ms) e H2 (94 ms) são de script. Se o ensaio com cronômetro for feito antes de terça, troque a fala "mede o sistema, não um organizador real" pelo tempo medido e aponte a gravação. Sem ele, mantenha como está.
 - O 403 do observador ao vivo é pelo teste (`pytest -k`), porque a tela do observador não tem formulário. Se quiser mostrá-lo no navegador, prepare no ensaio um `fetch` no console com o token CSRF da própria página, como nas evidências; o nome do campo está nos templates, que não consultei.
 - Tempo humano do bloco 2 (31 ações de inscrição e 3 recusas em 60 s) só se sabe no ensaio. Se estourar, vale a regra de corte da tabela "Se o tempo apertar".
