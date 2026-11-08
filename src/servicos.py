@@ -381,12 +381,26 @@ def criar_usuario(repo: Repositorio, login: str, senha: str, papel: str) -> int:
                             ) from conflito
 
 
+_HASH_FALSO: str | None = None
+
+
+def _hash_falso() -> str:
+    """Hash de uma senha que ninguém usa, gerado na primeira vez e guardado no módulo."""
+    global _HASH_FALSO
+    if _HASH_FALSO is None:
+        _HASH_FALSO = generate_password_hash("senha-que-ninguem-usa")
+    return _HASH_FALSO
+
+
 def autenticar(repo: Repositorio, login: str, senha: str) -> dict | None:
     """US07. {id, login, papel} se login e senha conferem
     (werkzeug.security.check_password_hash), senão None."""
     if not isinstance(login, str) or not isinstance(senha, str):
         return None
     usuario = repo.buscar_usuario_por_login(login)
-    if usuario is None or not check_password_hash(usuario["senha_hash"], senha):
+    # Sem usuário, confere contra um hash falso: o tempo não revela quais logins existem.
+    hash_conferido = usuario["senha_hash"] if usuario else _hash_falso()
+    senha_confere = check_password_hash(hash_conferido, senha)
+    if usuario is None or not senha_confere:
         return None
     return {"id": usuario["id"], "login": usuario["login"], "papel": usuario["papel"]}
