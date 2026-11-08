@@ -406,3 +406,8 @@ def test_operacao_ou_inscricao_inexistente_e_404(org_client):
 ])
 def test_id_gigante_na_url_e_404_e_nao_500(org_client, metodo, caminho):
     assert getattr(org_client, metodo)(caminho, data={}).status_code == 404
+
+
+def test_paginas_declaram_icone_para_o_navegador_nao_pedir_favicon(client, org_client):
+    assert 'rel="icon"' in html(client.get("/login"))
+    assert 'rel="icon"' in html(org_client.get("/operacoes"))
