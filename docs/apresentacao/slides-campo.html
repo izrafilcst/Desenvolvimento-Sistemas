@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:,">
+<title>MeshTracker Central</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== TEMA: CARTA DE CAMPO (troque as cores e as fontes aqui) ===== */
+:root{
+  --stage-bg:#0c0e09; --slide-bg:transparent;
+  --khaki:#e6dfc3; --khaki-2:#a39d82; --linha:rgba(230,223,195,.13); --fundo:#161a11;
+  --ativo:#7bd88f; --atrasado:#f2c14e; --perdido:#ff5a4e;
+  --display:'Big Shoulders Display','Reserva Display','Impact',sans-serif;
+  --mono:'IBM Plex Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+}
+/* Reserva sem internet: fonte condensada do sistema, reduzida para caber no mesmo espaco do Big Shoulders */
+@font-face{font-family:'Reserva Display';src:local('Impact'),local('Arial Narrow'),local('Bahnschrift');font-weight:100 900;font-stretch:75% 100%;size-adjust:86%}
+*{margin:0;padding:0;box-sizing:border-box}
+::selection{background:var(--khaki);color:var(--fundo)}
+
+/* ===== BASE DO PALCO FIXO 1920x1080 (viewport-base.css, inteiro) ===== */
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--slide-bg,#fff)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg,#fff)}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+img,video,canvas,svg{max-width:100%;max-height:100%}
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000}
+@media print{
+  html,body{width:1920px;height:auto;overflow:visible;background:#fff}
+  .deck-viewport{position:static;overflow:visible;background:#fff}
+  .deck-stage{position:static;width:auto;height:auto;transform:none!important;background:none}
+  .slide{position:relative;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;width:1920px;height:1080px;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+  .deck-controls{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important}}
+
+/* ===== CARTA: grade, curvas, emblema, leitura, varredura ===== */
+.deck-stage{background:radial-gradient(1200px 800px at 78% 40%,#20271a 0%,#161a11 60%,#10130c 100%)}
+.slide{color:var(--khaki);font-family:var(--mono)}
+.slide.saindo{visibility:visible;opacity:1}
+#fundo{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#fundo .grade{position:absolute;inset:-240px;background-image:linear-gradient(var(--linha) 1px,transparent 1px),linear-gradient(90deg,var(--linha) 1px,transparent 1px);background-size:240px 240px}
+#fundo .cv{position:absolute;left:740px;top:-60px;width:1300px;height:1200px;opacity:.55}
+#fundo .cv svg{width:1300px;height:1200px;max-width:none;max-height:none;overflow:visible}
+#fundo .cv path{fill:none;stroke:var(--khaki-2);stroke-width:1.6;stroke-dasharray:1 1}
+.coord{position:absolute;top:96px;font:500 22px/1 var(--mono);letter-spacing:.14em;color:var(--khaki-2);white-space:nowrap}
+.crd{left:124px}.leitura{right:120px;color:var(--khaki)}
+.emb{position:absolute;left:0;top:0;width:300px;height:300px;max-width:none;max-height:none;overflow:visible;transform-origin:0 0}
+.emb .anel{fill:none;stroke:var(--khaki);stroke-width:10;transition:stroke .6s}
+.emb .pulso{fill:none;stroke:var(--khaki);stroke-width:3;transform-origin:150px 150px;animation:pulso 2.6s ease-out infinite;transition:stroke .6s}
+.emb .seta{fill:var(--khaki);transform-origin:150px 150px;transition:fill .6s}
+.emb[data-tom="1"] .anel,.emb[data-tom="1"] .pulso{stroke:var(--perdido)}
+.emb[data-tom="1"] .seta{fill:var(--atrasado)}
+#varre{position:absolute;left:0;top:0;width:3px;height:1080px;background:var(--khaki);opacity:0;z-index:5;pointer-events:none}
+#varre::before{content:"";position:absolute;right:3px;top:0;width:18px;height:100%;background:repeating-linear-gradient(0deg,var(--khaki) 0 2px,transparent 2px 24px)}
+#varre::after{content:"";position:absolute;right:3px;top:0;width:150px;height:100%;background:linear-gradient(90deg,transparent,rgba(230,223,195,.10))}
+#varre.volta::before,#varre.volta::after{right:auto;left:3px}
+#varre.volta::after{transform:scaleX(-1)}
+#escala{position:absolute;left:0;right:0;bottom:0;height:8px;z-index:4;background:rgba(230,223,195,.10)}
+#escala i{display:block;height:100%;width:0;background:var(--khaki-2);transition:width .8s cubic-bezier(.16,1,.3,1)}
+#escala::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(100%/7 - 2px),var(--fundo) calc(100%/7 - 2px),var(--fundo) calc(100%/7))}
+
+/* ===== TIPOGRAFIA E PEÇAS COMUNS ===== */
+.t{position:absolute;left:120px;font:800 condensed 112px/.92 var(--display);text-transform:uppercase;letter-spacing:.01em;white-space:nowrap}
+.t em{font-style:normal;color:transparent;-webkit-text-stroke:3px var(--khaki)}
+.p{position:absolute;font:400 30px/1.45 var(--mono)}
+.p b{font-weight:600}.nb{white-space:nowrap}.mudo{color:var(--khaki-2)}
+.cod{font:800 condensed 1em/1 var(--display)}
+.ae{position:relative;display:inline-block;width:18px;height:18px;border-radius:50%;margin-right:14px;vertical-align:-2px;border:4px solid currentColor}
+.ae::after{content:"";position:absolute;inset:-5px;border:2px solid currentColor;border-radius:50%;opacity:0;animation:pulsoae 2.8s ease-out infinite}
+.ae.sem{border-style:dashed;color:var(--khaki-2)}.ae.sem::after{display:none}
+.ativo{color:var(--ativo)}.atrasado{color:var(--atrasado)}.perdido{color:var(--perdido)}
+.slide:not(.active) .ae::after{animation:none}
+.selo{position:absolute;left:120px;bottom:60px;padding:14px 26px 14px 22px;border:2px solid var(--khaki);font:600 28px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;background:rgba(22,26,17,.72)}
+.selo i{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--khaki);margin-right:18px;vertical-align:1px;animation:piscar 2s ease-in-out infinite}
+/* quadro de carta: marcas de corte, regua de coordenadas, janela revelada por clip-path */
+.quadro{position:absolute;margin:0}
+.quadro::before{content:"";position:absolute;left:0;right:0;top:-18px;height:12px;background:repeating-linear-gradient(90deg,var(--khaki-2) 0 1px,transparent 1px 100px) 0 100%/100% 12px no-repeat,repeating-linear-gradient(90deg,var(--khaki-2) 0 1px,transparent 1px 20px) 0 100%/100% 6px no-repeat}
+.quadro .rv{position:absolute;left:-18px;top:0;bottom:0;width:12px;background:repeating-linear-gradient(0deg,var(--khaki-2) 0 1px,transparent 1px 100px) 100% 0/12px 100% no-repeat,repeating-linear-gradient(0deg,var(--khaki-2) 0 1px,transparent 1px 20px) 100% 0/6px 100% no-repeat}
+.quadro::after{content:"";position:absolute;inset:-28px;pointer-events:none;background:
+ linear-gradient(var(--khaki),var(--khaki)) 0 0/24px 2px,linear-gradient(var(--khaki),var(--khaki)) 0 0/2px 24px,
+ linear-gradient(var(--khaki),var(--khaki)) 100% 0/24px 2px,linear-gradient(var(--khaki),var(--khaki)) 100% 0/2px 24px,
+ linear-gradient(var(--khaki),var(--khaki)) 0 100%/24px 2px,linear-gradient(var(--khaki),var(--khaki)) 0 100%/2px 24px,
+ linear-gradient(var(--khaki),var(--khaki)) 100% 100%/24px 2px,linear-gradient(var(--khaki),var(--khaki)) 100% 100%/2px 24px;background-repeat:no-repeat}
+.cl{position:absolute;font:500 16px/1 var(--mono);letter-spacing:.1em;color:var(--khaki-2);white-space:nowrap}
+.cl.h{left:50%;top:-44px;transform:translateX(-50%)}
+.cl.v{left:-46px;top:50%;transform:translate(-50%,-50%) rotate(-90deg)}
+.janela{position:relative;overflow:hidden;background:#fff;box-shadow:0 22px 56px rgba(0,0,0,.5)}
+.janela img{display:block;max-width:none;max-height:none;height:auto}
+.quadro figcaption{position:absolute;left:0;top:100%;margin-top:22px;font:500 20px/1.3 var(--mono);letter-spacing:.06em;color:var(--khaki-2);white-space:nowrap}
+.anot{position:absolute;border:3px solid var(--perdido);border-radius:3px}
+.anot span{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);padding:5px 10px;background:var(--khaki);color:var(--fundo);font:600 18px/1 var(--mono);white-space:nowrap}
+.anot span b{color:#b3261e}
+.hr{position:absolute;height:0;border-top:1px solid var(--khaki-2);opacity:.6}
+
+/* ===== SLIDE 1 ===== */
+.s1-tit{top:228px;left:120px;font-size:236px;line-height:.82;font-weight:900}
+.s1-sub{left:124px;top:660px;width:960px;font-size:31px}
+.dois{position:absolute;left:1160px;top:652px;width:640px;list-style:none;font-size:26px;line-height:1.42}
+.dois li{position:relative;padding-left:44px}.dois li+li{margin-top:26px}
+.dois li::before{content:"";position:absolute;left:0;top:7px;width:22px;height:22px;border:2px solid var(--khaki-2);border-radius:50%}
+.dois li::after{content:"";position:absolute;left:11px;top:2px;width:2px;height:32px;background:var(--khaki-2);box-shadow:-11px 15px 0 0 transparent}
+.legenda{position:absolute;left:124px;top:924px;display:flex;gap:46px;font-size:22px;letter-spacing:.12em;text-transform:uppercase}
+.legenda .ae{color:inherit}
+.autor{position:absolute;right:120px;top:912px;text-align:right;font-size:22px;line-height:1.6;letter-spacing:.1em;color:var(--khaki-2)}
+.autor b{color:var(--khaki);font-weight:600}
+.marca{position:absolute;left:124px;top:992px;font-size:20px;letter-spacing:.1em;color:var(--khaki-2);text-transform:uppercase}
+
+/* ===== SLIDES 2 A 4 (demo ao vivo) ===== */
+.lista{position:absolute;list-style:none;font-size:28px;line-height:1.35}
+.lista li{display:flex;gap:22px;align-items:baseline;padding:11px 0;border-top:1px solid var(--linha)}
+.lista li:last-child{border-bottom:1px solid var(--linha)}
+.lista .r{flex:none;width:76px;padding:3px 0;text-align:center;border:1.5px solid var(--khaki);font:600 24px/1.2 var(--mono)}
+.lista .un{margin-left:auto;font-size:20px;letter-spacing:.1em;color:var(--khaki-2);white-space:nowrap}
+.num{font:800 condensed 1.5em/.9 var(--display);letter-spacing:.01em}
+.tempo{position:absolute;left:120px;top:484px;width:880px}
+.tempo .tr{display:flex;width:680px;height:22px;margin-top:62px}
+.tempo .seg{flex:1;height:100%;transform-origin:left}
+.tempo .seg.ativo{background:var(--ativo)}.tempo .seg.atrasado{background:var(--atrasado)}.tempo .seg.perdido{background:var(--perdido)}
+.tempo .seg+.seg{margin-left:3px}
+.tempo .tk{position:absolute;top:0;font:500 20px/1.1 var(--mono);color:var(--khaki);text-align:center;transform:translateX(-50%);white-space:nowrap}
+.tempo .tk::after{content:"";display:block;margin:8px auto 0;width:1px;height:34px;background:var(--khaki)}
+.tempo .rot{display:flex;margin-top:16px;font-size:28px;line-height:1.25}
+.tempo .rot>div{flex:none;width:226.7px}.tempo .rot small{display:block;font-size:22px;color:var(--khaki-2)}
+.tempo .rot .ult{flex:none;width:200px;color:var(--khaki-2)}
+.resp{position:absolute;display:grid;grid-template-columns:130px 1fr;column-gap:22px;align-items:center;font-size:25px;line-height:1.35}
+.resp .cod{font-size:68px;color:var(--khaki)}
+.codes{position:absolute;display:grid;grid-template-columns:1fr 1fr 1.4fr;column-gap:30px;left:120px;width:900px}
+.codes>div{position:relative;padding-top:34px;font-size:24px;line-height:1.35}
+.codes>div::before{content:"";position:absolute;left:0;top:0;width:100%;height:2px;background:var(--khaki-2)}
+.codes>div::after{content:"";position:absolute;left:0;top:-7px;width:16px;height:16px;border-radius:50%;background:var(--khaki);border:3px solid var(--fundo)}
+.codes .cod{display:block;font-size:100px;color:var(--khaki);margin-bottom:10px}
+
+/* ===== SLIDE 5 ===== */
+.dec{position:absolute;left:120px;width:800px;display:grid;grid-template-columns:84px 1fr;column-gap:20px}
+.dec .n{font:900 condensed 96px/.85 var(--display);color:transparent;-webkit-text-stroke:2px var(--khaki)}
+.dec h3{font:800 condensed 54px/1 var(--display);text-transform:uppercase;letter-spacing:.01em;margin-bottom:12px}
+.dec p{font-size:25px;line-height:1.42;color:var(--khaki)}
+.perfil{position:absolute;left:1020px;top:338px;width:780px}
+.perfil .lin{display:flex;align-items:center;height:46px;font-size:24px}
+.perfil .lb{flex:none;width:84px;color:var(--khaki-2)}
+.perfil .tr{display:flex;align-items:center;gap:14px}
+.perfil .b{display:block;height:26px;width:calc(var(--v)*13px);background:rgba(163,157,130,.5);transform-origin:left}
+.perfil .ct{min-width:44px}
+.perfil .hl .lb{color:var(--khaki);font-weight:600}.perfil .hl .b{background:var(--khaki)}
+.perfil .hl .ct{font:800 condensed 44px/1 var(--display);color:var(--khaki)}
+.perfil .hl .nt{white-space:nowrap;margin-left:4px;font-size:22px;letter-spacing:.08em;color:var(--khaki-2)}
+.total{position:absolute;left:1020px;top:888px;width:780px;font-size:28px;line-height:1.3}
+.total .cod{font-size:84px;vertical-align:-8px}
+
+/* ===== SLIDE 6 ===== */
+.itens{position:absolute;list-style:none;font-size:30px;line-height:1.4}
+.itens li{position:relative;padding-left:56px}.itens li+li{margin-top:34px}
+.itens li::before{content:"";position:absolute;left:0;top:8px;width:26px;height:26px;border:2px solid var(--khaki-2);border-radius:50%}
+.itens li::after{content:"";position:absolute;left:12px;top:2px;width:2px;height:38px;background:var(--khaki-2);box-shadow:0 0 0 0 transparent}
+.rota{position:absolute;font-size:30px;line-height:1.4}
+.rota ul{list-style:none}
+.rota .fio{position:absolute;left:11px;top:14px;bottom:84px;width:2px;background:var(--khaki-2);transform-origin:top}
+.rota li{position:relative;padding-left:64px}.rota li+li{margin-top:34px}
+.rota li::before{content:"";position:absolute;left:0;top:8px;width:24px;height:24px;border-radius:50%;background:var(--khaki);border:5px solid var(--fundo)}
+.rota .data{display:block;font:800 condensed 46px/1 var(--display);letter-spacing:.02em;color:var(--khaki);margin-bottom:6px}
+
+/* ===== SLIDE 7 ===== */
+.s7-tit{top:300px;font-size:236px;line-height:.82;font-weight:900}
+.s7-sub{top:556px;font-size:150px;line-height:.9}
+.pistas{position:absolute;left:124px;top:900px;width:1560px;display:flex;flex-wrap:wrap;gap:16px 46px;font-size:24px;letter-spacing:.06em;color:var(--khaki-2)}
+
+/* ===== NOTAS (tecla N), EDICAO (tecla E) ===== */
+#painel{display:none;position:fixed;left:0;right:0;bottom:0;height:27vh;min-height:150px;z-index:1000;overflow:auto;padding:14px 32px 18px;background:#0c0e09;border-top:1px solid var(--khaki-2);color:var(--khaki);font:400 18px/1.5 var(--mono)}
+html.com-notas #painel{display:block}
+#painel h4{font:600 14px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--khaki-2);margin-bottom:8px}
+#painel p+p{margin-top:8px}
+html.editando .slide [contenteditable]{outline:2px dashed var(--atrasado);outline-offset:4px}
+.notas{display:none}
+
+/* ===== MOVIMENTO ===== */
+@keyframes pulso{from{transform:scale(1);opacity:.9}to{transform:scale(1.6);opacity:0}}
+@keyframes pulsoae{from{transform:scale(1);opacity:.7}to{transform:scale(1.9);opacity:0}}
+@keyframes piscar{50%{opacity:.35}}
+html.estatico .emb .pulso{animation:none;opacity:.35;transform:scale(1.28)}
+html.estatico .ae::after,html.estatico .selo i{animation:none}
+html.estatico .ae::after{opacity:.35;transform:scale(1.4)}
+@media (prefers-reduced-motion:reduce){.emb .pulso,.ae::after,.selo i{animation:none}.emb .pulso{opacity:.35;transform:scale(1.28)}.ae::after{opacity:.35;transform:scale(1.4)}}
+@media print{
+  #fundo,#varre,#escala,#painel{display:none!important}
+  .fundo-imp{display:block!important;position:absolute;inset:0;overflow:hidden}
+  .slide{background:radial-gradient(1200px 800px at 78% 40%,#20271a 0%,#161a11 60%,#10130c 100%)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<main class="deck-stage" id="palco">
+
+  <!-- ===== CARTA (camada fixa: grade, curvas de nivel, leitura, emblema) ===== -->
+  <div id="fundo" aria-hidden="true">
+    <div class="grade"></div>
+    <div class="cv"><svg viewBox="0 0 1300 1200">
+      <path pathLength="1" d="M140 620 C 220 380, 520 260, 760 330 S 1160 560, 1120 800 S 760 1080, 500 1000 S 90 860, 140 620 Z"/>
+      <path pathLength="1" d="M260 630 C 320 450, 540 360, 740 410 S 1040 590, 1010 770 S 740 960, 540 910 S 220 800, 260 630 Z"/>
+      <path pathLength="1" d="M380 640 C 420 520, 570 460, 720 490 S 920 610, 900 740 S 720 850, 580 820 S 350 740, 380 640 Z"/>
+      <path pathLength="1" d="M490 650 C 520 580, 610 545, 700 565 S 810 640, 800 710 S 700 770, 620 755 S 470 710, 490 650 Z"/>
+      <path pathLength="1" d="M20 300 C 260 120, 640 60, 980 140 S 1300 380, 1290 520"/>
+      <path pathLength="1" d="M0 1000 C 200 1140, 600 1180, 900 1110 S 1250 960, 1300 1040"/>
+    </svg></div>
+    <div class="coord crd">15°47′56″S · 47°54′25″W — PARQUE DA CIDADE</div>
+    <div class="coord leitura">SETOR 01/07 · RUMO 038°</div>
+    <svg class="emb" viewBox="0 0 300 300" data-tom="1">
+      <circle class="pulso" cx="150" cy="150" r="96"/>
+      <circle class="anel" cx="150" cy="150" r="96"/>
+      <path class="seta" d="M150 78 L196 206 L150 180 L104 206 Z"/>
+    </svg>
+  </div>
+
+  <!-- ===== SLIDE 1: ABERTURA ===== -->
+  <section class="slide active" id="s1" aria-label="Abertura">
+    <h1 class="t s1-tit a">MeshTracker<br><em>Central</em></h1>
+    <p class="p s1-sub a">Quem está em campo, onde e há quanto tempo sem sinal: o painel do organizador de operações de airsoft do DF.</p>
+    <ul class="dois a">
+      <li>O operador teria de se cadastrar de novo a cada operação.</li>
+      <li>Cada dispositivo esquece quem some por 2 minutos, e ninguém vê o conjunto.</li>
+    </ul>
+    <div class="legenda a">
+      <span class="ativo"><i class="ae"></i>ativo</span>
+      <span class="atrasado"><i class="ae"></i>atrasado</span>
+      <span class="perdido"><i class="ae"></i>perdido</span>
+    </div>
+    <div class="autor a"><b>RAFAEL ALVES DE SOUSA COSTA</b><br>DESENVOLVIMENTO DE SISTEMAS · CEUB<br>AULA 14 · 10/11/2026</div>
+    <div class="marca a">Sinais simulados · problema ainda não confirmado com a federação</div>
+    <aside class="notas"><p>Este é o MeshTracker Central, um painel web para o organizador de operações de airsoft do Distrito Federal.</p><p>Percebi dois problemas olhando para o meu projeto. O operador teria de se cadastrar de novo a cada operação. E cada dispositivo esquece quem some por 2 minutos, então ninguém vê o conjunto.</p><p>Não confirmei isso com a federação. Mostro o que está pronto, com sinais simulados.</p></aside>
+  </section>
+
+  <!-- ===== SLIDE 2: DEMO AO VIVO, H1 ===== -->
+  <section class="slide" id="s2" aria-label="Demo ao vivo: inscrever sem recadastrar">
+    <h2 class="t a" style="top:214px;font-size:108px">Inscrever<br><em>sem recadastrar</em></h2>
+    <p class="p a" style="left:124px;top:452px;width:840px;font-size:29px">Falcão, Lobo, Coruja, Raposa e Pantera, já cadastrados, entram na Operação Charlie só com time, classe, dispositivo e consentimento.</p>
+    <ul class="lista a" style="left:124px;top:626px;width:840px">
+      <li><span class="r">R2</span>operador repetido<span class="un">UNIQUE no banco</span></li>
+      <li><span class="r">R3</span>dispositivo repetido<span class="un">UNIQUE no banco</span></li>
+      <li><span class="r">R5</span>sem consentimento</li>
+    </ul>
+    <p class="p a" style="left:124px;top:850px;width:860px;font-size:27px;line-height:1.4">Meta da H1: até 3 min. Por script: <span class="num"><span data-conta="554">554</span> ms</span>. Mede o fluxo, não uma pessoa.</p>
+    <figure class="quadro a" style="left:1090px;top:214px;width:710px">
+      <b class="rv"></b><span class="cl h">47°54′25″W</span><span class="cl v">15°47′56″S</span>
+      <div class="janela q" style="height:588px"><img src="../evidencias/02-inscricao-charlie.png" style="width:710px" alt="Tela do organizador com a Operação Charlie e os cinco inscritos"></div>
+      <figcaption>Tela do organizador · Operação Charlie, 5 inscritos</figcaption>
+    </figure>
+    <figure class="quadro a" style="left:1090px;top:894px;width:640px">
+      <b class="rv"></b>
+      <div class="janela q" style="height:70px"><img src="../evidencias/03-recusa-duplicada.png" style="width:1265px;margin:-172px 0 0 -30px" alt="Mensagem de recusa: este operador já está inscrito nesta operação"></div>
+      <figcaption>Recusa R2 · a mensagem do sistema</figcaption>
+    </figure>
+    <div class="selo a"><i></i>Demo ao vivo · no navegador</div>
+    <aside class="notas"><p>Esta é a Operação Charlie, vazia. Os cinco operadores já estão cadastrados. Inscrever pede só time, classe, dispositivo e consentimento: nenhum dado pessoal de novo. É a hipótese 1.</p><p>Primeira recusa: o mesmo operador de novo. Regra R2. Segunda: o Lobo com o dispositivo do Falcão. Regra R3. As duas são restrições UNIQUE no banco, não só no código. Terceira: o Lobo sem consentimento. Regra R5. Sem consentimento, não há inscrição.</p><p>Cinco inscritos, nenhum cadastro refeito. Rodei esse fluxo por script: 554 milissegundos, para uma meta de 3 minutos. Isso mede o sistema, não um organizador real.</p><p>Cuidado: depois de uma recusa, não dê F5 (reenvia o formulário). Não clique em "Iniciar operação" na Charlie.</p></aside>
+  </section>
+
+  <!-- ===== SLIDE 3: DEMO AO VIVO, H2 (MAPA) ===== -->
+  <section class="slide" id="s3" aria-label="Demo ao vivo: o mapa e o perdido">
+    <h2 class="t a" style="top:214px;font-size:100px">Quem está perdido,<br><em>e há quanto tempo</em></h2>
+    <div class="tempo">
+      <div class="tk a" style="left:226.7px">59 · 60 · 61 s</div>
+      <div class="tk a" style="left:453.3px">119 · 120 · 121 s</div>
+      <div class="tr"><i class="seg ativo b"></i><i class="seg atrasado b"></i><i class="seg perdido b"></i></div>
+      <div class="rot a">
+        <div class="ativo"><i class="ae"></i>ativo<small>até 60 s</small></div>
+        <div class="atrasado"><i class="ae"></i>atrasado<small>até 120 s</small></div>
+        <div class="perdido"><i class="ae"></i>perdido<small>acima de 120 s</small></div>
+        <div class="ult"><i class="ae sem"></i>sem sinal</div>
+      </div>
+    </div>
+    <p class="p mudo a" style="left:124px;top:728px;width:860px;font-size:22px;line-height:1.4">Estado pelo tempo desde o último sinal (R9). As marcas são os instantes testados com o relógio injetado.</p>
+    <p class="p a" style="left:124px;top:806px;width:860px;font-size:28px;line-height:1.4">Meta da H2: apontar o perdido em até 10 s. Por script: mediana de <span class="num"><span data-conta="94">94</span> ms</span>.</p>
+    <figure class="quadro a" style="left:1040px;top:228px;width:760px">
+      <b class="rv"></b><span class="cl h">47°54′25″W</span><span class="cl v">15°47′56″S</span>
+      <div class="janela q" style="height:475px"><img src="../evidencias/07-mapa-perdido.png" style="width:760px" alt="Mapa da Operação Bravo com a Coruja perdida no topo da lista">
+        <i class="anot" style="left:56.1%;top:49.4%;width:40.2%;height:5.3%"><span class="perdido"><b>perdido</b> no topo da lista</span></i></div>
+      <figcaption>Mapa da Operação Bravo · atualiza a cada 3 s</figcaption>
+    </figure>
+    <div class="resp a" style="left:1040px;top:790px;width:760px"><span class="cod">202</span><span>MT-99, não inscrito: só conta como descartado (R7).</span></div>
+    <div class="resp a" style="left:1040px;top:896px;width:760px"><span class="cod">200</span><span>Pacote repetido: duplicado, não grava de novo (R8).</span></div>
+    <div class="selo a"><i></i>Demo ao vivo · no navegador</div>
+    <aside class="notas"><p>Esta é a Operação Bravo, em curso. O simulador envia a posição de cinco dispositivos por HTTP, no contrato do ADR-003. As setas se movem sem recarregar a página. Ela consulta a API a cada 3 segundos, porque não usei WebSocket. A cor é o time.</p><p>Aponte a primeira linha da lista: a Coruja, perdida há mais de 2 minutos. O simulador parou o dispositivo dela, o MT-03, de propósito. Perdido é mais de 120 segundos sem sinal. Atrasado, de 60 a 120. A lista põe os perdidos primeiro.</p><p>Hipótese 2: apontar o perdido em até 10 segundos. Por script, a mediana foi 94 milissegundos. De novo, isso mede o fluxo, não uma pessoa.</p><p>Esperar dois minutos a cada teste seria inviável. Por isso o relógio é injetado nos testes: 59, 60, 61, 119, 120 e 121 segundos.</p><p>Contador de descartados: o MT-99 não está inscrito. O sistema responde 202, descarta e só conta. A posição dele nunca vira dado gravado. Regra R7. Pacote reenviado: 200, duplicado, não grava de novo. Regra R8.</p></aside>
+  </section>
+
+  <!-- ===== SLIDE 4: DEMO AO VIVO, H3 E H4 ===== -->
+  <section class="slide" id="s4" aria-label="Demo ao vivo: acesso e API">
+    <h2 class="t a" style="top:214px;font-size:104px">Observador só lê;<br><em>a API pede token</em></h2>
+    <div class="resp a" style="left:120px;top:468px;width:900px;grid-template-columns:200px 1fr;font-size:28px"><span class="cod" style="font-size:132px">403</span><span>Observador: vê lista e mapa, sem formulários. Toda escrita dele recebe 403 (R10).</span></div>
+    <div class="codes" style="top:668px">
+      <div class="a"><span class="cod">401</span>sem token</div>
+      <div class="a"><span class="cod">201</span>com token: gravado</div>
+      <div class="a"><span class="cod">200</span>o mesmo pacote de novo: duplicado (R11)</div>
+    </div>
+    <figure class="quadro a" style="left:1110px;top:228px;width:690px">
+      <b class="rv"></b><span class="cl h">47°54′25″W</span><span class="cl v">15°47′56″S</span>
+      <div class="janela q" style="height:551px"><img src="../evidencias/08-observador.png" style="width:690px" alt="Tela do observador, só com a lista de inscritos e o botão de abrir o mapa"></div>
+      <figcaption>Tela do observador · só leitura</figcaption>
+    </figure>
+    <p class="p a" style="left:1110px;top:866px;width:690px;font-size:26px;line-height:1.42">É o mesmo contrato HTTP que o simulador usa e que um gateway real usaria (<span class="nb">ADR-003</span>).</p>
+    <div class="selo a"><i></i>Demo ao vivo · no navegador</div>
+    <aside class="notas"><p>Agora o acesso. Esta aba é o observador. Ele vê a lista e o mapa. Não tem botão de iniciar, alterar ou inscrever. É a hipótese 3: o observador só lê.</p><p>No terminal da demo: <b>python -m pytest tests/test_funcional.py -q -k observador_recebe_403</b>. Como a tela não tem formulário, o 403 aparece no teste: toda escrita do observador é recusada. Passou.</p><p>Hipótese 4: a API. Rode o curl 1 (sem token): 401. O curl 2 (com token): 201. Repita o curl 2: 200, duplicado. É o contrato que o simulador usa e que um gateway real usaria.</p><p>Cuidado: não use o MT-03 no curl; só o MT-01.</p></aside>
+  </section>
+
+  <!-- ===== SLIDE 5: DECISOES ===== -->
+  <section class="slide" id="s5" aria-label="Decisões">
+    <h2 class="t a" style="top:196px;font-size:116px">Decisões</h2>
+    <div class="dec a" style="top:346px"><span class="n">1</span><div><h3>O recorte</h3><p>Fica fora o que exige hardware ou outro sistema: MQTT, gateway real e integração com o operational-command.</p></div></div>
+    <div class="dec a" style="top:578px"><span class="n">2</span><div><h3>Flask e SQLite</h3><p>No lugar de Vue, Express e MongoDB: eram quatro serviços e um build de front-end para nove dias, trabalhando sozinho (<span class="nb">ADR-002</span>).</p></div></div>
+    <div class="dec a" style="top:810px"><span class="n">3</span><div><h3>HTTP, não MQTT</h3><p>O menor contrato que leva o sinal à regra e ao mapa. O MQTT volta com o gateway real (<span class="nb">ADR-003</span>).</p></div></div>
+    <div class="dec a" style="left:1020px;top:196px;width:780px"><span class="n">4</span><div><h3>Testes por regra</h3><p class="mudo" style="font-size:21px;margin-top:-2px">contagem pelo nome do teste; é o piso</p></div></div>
+    <div class="perfil">
+      <div class="lin"><span class="lb">R1</span><span class="tr"><i class="b" style="--v:16"></i><span class="ct" data-conta="16">16</span></span></div>
+      <div class="lin"><span class="lb">R2</span><span class="tr"><i class="b" style="--v:5"></i><span class="ct" data-conta="5">5</span></span></div>
+      <div class="lin"><span class="lb">R3</span><span class="tr"><i class="b" style="--v:6"></i><span class="ct" data-conta="6">6</span></span></div>
+      <div class="lin"><span class="lb">R4</span><span class="tr"><i class="b" style="--v:7"></i><span class="ct" data-conta="7">7</span></span></div>
+      <div class="lin"><span class="lb">R5</span><span class="tr"><i class="b" style="--v:4"></i><span class="ct" data-conta="4">4</span></span></div>
+      <div class="lin"><span class="lb">R6</span><span class="tr"><i class="b" style="--v:17"></i><span class="ct" data-conta="17">17</span></span></div>
+      <div class="lin"><span class="lb">R7</span><span class="tr"><i class="b" style="--v:13"></i><span class="ct" data-conta="13">13</span></span></div>
+      <div class="lin"><span class="lb">R8</span><span class="tr"><i class="b" style="--v:11"></i><span class="ct" data-conta="11">11</span></span></div>
+      <div class="lin hl"><span class="lb">R9</span><span class="tr"><i class="b" style="--v:39"></i><span class="ct" data-conta="39">39</span><span class="nt">o tempo</span></span></div>
+      <div class="lin"><span class="lb">R10</span><span class="tr"><i class="b" style="--v:16"></i><span class="ct" data-conta="16">16</span></span></div>
+      <div class="lin"><span class="lb">R11</span><span class="tr"><i class="b" style="--v:14"></i><span class="ct" data-conta="14">14</span></span></div>
+    </div>
+    <p class="total a"><span class="cod" data-conta="474">474</span> testes verdes, <b><span data-conta="66">66</span></b> deles de segurança.</p>
+    <aside class="notas"><p>Quatro decisões. Primeira, o recorte. Ficou fora o que exige hardware ou outro sistema: MQTT, gateway real e integração com o operational-command.</p><p>Segunda, Flask e SQLite no lugar de Vue, Express e MongoDB. Eram quatro serviços e um build de front-end para nove dias, e eu trabalho sozinho.</p><p>Terceira, HTTP no lugar de MQTT: o menor contrato que leva o sinal até a regra e ao mapa. O MQTT volta com o gateway real.</p><p>Quarta, os testes. Cada regra tem de 4 a 39 testes com o nome dela: a R5 tem 4, a R9, a do tempo, tem 39. A suíte tem 474 testes verdes.</p></aside>
+  </section>
+
+  <!-- ===== SLIDE 6: LIMITES E PROXIMOS PASSOS ===== -->
+  <section class="slide" id="s6" aria-label="Limites e próximos passos">
+    <h2 class="t a" style="left:120px;top:200px;font-size:116px">Limites</h2>
+    <h2 class="t a" style="left:1040px;top:200px;font-size:106px"><em>Próximos passos</em></h2>
+    <i class="hr a" style="left:120px;top:336px;width:790px"></i><i class="hr a" style="left:1040px;top:336px;width:760px"></i>
+    <ul class="itens a" style="left:124px;top:392px;width:780px">
+      <li>Quem executou os roteiros foi o autor, no papel de organizador.</li>
+      <li>Os sinais são simulados, e os tempos vieram de script.</li>
+      <li>O fundo do mapa precisa de internet.</li>
+      <li>Falta definir por quanto tempo guardar as posições (LGPD).</li>
+    </ul>
+    <div class="rota" style="left:1040px;top:392px;width:760px"><i class="fio"></i>
+      <ul class="a">
+        <li>Um app de celular ou um gateway MeshTracker por MQTT, enviando ao mesmo contrato HTTP.</li>
+        <li>Conversar com a federação.</li>
+        <li><span class="data">08/12</span>Incremento 3 e tag v1.0.</li>
+        <li><span class="data">15/12</span>Demo Day.</li>
+      </ul>
+    </div>
+    <aside class="notas"><p>Limites. Quem executou os roteiros fui eu, no papel de organizador. Os sinais são simulados, e os tempos vieram de script. O fundo do mapa precisa de internet. Falta definir por quanto tempo guardar as posições.</p><p>Próximos passos. Um app de celular ou um gateway MeshTracker, por MQTT, enviando ao mesmo contrato HTTP. E conversar com a federação, que ainda não aconteceu. Obrigado.</p></aside>
+  </section>
+
+  <!-- ===== SLIDE 7: OBRIGADO ===== -->
+  <section class="slide" id="s7" aria-label="Obrigado">
+    <h2 class="t s7-tit a" style="left:120px">Obrigado.</h2>
+    <p class="t s7-sub a" style="left:124px"><em>Perguntas?</em></p>
+    <div class="pistas a"><span>código no branch demo/mvp-10-11</span><span>docs/api.md</span><span>docs/guia-de-reproducao.md</span><span>docs/evidencias/</span></div>
+    <aside class="notas"><p>Obrigado. Aceito perguntas.</p><p>Onde achar: o código está no branch demo/mvp-10-11; o contrato da API, em docs/api.md; o passo a passo para reproduzir, em docs/guia-de-reproducao.md; os prints e os números, em docs/evidencias/.</p><p>Perguntas prováveis, com resposta no roteiro: Flask e não MEVN; HTTP e não MQTT; consentimento e LGPD; como R2 e R3 são garantidas; como se testa o tempo; validação com a federação (não houve).</p></aside>
+  </section>
+
+  <div id="varre" aria-hidden="true"></div>
+  <div id="escala" aria-hidden="true"><i></i></div>
+</main>
+</div>
+
+<!-- Painel de notas do apresentador (tecla N): fica fora do palco -->
+<div id="painel" aria-live="polite"><h4></h4><div class="txt"></div></div>
+
+<script src="vendor/motion.js"></script>
+<script>
+/* ===========================================================
+   CARTA DE CAMPO: navegacao, transicao e notas
+   Troca de slide = deslocar a carta para outro setor (Motion).
+   =========================================================== */
+const { animate, stagger, cubicBezier } = Motion;
+const P = new URLSearchParams(location.search);
+const ESTATICO = P.has('estatico');
+const REDUZ = matchMedia('(prefers-reduced-motion: reduce)');
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const palco = $('#palco'), fundo = $('#fundo'), varre = $('#varre'), painel = $('#painel');
+const slides = $$('.slide'), N = slides.length;
+const eIO = cubicBezier(.65, 0, .35, 1), eOut = cubicBezier(.16, 1, .3, 1), eIn = cubicBezier(.5, 0, .9, .4);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+if (ESTATICO) document.documentElement.classList.add('estatico');
+
+/* Um setor por slide: rumo do emblema, posicao do emblema [x,y,escala], tom do anel e
+   variante das curvas de nivel [x,y,giro,escala,opacidade]. */
+const GRANDE = [1500, 236, 1], PEQ = [118, 62, .3];
+const SET = [
+  { rumo: 38,  emb: GRANDE, tom: 1, v: [0, 0, 0, 1, .55] },
+  { rumo: 118, emb: PEQ,    tom: 0, v: [-150, 240, 24, .9, .34] },
+  { rumo: 212, emb: PEQ,    tom: 1, v: [130, -170, -38, 1.05, .34] },
+  { rumo: 287, emb: PEQ,    tom: 0, v: [-430, 110, 64, .95, .32] },
+  { rumo: 341, emb: PEQ,    tom: 0, v: [90, 300, -80, 1.1, .3] },
+  { rumo: 76,  emb: PEQ,    tom: 0, v: [180, 380, 112, .8, .32] },
+  { rumo: 0,   emb: GRANDE, tom: 0, v: [0, 0, 180, 1, .55] },
+];
+const rotulo = i => `SETOR 0${i + 1}/0${N} · RUMO ${String(SET[i].rumo).padStart(3, '0')}°`;
+const fmt = v => String(Math.round(v));
+const cvT = (v, dx = 0) => `translate(${v[0] + dx}px,${v[1]}px) rotate(${v[2]}deg) scale(${v[3]})`;
+const embT = e => `translate(${e[0]}px,${e[1]}px) scale(${e[2]})`;
+
+let atual = -1, gx = 0, ang = 0, emCurso = null;
+
+/* Estado final da carta para o slide i (usado ao terminar, no ?estatico e na impressao). */
+function pintar(i, R = fundo, g = gx) {
+  const s = SET[i];
+  $('.grade', R).style.transform = `translate3d(${g % 240}px,0,0)`;
+  const cv = $('.cv', R); cv.style.transform = cvT(s.v); cv.style.opacity = s.v[4];
+  $$('.cv path', R).forEach(p => p.style.strokeDashoffset = 0);
+  const e = $('.emb', R); e.style.transform = embT(s.emb); e.dataset.tom = s.tom;
+  $('.seta', R).style.transform = `rotate(${R === fundo ? ang : s.rumo}deg)`;
+  $('.crd', R).style.transform = `translateX(${s.emb[2] < 1 ? 102 : 0}px)`;
+  $('.leitura', R).textContent = rotulo(i);
+}
+function limpar(sec) {
+  $$('.a,.q,.b,.fio', sec).forEach(e => { e.style.opacity = ''; e.style.transform = ''; e.style.clipPath = ''; });
+  $$('[data-conta]', sec).forEach(e => e.textContent = fmt(e.dataset.conta));
+}
+function finalizar(i) {
+  slides.forEach((s, k) => {
+    s.classList.toggle('active', k === i); s.classList.remove('saindo');
+    s.style.clipPath = ''; s.style.opacity = ''; s.setAttribute('aria-hidden', k !== i);
+  });
+  limpar(slides[i]);
+  varre.style.opacity = 0;
+  gx = gx % 240; ang = SET[i].rumo + 360 * Math.round((ang - SET[i].rumo) / 360);
+  pintar(i);
+  $('#escala i').style.width = ((i + 1) / N * 100) + '%';
+}
+function concluir() {
+  if (!emCurso) return;
+  const t = emCurso; emCurso = null; clearTimeout(t.guarda);
+  t.ctrls.forEach(c => { try { c.complete(); } catch (_) { try { c.stop(); } catch (__) {} } });
+  finalizar(t.para);
+}
+
+/* Entradas internas do slide novo: sequencia, quadros por clip-path, barras e contagens. */
+function entradas(sn, ctrls, atraso = .22) {
+  const as = $$('.a', sn), qs = $$('.q', sn), bs = $$('.b', sn), cs = $$('[data-conta]', sn);
+  as.forEach(e => { e.style.opacity = 0; e.style.transform = 'translateY(26px)'; });
+  qs.forEach(e => e.style.clipPath = 'inset(0 0 100% 0)');
+  bs.forEach(e => e.style.transform = 'scaleX(0)');
+  $$('.fio', sn).forEach(e => e.style.transform = 'scaleY(0)');
+  cs.forEach(e => e.textContent = '0');
+  if (as.length) ctrls.push(animate(as, { opacity: [0, 1], y: [26, 0] },
+    { duration: .5, ease: [.16, 1, .3, 1], delay: stagger(Math.min(.07, .3 / as.length), { startDelay: atraso }) }));
+  if (qs.length) ctrls.push(animate(qs, { clipPath: ['inset(0 0 100% 0)', 'inset(0 0 0% 0)'] },
+    { duration: .7, ease: [.16, 1, .3, 1], delay: stagger(.12, { startDelay: atraso + .1 }) }));
+  if (bs.length) ctrls.push(animate(bs, { scaleX: [0, 1] },
+    { duration: .5, ease: [.16, 1, .3, 1], delay: stagger(.02, { startDelay: atraso + .1 }) }));
+  $$('.fio', sn).forEach(e => ctrls.push(animate(e, { scaleY: [0, 1] }, { duration: .7, delay: atraso + .1, ease: [.16, 1, .3, 1] })));
+  cs.forEach((e, k) => ctrls.push(animate(0, +e.dataset.conta, {
+    duration: .6, delay: atraso + .1 + k * .02, ease: eOut, onUpdate: v => e.textContent = fmt(v) })));
+}
+
+/* A transicao: linha de varredura + clip-path; grade e curvas deslizam (parallax);
+   curvas se apagam e se redesenham; leitura embaralha os digitos; emblema gira (spring). */
+function transicao(de, para, d) {
+  const t = { para, ctrls: [] }; emCurso = t;
+  const sa = slides[de], sn = slides[para], ctrls = t.ctrls;
+  const A = de >= 0 ? SET[de] : null, B = SET[para];
+  const g0 = gx, GRADE = 560, DERIVA = 130, TROCA = A ? .4 : 0;
+  const alvo = rotulo(para), caminhos = $$('.cv path', fundo), K = caminhos.length, inv = para % 2 ? 1 : 0;
+  const delta = ((B.rumo - ang + 540) % 360) - 180, a0 = A ? ang : B.rumo - 120;
+  ang = A ? ang + delta : B.rumo; const a1 = ang;
+  let trocou = false;
+
+  sn.style.clipPath = d > 0 ? 'inset(0 100% 0 0)' : 'inset(0 0 0 100%)';
+  slides.forEach(s => { if (s !== sn && s !== sa) s.classList.remove('active'); });
+  if (sa) { sa.classList.remove('active'); sa.classList.add('saindo'); }
+  sn.classList.add('active'); sn.removeAttribute('aria-hidden');
+  varre.classList.toggle('volta', d < 0);
+  entradas(sn, ctrls);
+  $('.emb', fundo).dataset.tom = B.tom;
+
+  const quadro = p => {
+    const s = eIO(clamp(p / .78)), x = d > 0 ? s * 1920 : (1 - s) * 1920;
+    varre.style.opacity = s > 0 && s < 1 ? 1 : 0;
+    varre.style.transform = `translate3d(${x}px,0,0)`;
+    sn.style.clipPath = d > 0 ? `inset(0 ${(1 - s) * 100}% 0 0)` : `inset(0 0 0 ${(1 - s) * 100}%)`;
+    if (sa) sa.style.clipPath = d > 0 ? `inset(0 0 0 ${s * 100}%)` : `inset(0 ${s * 100}% 0 0)`;
+    gx = g0 - d * GRADE * eOut(p);
+    $('.grade', fundo).style.transform = `translate3d(${gx % 240}px,0,0)`;
+    const cv = $('.cv', fundo);
+    if (p < TROCA) {                                  /* apaga as curvas do setor anterior */
+      const q = p / TROCA;
+      cv.style.transform = cvT(A.v, -d * DERIVA * eIn(q));
+      cv.style.opacity = A.v[4] * (1 - .6 * q);
+      caminhos.forEach((c, k) => c.style.strokeDashoffset = -eIn(clamp((q - k * .09) / .55)));
+    } else {                                          /* redesenha as do setor novo, em outra posicao */
+      const q = (p - TROCA) / (1 - TROCA);
+      if (!trocou) { trocou = true; cv.style.opacity = B.v[4]; }
+      cv.style.transform = cvT(B.v, d * DERIVA * (1 - eOut(q)));
+      caminhos.forEach((c, k) => {
+        const u = eOut(clamp((q - (inv ? K - 1 - k : k) * .09) / .55));
+        c.style.strokeDashoffset = (inv ? -1 : 1) * (1 - u);
+      });
+    }
+    const e0 = A ? A.emb : [B.emb[0] + 160, B.emb[1], B.emb[2]], f = eIO(clamp(p / .9));
+    $('.emb', fundo).style.transform = embT(e0.map((v, k) => v + (B.emb[k] - v) * f));
+    $('.crd', fundo).style.transform = `translateX(${(A && A.emb[2] < 1 ? 102 : 0) + ((B.emb[2] < 1 ? 102 : 0) - (A && A.emb[2] < 1 ? 102 : 0)) * f}px)`;
+    const r = clamp((p - .08) / .8) * alvo.length;     /* embaralha os digitos ate o rotulo do setor */
+    $('.leitura', fundo).textContent = [...alvo].map((c, k) => k < r || !/\d/.test(c) ? c : Math.floor(Math.random() * 10)).join('');
+  };
+  ctrls.push(animate(0, 1, { duration: .95, ease: 'linear', onUpdate: quadro }));
+  ctrls.push(animate(a0, a1, { type: 'spring', visualDuration: .6, bounce: .3,
+    onUpdate: v => $('.seta', fundo).style.transform = `rotate(${v}deg)` }));
+  fim(t);
+}
+/* Termina quando todas as animacoes acabam; a guarda conclui a troca se alguma travar (aba oculta, por exemplo). */
+function fim(t) {
+  Promise.all(t.ctrls).then(() => { if (emCurso === t) concluir(); });
+  t.guarda = setTimeout(() => { if (emCurso === t) concluir(); }, 2200);
+}
+
+/* Reduced motion: so um fade curto entre os slides. */
+function reduzido(de, para) {
+  const t = { para, ctrls: [] }; emCurso = t;
+  const sa = slides[de], sn = slides[para];
+  slides.forEach(s => { if (s !== sn && s !== sa) s.classList.remove('active'); });
+  if (sa) { sa.classList.remove('active'); sa.classList.add('saindo'); t.ctrls.push(animate(sa, { opacity: [1, 0] }, { duration: .2 })); }
+  sn.classList.add('active'); sn.removeAttribute('aria-hidden'); sn.style.opacity = 0;
+  t.ctrls.push(animate(sn, { opacity: [0, 1] }, { duration: .2 }));
+  gx = -para * 400; ang = SET[para].rumo;
+  fim(t);
+}
+
+function ir(n) {
+  n = clamp(n, 0, N - 1);
+  if (n === atual) return;
+  concluir();
+  const de = atual; atual = n;
+  history.replaceState(null, '', location.pathname + location.search + '#' + (n + 1));
+  notas();
+  if (ESTATICO) { gx = -n * 400; ang = SET[n].rumo; finalizar(n); return; }
+  if (REDUZ.matches) { de < 0 ? (gx = -n * 400, ang = SET[n].rumo, finalizar(n)) : reduzido(de, n); return; }
+  transicao(de, n, n > de ? 1 : -1);
+}
+const lerHash = () => { const m = /^#(\d+)$/.exec(location.hash); return clamp(m ? +m[1] : 1, 1, N) - 1; };
+addEventListener('hashchange', () => ir(lerHash()));
+
+/* ----- Palco escalado por inteiro (nunca reflow) ----- */
+function escala() {
+  const h = innerHeight - (document.documentElement.classList.contains('com-notas') ? painel.offsetHeight : 0);
+  const k = Math.min(innerWidth / 1920, h / 1080);
+  palco.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px,${(h - 1080 * k) / 2}px) scale(${k})`;
+}
+addEventListener('resize', escala);
+
+/* ----- Notas do apresentador (tecla N) ----- */
+function notas() {
+  $('h4', painel).textContent = `Slide ${atual + 1} de ${N} · notas`;
+  $('.txt', painel).innerHTML = $('.notas', slides[atual]).innerHTML;
+}
+function alternarNotas() {
+  document.documentElement.classList.toggle('com-notas'); escala();
+}
+
+/* ----- Edicao de texto na hora (tecla E), guardada no navegador ----- */
+const EDIT = $$('.t,.p,.dec h3,.dec p,.itens li,.rota li,.lista li,figcaption');
+const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return h; };
+const chave = (e, k) => `mt-campo:${k}:${hash(e.dataset.orig)}`;
+EDIT.forEach((e, k) => {
+  e.dataset.orig = e.innerHTML;
+  try { const v = localStorage.getItem(chave(e, k)); if (v) e.innerHTML = v; } catch (_) {}
+  e.addEventListener('input', () => { try { localStorage.setItem(chave(e, k), e.innerHTML); } catch (_) {} });
+});
+function alternarEdicao() {
+  const on = document.documentElement.classList.toggle('editando');
+  EDIT.forEach(e => on ? e.setAttribute('contenteditable', 'true') : e.removeAttribute('contenteditable'));
+}
+
+/* ----- Teclado (setas, espaco, PageUp/PageDown de passador, Home/End), clique e toque ----- */
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key, editando = e.target.isContentEditable;
+  if (k === 'n' || k === 'N') { if (!editando) alternarNotas(); return; }
+  if (k === 'e' || k === 'E') { if (!editando || !e.target.closest('[contenteditable]')) alternarEdicao(); return; }
+  if (k === 'Escape' && document.documentElement.classList.contains('editando')) { alternarEdicao(); return; }
+  if (editando) return;
+  const prox = ['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'], ant = ['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'];
+  if (prox.includes(k)) { e.preventDefault(); ir(atual + 1); }
+  else if (ant.includes(k)) { e.preventDefault(); ir(atual - 1); }
+  else if (k === 'Home') { e.preventDefault(); ir(0); }
+  else if (k === 'End') { e.preventDefault(); ir(N - 1); }
+});
+addEventListener('click', e => {
+  if (e.target.closest?.('#painel,[contenteditable],a') || document.documentElement.classList.contains('editando')) return;
+  if (getSelection().toString()) return;
+  ir(e.clientX < innerWidth * .25 ? atual - 1 : atual + 1);
+});
+let tx = null;
+addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+addEventListener('touchend', e => {
+  if (tx === null) return;
+  const dx = e.changedTouches[0].clientX - tx; tx = null;
+  if (Math.abs(dx) > 50) ir(atual + (dx < 0 ? 1 : -1));
+});
+
+/* ----- Impressao (plano B em PDF): cada slide leva a sua propria carta ----- */
+addEventListener('beforeprint', () => slides.forEach((s, i) => {
+  const c = fundo.cloneNode(true); c.removeAttribute('id'); c.classList.add('fundo-imp');
+  pintar(i, c, -i * 400); s.prepend(c);
+}));
+addEventListener('afterprint', () => $$('.fundo-imp').forEach(e => e.remove()));
+
+/* ----- Partida ----- */
+escala();
+ir(lerHash());
+</script>
+</body>
+</html>
