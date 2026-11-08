@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block titulo %}Operações · MeshTracker Central{% endblock %}
+{% block conteudo %}
+<h1>Operações</h1>
+<article>
+  {% if operacoes %}
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Operação</th>
+        <th scope="col">Data</th>
+        <th scope="col">Local</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Inscritos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in operacoes %}
+      <tr>
+        <td><a href="{{ url_for('paginas.operacao', operacao_id=o.id) }}">{{ o.nome }}</a></td>
+        <td>{{ o.data|data_br }}</td>
+        <td>{{ o.local }}</td>
+        <td><span class="situacao situacao-{{ o.situacao }}">{{ o.situacao|rotulo_situacao }}</span></td>
+        <td>{{ o.inscritos }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Nenhuma operação criada.</p>
+  {% endif %}
+</article>
+
+{% if current_user.eh_organizador %}
+<article>
+  <header>Criar operação</header>
+  <p><small>A operação começa planejada. Sem centro do mapa, usa Brasília.</small></p>
+  <form method="post" action="{{ url_for('paginas.operacoes_criar') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Nome
+      <input name="nome" required maxlength="100" value="{{ valores.get('nome', '') }}">
+    </label>
+    <div class="grid">
+      <label>Data
+        <input type="date" name="data" required value="{{ valores.get('data', '') }}">
+      </label>
+      <label>Local
+        <input name="local" required maxlength="100" value="{{ valores.get('local', '') }}">
+      </label>
+    </div>
+    <div class="grid">
+      <label>Latitude do centro (opcional)
+        <input name="centro_lat" inputmode="decimal" placeholder="-15.7939" value="{{ valores.get('centro_lat', '') }}">
+      </label>
+      <label>Longitude do centro (opcional)
+        <input name="centro_lon" inputmode="decimal" placeholder="-47.8828" value="{{ valores.get('centro_lon', '') }}">
+      </label>
+    </div>
+    <button type="submit">Criar operação</button>
+  </form>
+</article>
+{% endif %}
+{% endblock %}

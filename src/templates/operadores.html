@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Operadores · MeshTracker Central{% endblock %}
+{% block conteudo %}
+<h1>Operadores</h1>
+<article>
+  {% if operadores %}
+  <table>
+    <thead>
+      <tr><th scope="col">Apelido</th><th scope="col">Nome</th></tr>
+    </thead>
+    <tbody>
+      {% for o in operadores %}
+      <tr><td>{{ o.apelido }}</td><td>{{ o.nome }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Nenhum operador cadastrado.</p>
+  {% endif %}
+</article>
+
+{% if current_user.eh_organizador %}
+<article>
+  <header>Cadastrar operador</header>
+  <p><small>O cadastro é feito uma vez só. Depois, o operador é inscrito em cada operação sem novo cadastro.</small></p>
+  <form method="post" action="{{ url_for('paginas.operadores_criar') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="grid">
+      <label>Apelido
+        <input name="apelido" required maxlength="32" value="{{ valores.get('apelido', '') }}">
+      </label>
+      <label>Nome
+        <input name="nome" required maxlength="100" value="{{ valores.get('nome', '') }}">
+      </label>
+    </div>
+    <button type="submit">Cadastrar</button>
+  </form>
+</article>
+{% endif %}
+{% endblock %}

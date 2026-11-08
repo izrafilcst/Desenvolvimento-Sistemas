@@ -35,6 +35,9 @@
         <p class="mensagem mensagem-{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</p>
       {% endfor %}
     {% endwith %}
+    {% if erro %}
+      <p class="mensagem mensagem-erro" role="alert">{{ erro }}</p>
+    {% endif %}
     {% block conteudo %}{% endblock %}
   </main>
   {% block scripts %}{% endblock %}

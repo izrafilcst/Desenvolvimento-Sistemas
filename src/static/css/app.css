@@ -1,4 +1,26 @@
 /* Ajustes sobre o Pico. Dono: agente web. */
+.mensagem { padding: 0.5rem 0.75rem; border-radius: var(--pico-border-radius); border: 1px solid currentColor; }
 .mensagem-erro { color: var(--pico-del-color); }
 .mensagem-sucesso { color: var(--pico-ins-color); }
+.mensagem-aviso { color: var(--pico-secondary); }
 .form-sair { margin: 0; }
+.cartao-estreito { max-width: 28rem; margin-inline: auto; }
+
+/* Situação da operação: etiqueta com o texto (a cor sozinha não basta). */
+.situacao { display: inline-block; padding: 0.1rem 0.6rem; border-radius: 1rem; font-size: 0.85em; font-weight: 600; border: 1px solid currentColor; }
+.situacao-planejada { color: var(--pico-secondary); }
+.situacao-em_curso { color: var(--pico-ins-color); }
+.situacao-encerrada { color: var(--pico-muted-color); }
+
+/* Amostra da cor do time ao lado do nome. */
+.amostra-cor { display: inline-block; width: 0.9em; height: 0.9em; border-radius: 50%; vertical-align: -0.1em; border: 1px solid var(--pico-muted-border-color); }
+
+/* Botões de ação da operação e formulários dentro da tabela. */
+.acoes { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.acoes form, .acoes button, .acoes a[role="button"] { margin: 0; }
+.tabela-rolavel { overflow-x: auto; }
+.nowrap { white-space: nowrap; }
+.alterar { margin: 0; border: 0; }
+.alterar summary { margin: 0; }
+.form-linha { display: flex; flex-direction: column; gap: 0.5rem; min-width: 12rem; margin: 0.5rem 0 0; }
+.form-linha select, .form-linha button { margin: 0; }
