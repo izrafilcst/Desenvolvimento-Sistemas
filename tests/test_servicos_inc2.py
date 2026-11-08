@@ -29,8 +29,6 @@ def codigo_do_erro(funcao, *args, **kwargs):
     return erro.value.codigo
 
 
-# ------------------------------------------------------------ R7 e R8
-
 def operacao_em_curso_com_inscrito(repo, relogio, dispositivo="MT-01", apelido="alfa"):
     """Operação em curso com um operador inscrito; devolve (operacao_id, inscricao_id)."""
     operacao = nova_operacao(repo)
@@ -179,8 +177,6 @@ def test_r8_busca_da_inscricao_pelo_dispositivo_na_operacao(repo, relogio):
     assert repo.inscricao_por_dispositivo(operacao, "MT-01")["id"] == inscricao
     assert repo.inscricao_por_dispositivo(operacao, "MT-99") is None
 
-
-# ------------------------------------------------------------------- R9
 
 def situacao(repo, relogio, operacao, atrasado_s=60, perdido_s=120):
     return servicos.situacao_da_operacao(repo, operacao, relogio(), atrasado_s, perdido_s)
@@ -341,8 +337,6 @@ def test_r9_situacao_em_curso_devolve_a_operacao_em_curso(repo, relogio):
     assert resultado["inscritos"][0]["estado"] == "atrasado"
 
 
-# ------------------------------------------------------------------ rumo
-
 @pytest.mark.parametrize("destino, esperado", [
     ((1.0, 0.0), 0.0),      # norte
     ((0.0, 1.0), 90.0),     # leste
@@ -421,9 +415,7 @@ def test_rumo_olha_so_as_dez_ultimas_posicoes(repo, relogio):
     assert situacao(repo, relogio, operacao)["inscritos"][0]["rumo"] is None
 
 
-# --------------------------------------------------------------- usuarios
-
-SENHA = "senha-de-teste-123"
+SENHA ="senha-de-teste-123"
 
 
 def test_usuario_cria_com_senha_em_hash_e_nao_em_texto(repo, conn):
@@ -495,3 +487,12 @@ def test_usuario_nao_autentica_com_senha_errada_ou_login_desconhecido(repo):
     assert servicos.autenticar(repo, "org", "senha-errada-123") is None
     assert servicos.autenticar(repo, "ninguem", SENHA) is None
     assert servicos.autenticar(repo, "", "") is None
+
+
+def test_usuario_login_inexistente_tambem_confere_hash(repo, monkeypatch):
+    chamadas = []
+    original = servicos.check_password_hash
+    monkeypatch.setattr(servicos, "check_password_hash",
+                        lambda hash_, senha: chamadas.append(hash_) or original(hash_, senha))
+    assert servicos.autenticar(repo, "ninguem", SENHA) is None
+    assert len(chamadas) == 1
