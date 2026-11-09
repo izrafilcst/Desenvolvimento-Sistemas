@@ -13,8 +13,8 @@ Como ler este arquivo: igual ao `roteiro-5min.md`. As linhas que começam com `>
 | 1:55–4:05 | 3. Os três ADRs | 5, 6, 7 | contexto, decisão, alternativa descartada, onde aparece na demo e nos testes | `docs/adr/ADR-001`, `ADR-002`, `ADR-003`; `docs/api.md` |
 | 4:05–5:15 | 4a. Demo H1 | 8 (2 passos) | inscrever os 5 na Charlie; três recusas | ADR-001, R1 a R5 em `docs/backlog.md`, `docs/evidencias/funcional.md` |
 | 5:15–6:30 | 4b. Demo H2 | 9 (2 passos) | mapa da Bravo; a faixa; a Coruja perdida; MT-99 descartado | R7 a R9, ADR-003, `DESIGN.md`, `docs/evidencias/funcional.md` |
-| 6:30–7:15 | 4c. Demo H3 e H4 | 10 (2 passos) | observador só lê (403); curl 401, 201 e 200 | R10 e R11, `docs/api.md`, `docs/evidencias/curl-401-201.txt` |
-| 7:15–8:25 | 5. Qualidade | 11, 12, 13 | testes por regra; revisão S-1 a S-5; reprodução pelo Guia | `tests/`, `docs/evidencias/seguranca.md`, `docs/guia-de-reproducao.md` |
+| 6:30–7:10 | 4c. Demo H3 e H4 | 10 (2 passos) | observador só lê (403); curl 401, 201 e 200 | R10 e R11, `docs/api.md`, `docs/evidencias/curl-401-201.txt` |
+| 7:10–8:25 | 5. Qualidade | 11, 12, 13 | testes por regra; revisão S-1 a S-5; reprodução pelo Guia | `tests/`, `docs/evidencias/seguranca.md`, `docs/guia-de-reproducao.md` |
 | 8:25–8:55 | 6. O que mudou desde a Aula 14 | 14 | antes e depois da identidade das telas | `docs/evidencias/*.png`, `docs/evidencias/v1/`, `DESIGN.md` |
 | 8:55–10:00 | 7. Limites e próximos passos | 15, 16 | a federação como pendência principal; sinais simulados; LGPD; app de celular e gateway MQTT | `PRODUCT.md`, `docs/backlog.md`, `docs/api.md` |
 | depois dos 10:00 | Perguntas (à parte) | 17 | pistas dos arquivos | ver "Perguntas prováveis" |
@@ -57,7 +57,7 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 12. **Revisão de segurança: S-1 a S-5** (bloco 5; não é demo)
     - Conteúdo mínimo: tabela com id, achado em poucas palavras e destino, todos de severidade Baixa e sem vermelho: S-1 corpo sem limite, corrigido (64 KB, 413); S-2 JSON aninhado dava 500, corrigido (400); S-3 tempo do login revelava usuário, corrigido; S-4 o simulador seguia redirecionamento levando o token, corrigido; S-5 token em `--token`, aceito (o Guia recomenda a variável de ambiente). Rodapé: bandit sem achado alto; pip-audit sem vulnerabilidade conhecida `[conferir no ensaio: rodar de novo]`.
 13. **Reprodução pelo Guia** (bloco 5; não é demo)
-    - Conteúdo mínimo: a cadeia "clone limpo → venv novo → só o Guia". O estado: "Planejada até 05/12. Ainda não feita." `[conferir no ensaio: se já foi feita, trocar pelo resultado: data, commit, testes passados, passos que travaram]`.
+    - Conteúdo mínimo: a cadeia "clone limpo → venv novo → só o Guia". O estado: "Feita em 08/11, num clone limpo e com as telas da Aula 14: 382 testes passaram. A refazer com as telas novas antes da v1.0 (até 05/12)." `[conferir no ensaio: data, commit, testes e passos que travaram na reprodução com as telas novas; troque a segunda frase pelo resultado]`.
 14. **O que mudou desde a Aula 14** (bloco 6; não é demo)
     - Conteúdo mínimo: duas colunas de mesmo tamanho, "Aula 14 (10/11)" e "Agora". Esquerda: `docs/evidencias/07-mapa-perdido.png`. Direita: print equivalente em `docs/evidencias/v1/` `[conferir no ensaio: a pasta ainda está vazia]`. Três marcas legendadas na direita: moldura preta; faixa com a contagem por estado; perdido com colchetes e "perdido há X". Uma linha: "Os botões têm os mesmos nomes."
 15. **Limites** (bloco 7; não é demo)
@@ -157,7 +157,7 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 
 *Fonte:* R7, R8 e R11 em `docs/backlog.md`; `tests/test_api.py` e `tests/test_servicos_inc2.py` (testes `test_r7_`, `test_r8_` e `test_r11_`).
 
-### Bloco 4: Demo ao vivo (4:05–7:15)
+### Bloco 4: Demo ao vivo (4:05–7:10)
 
 #### 4a. H1: inscrever sem recadastrar (4:05–5:15)
 
@@ -235,7 +235,7 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 
 *Fonte:* `docs/evidencias/funcional.md` (seção 3, H2: mediana de 94 ms, com a ressalva). `[conferir no ensaio: tempo humano de H2 com cronômetro, meta 10 s]`
 
-#### 4c. H3 e H4: acesso e API (6:30–7:15)
+#### 4c. H3 e H4: acesso e API (6:30–7:10)
 
 **Mostre o slide 10, passo 1.**
 
@@ -255,13 +255,13 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 
 *Fonte:* R11 em `docs/backlog.md`; `docs/api.md` (POST /api/v1/sinais: 401, 201 e 200); H4 em `docs/hipoteses-e-incrementos.md`; `docs/adr/ADR-003-gateway-por-http.md`; `docs/evidencias/curl-401-201.txt`.
 
-### Bloco 5: Qualidade (7:15–8:25)
+### Bloco 5: Qualidade (7:10–8:25)
 
 **Mostre o slide 11.**
 
-> Qualidade. Cada regra, de R1 a R11, tem testes com o nome dela: de 4 na R5 a 39 na R9, a do tempo. A suíte inteira tem 474 testes, 66 deles de segurança, que cobrem CSRF, token, SQL parametrizado e XSS. O número vem do pytest.
+> Qualidade. Cada regra, de R1 a R11, tem testes com o nome dela: de 4 na R5 a 39 na R9, a do tempo. A suíte inteira tem 474 testes, 66 deles de segurança. O número vem do pytest.
 
-*Fonte:* contagem por prefixo do nome do teste (`test_r5_`: 4; `test_r9_`: 39), e total e segurança do `pytest --collect-only`, conferidos em 08/11/2026 (474 e 66); o que os de segurança cobrem está no Checklist de `docs/evidencias/seguranca.md`. Como contar, no ensaio: ver "Preparação". `[conferir no ensaio: total, segurança e por regra; se o número for outro, troque na fala e no slide 11]`
+*Fonte:* contagem por prefixo do nome do teste (`test_r5_`: 4; `test_r9_`: 39), e total e segurança do `pytest --collect-only`, conferidos em 08/11/2026 (474 e 66). Como contar, no ensaio: ver "Preparação". `[conferir no ensaio: total, segurança e por regra; se o número for outro, troque na fala e no slide 11]`
 
 **Avance para o slide 12.**
 
@@ -275,9 +275,9 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 
 **Avance para o slide 13.**
 
-> A reprodução do zero pelo Guia, num clone limpo, é o critério do Incremento 3. Está planejada até 5 de dezembro e ainda não foi feita.
+> A reprodução pelo Guia, num clone limpo, é o critério do Incremento 3. Fiz uma em 8 de novembro, com as telas da Aula 14: 382 testes passaram, e o passo 11 travou no PowerShell. Refaço com as telas novas antes da v1.0, até 5 de dezembro.
 
-*Fonte:* `docs/hipoteses-e-incrementos.md` (Ficha 12, Incremento 3: "reproduzido do zero, num clone limpo e num venv novo, seguindo só o Guia"); `docs/historias.md` (US09: "essa reprodução ainda não foi realizada"). A data de 05/12 é o prazo planejado pelo autor. O teste prévio de 08/11 (`docs/evidencias/funcional.md`, seção 4) não é essa reprodução. `[conferir no ensaio: se a reprodução já foi feita, troque a fala por "Reproduzi do zero pelo Guia em [data], no commit [hash]: [N] testes passaram e travei em [passos]"]`
+*Fonte:* `docs/hipoteses-e-incrementos.md` (Ficha 12, Incremento 3: "reproduzido do zero, num clone limpo e num venv novo, seguindo só o Guia"); `docs/evidencias/funcional.md` (seção 4: clone do ramo `demo/mvp-10-11` no commit `c3998dc`, venv novo, só o Guia; 382 testes passaram; passos 2 e 11 com problema). A data de 05/12 é o prazo planejado pelo autor. `[conferir no ensaio: data, commit, testes e passos que travaram na reprodução com as telas novas; troque a última frase da fala por "Refiz em [data], no commit [hash]: [N] testes passaram e travei em [passos]"]`
 
 ### Bloco 6: O que mudou desde a Aula 14 (8:25–8:55)
 
@@ -313,7 +313,7 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 
 ## Palavras faladas
 
-Contagem das linhas `>` de cada bloco, em 08/11/2026. A régua é 130 palavras por minuto: 1.160 palavras são 8 min 55 s de fala, e os 65 s que sobram dos 10 minutos são a folga para os cliques e a troca de aba. Para contar de novo, na raiz do repositório:
+Contagem das linhas `>` de cada bloco, em 08/11/2026. A régua é 130 palavras por minuto: 1.173 palavras são 9 min 1 s de fala, e os 59 s que sobram dos 10 minutos são a folga para os cliques e a troca de aba. Para contar de novo, na raiz do repositório:
 
 ```bash
 awk '/^## /{if(b)print n"\t"b; b=""; n=0} /^### Bloco/{if(b)print n"\t"b; b=$0; n=0} /^> /{sub(/^> /,""); n+=NF} END{if(b)print n"\t"b}' docs/apresentacao/roteiro-demo-day.md
@@ -324,11 +324,11 @@ awk '/^## /{if(b)print n"\t"b; b=""; n=0} /^### Bloco/{if(b)print n"\t"b; b=$0; 
 | 1. Motivo | 121 | 60 s | 121 |
 | 2. Hipóteses e recorte | 116 | 55 s | 126 |
 | 3. Os três ADRs | 271 | 130 s | 125 |
-| 4. Demo ao vivo (H1, H2, H3 e H4) | 323 | 190 s | 102 |
-| 5. Qualidade | 141 | 70 s | 121 |
+| 4. Demo ao vivo (H1, H2, H3 e H4) | 323 | 185 s | 105 |
+| 5. Qualidade | 154 | 75 s | 123 |
 | 6. O que mudou desde a Aula 14 | 55 | 30 s | 110 |
 | 7. Limites e próximos passos | 133 | 65 s | 123 |
-| **Total** | **1.160** | **10 min** | **116** |
+| **Total** | **1.173** | **10 min** | **117** |
 
 Se mudar uma fala, conte de novo. O bloco 4 tem a maior folga (cerca de 40 s) porque são 31 ações de inscrição e três recusas; o tempo humano disso só se sabe no ensaio.
 
@@ -340,7 +340,7 @@ Se mudar uma fala, conte de novo. O bloco 4 tem a maior folga (cerca de 40 s) po
 | 4:05 | Ainda nos ADRs | Em cada ADR, diga só a decisão e a alternativa descartada; o contexto fica no slide |
 | 5:15 | Ainda inscrevendo | Pare de inscrever, diga "faltam dois, o fluxo completo está na gravação" e vá para o mapa. As recusas não se cortam |
 | 6:30 | Ainda no mapa | Pule a frase dos 94 milissegundos; ela volta nas perguntas |
-| 7:15 | Ainda no curl | Pule o terceiro curl (o 200) |
+| 7:10 | Ainda no curl | Pule o terceiro curl (o 200) |
 | 8:25 | Ainda em Qualidade | Pule o slide 13: diga a frase da reprodução junto com o slide 12 |
 | 8:55 | Ainda no bloco 6 | Diga só "mudou a identidade das telas, os botões são os mesmos" e passe ao slide 15; o antes e depois vai para as perguntas |
 | 9:30 | Ainda nos limites | Corte "o fundo do mapa precisa de internet". A federação não se corta |
@@ -471,7 +471,7 @@ Não. Os roteiros foram executados por mim, no papel de organizador, e medem o f
 Mudou a aparência: moldura preta, faixa de contagem, colchetes no perdido. Alguns testes conferem o HTML: o observador não vê formulários, todo formulário leva o `csrf_token` e nenhum texto vindo do servidor entra no mapa por `innerHTML`. *Fonte:* `DESIGN.md`; `README.md` ("Para mexer no layout e no front"). `[conferir no ensaio: a suíte passa com as telas novas]`
 
 **Já reproduziu o projeto pelo Guia?**
-O go/no-go do Incremento 3 (clone limpo, venv novo, só o Guia) está planejado até 05/12. Em 08/11 houve um teste prévio no ramo da demo, que achou quatro defeitos menores e nenhum bloqueante; não o conto como a reprodução. *Fonte:* `docs/hipoteses-e-incrementos.md` (Ficha 12); `docs/historias.md` (US09); `docs/evidencias/funcional.md` (seções 4 e 5). `[conferir no ensaio: resultado da reprodução]`
+Sim, uma vez. Em 08/11 clonei o ramo `demo/mvp-10-11` (commit `c3998dc`) numa pasta limpa, criei um venv novo e segui só o Guia: 382 testes passaram. Ficaram ambíguos o passo 2 (a frase do `py -3.12` contradizia "3.12 ou mais novo"), o passo 9 (o "Clique em Operações" era redundante) e o passo 11, que travou no PowerShell porque o `curl` ali é outro comando. Foi com as telas da Aula 14; refaço com as telas novas antes da v1.0, até 05/12. *Fonte:* `docs/evidencias/funcional.md` (seções 4 e 5); `docs/hipoteses-e-incrementos.md` (Ficha 12). `[conferir no ensaio: data, commit, testes e passos que travaram na reprodução com as telas novas]`
 
 **Quando o MQTT entra?**
 Quando houver gateway real. O gateway recebe os sinais por MQTT e os envia ao mesmo contrato HTTP; trocar o contrato exigiria um novo ADR. Nada disso está pronto. *Fonte:* `docs/api.md` (Fontes de sinal); `docs/adr/ADR-003-gateway-por-http.md` (Justificativa).
@@ -489,7 +489,7 @@ Cada `[conferir no ensaio: ...]` do texto, reunido aqui. Nenhum resultado abaixo
 | 5 | Tempo humano de H2 (meta 10 s) e mediana por script nas telas novas | Bloco 4b; slide 9, passo 2 | Cronômetro no ensaio |
 | 6 | Total de testes, de segurança e por regra | Bloco 5; slides 9 e 11 | Comandos de contagem em "Preparação" |
 | 7 | bandit, pip-audit e `tests/test_seguranca.py` rodados de novo | Bloco 5; slide 12 | Comandos em "Preparação", item 3 |
-| 8 | Resultado da reprodução pelo Guia (planejada até 05/12) | Bloco 5; slide 13 | Clone limpo, venv novo, só o Guia |
+| 8 | Resultado da reprodução com as telas novas (planejada até 05/12) | Bloco 5; slide 13; pergunta sobre o Guia | Clone limpo, venv novo, só o Guia |
 | 9 | Prints novos em `docs/evidencias/v1/` | Bloco 6; slides 8, 9, 10 e 14 | Tirar os prints com o app montado |
 | 10 | Suíte verde com as telas novas | Pergunta sobre as telas | `python -m pytest -q` |
 | 11 | A situação da federação continua a de 08/11/2026 | Bloco 7; slide 15 | Só o autor pode confirmar |
