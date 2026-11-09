@@ -310,7 +310,7 @@ Os cantos são retos (raio 0) em tudo: botão, campo, bloco, selo e tabela. O c�
 - **Decisão da fase 2: o Pico saiu.** As páginas não carregam mais o `pico.min.css`. O `app.css` traz a base própria, com todos os tokens acima como variáveis (`--chao`, `--tinta`, `--ativo`...). O padrão era manter o Pico e redefinir o `--pico-*`, mas três coisas pesaram: o Pico traz um tema escuro automático que briga com o modo Sistema e com o seletor de tema, quase todas as peças visíveis já eram próprias (moldura, selos, dossiê, faixa, tabela, mensagens, seletor e mapa), e sem a camada do `--pico-*` a especificidade fica simples.
 - **Elementos com estilo próprio no `app.css`:** `button` (`.botao`, `.botao.secundario`, `.botao.cheio`), `input`, `select`, checkbox (`.consentimento`), `details`/`summary` (`.alterar`), `table` (com `<th scope="row">` na primeira coluna), `label` (`.campo`), link de ação, o cabeçalho de página (`.cabeca`, no lugar do `hgroup`) e as colunas (`.duas-colunas`). O `<a role="button">` virou `<a class="botao">`, porque é um link.
 - **Leaflet:** o `mapa.css` devolve aos controles de zoom, à escala e à atribuição o visual descrito acima.
-- **O que sobrou:** `src/static/vendor/pico/` continua no repositório só como registro, listado no `ORIGEM.md`, e pode ser apagado.
+- **O que sobrou:** nada. A pasta `src/static/vendor/pico/` foi apagada na integração da fase 2.
 
 ## Do's and Don'ts
 

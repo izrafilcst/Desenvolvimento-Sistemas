@@ -100,7 +100,7 @@ No Linux, no macOS e no Git Bash, a ativação é `source .venv/bin/activate` (G
 | Mapa ao vivo | `/operacoes/2/mapa` (Bravo) | `src/templates/mapa.html`, `src/static/js/mapa.js`, `src/static/css/mapa.css` |
 | Moldura comum (menu, mensagens) | todas | `src/templates/base.html`, `src/static/css/app.css` |
 
-- O visual parte do [Pico CSS](https://picocss.com) (`src/static/vendor/pico/`), e os ajustes ficam em `app.css` e `mapa.css`. O app não tem build de front-end: o que você salva é o que o navegador recebe.
+- O visual segue o [`DESIGN.md`](DESIGN.md) (tokens, estados e componentes). O CSS fica em `app.css` (base, moldura e páginas comuns) e `mapa.css`, sem framework. O app não tem build de front-end: o que você salva é o que o navegador recebe.
 - **Mudou CSS ou JS:** recarregue a página com Ctrl+F5. **Mudou um template:** pare o app (Ctrl+C) e suba de novo, porque ele roda sem o modo de depuração.
 - Para ver a tela do observador, entre com o usuário `observador` numa janela anônima.
 - Os prints de todas as telas, bons para importar no Figma como referência, estão em [docs/evidencias/](docs/evidencias/). Os slides da demo ficam em `docs/apresentacao/` e abrem direto no navegador (setas para navegar, N para as notas).
@@ -151,7 +151,7 @@ src/
   repositorio.py  db.py  schema.sql       todo o SQL, conexão e esquema do SQLite
   simulador.py                            operadores simulados, só pela API
   demo_seed.py                            dados da demo
-  templates/  static/                     páginas Jinja, CSS, mapa.js, Leaflet e Pico
+  templates/  static/                     páginas Jinja, CSS, mapa.js, tema.js, Leaflet e fontes
 tests/                                    pytest: serviços, páginas, API, simulador, segurança e roteiro
 ```
 

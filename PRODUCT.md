@@ -38,7 +38,7 @@ Sucesso, pelas hipóteses (`docs/hipoteses-e-incrementos.md`):
 ## Capabilities and Constraints
 
 - Regras R1 a R11 (`docs/backlog.md`), todas com testes. Estados do operador: sem sinal, ativo (até 60 s), atrasado (60 a 120 s), perdido (acima de 120 s).
-- Flask, Jinja e `sqlite3` sem ORM (ADR-002). Sem build de front-end e sem dependência nova de Python. Leaflet e Pico.css servidos pelo próprio app em `src/static/vendor/`.
+- Flask, Jinja e `sqlite3` sem ORM (ADR-002). Sem build de front-end e sem dependência nova de Python. Leaflet e as fontes (Archivo e Chivo Mono) servidos pelo próprio app em `src/static/vendor/`.
 - CSP `default-src 'self'` e `script-src 'self'`: nada de script inline nem fonte externa. Todo texto vindo do servidor entra no mapa por `textContent`.
 - Times (Azul, Vermelho, Verde, Amarelo) e classes (Fuzileiro, Suporte, Atirador designado, Médico) são listas fixas no código.
 - Fora do MVP: MQTT, gateway real, ordens, objetivos, topologia da malha, integração com o operational-command e app de celular.
