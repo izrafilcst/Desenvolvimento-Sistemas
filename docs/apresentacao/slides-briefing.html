@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeshTracker Central, briefing</title>
+<link rel="icon" href="data:,">
+<script>
+/* Esconde o palco até o JS escolher o slide do #n; se algo falhar, solta em 3 s. */
+(function(){var d=document.documentElement;if(!/[?&]estatico/.test(location.search)){d.classList.add('anima');setTimeout(function(){d.classList.remove('anima')},3000);}})();
+</script>
+<style>
+/* Deck de teste no estilo "briefing de campo sobre papel suíço" (DESIGN.md na raiz).
+   Fontes em vendor/fonts (ver vendor/ORIGEM.md): a sala não precisa de internet. */
+@font-face { font-family: 'Archivo'; src: url(vendor/fonts/archivo-latin.woff2) format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Chivo Mono'; src: url(vendor/fonts/chivo-mono-latin.woff2) format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+/* ---------- palco fixo de 1920×1080, escalado por inteiro ---------- */
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0b0b0b; }
+.deck-viewport { position: fixed; inset: 0; overflow: hidden; background: #0b0b0b; user-select: none; -webkit-user-select: none; }
+.deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: #0c0d0d; }
+.slide { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; isolation: isolate; visibility: hidden; opacity: 0; pointer-events: none;
+  background: var(--bg); color: var(--fg); font: 500 32px/1.35 var(--f-ui); }
+.slide.active { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+.anima .deck-stage { visibility: hidden; }
+* { box-sizing: border-box; }
+img, svg { max-width: none; max-height: none; }
+@media print {
+  html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+  .deck-viewport { position: static; overflow: visible; background: #fff; }
+  .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+  .slide { position: relative; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; width: 1920px; height: 1080px; break-after: page; page-break-after: always; }
+  .slide:last-of-type { break-after: auto; page-break-after: auto; }
+  .progresso, .painel-notas, .varredura { display: none !important; }
+}
+
+/* ---------- tokens (DESIGN.md). Ajuste de projetor: o texto secundário sobe de contraste ---------- */
+:root {
+  --tinta: #0b0b0b; --tinta-2: #3d3d39; --chao: #ecebe6; --verm: #d1242f;
+  --e-chao: #0c0d0d; --e-tinta: #ecebe6; --e-tinta-2: #c3c4be;
+  /* estados do operador: a mesma tabela do mapa do app */
+  --ativo: #1a7f37; --atras: #d4a72c; --perd: #d1242f; --sem: #6e7781;
+  --f-ui: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --f-dado: 'Chivo Mono', ui-monospace, Consolas, monospace;
+}
+.slide { /* papel claro */
+  --bg: var(--chao); --fg: var(--tinta); --fg2: var(--tinta-2); --surf: #ffffff; --surf2: #f5f5f2;
+  --fio: rgba(11,11,11,.16); --forte: var(--tinta); --rt: var(--verm); --grade: rgba(11,11,11,.06);
+}
+.slide.escuro { /* sala de briefing */
+  --bg: var(--e-chao); --fg: var(--e-tinta); --fg2: var(--e-tinta-2); --surf: rgba(21,23,23,.94); --surf2: rgba(28,31,31,.94);
+  --fio: rgba(236,235,230,.2); --forte: #ecebe6; --rt: #ff6b5e; --grade: rgba(236,235,230,.05);
+}
+
+/* grade visível: colunas de 160 px */
+.slide::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(to right, var(--grade) 0 1px, transparent 1px 160px); }
+.slide > aside.notas { display: none; }
+.alvo { position: relative; }
+.a { position: absolute; margin: 0; }
+.fundo { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; z-index: -2; }
+.scrim { position: absolute; inset: 0; z-index: -1; background: rgba(12,13,13,.64); }
+
+/* ---------- moldura preta (igual em todos os temas) e régua ---------- */
+.mold { position: absolute; left: 0; top: 0; width: 1920px; height: 80px; z-index: 10; display: flex; align-items: center; gap: 40px; padding: 0 48px;
+  background: #0b0b0b; color: #f4f4f1; border-bottom: 1px solid rgba(244,244,241,.14); }
+.marca { display: flex; align-items: center; gap: 16px; font: 900 28px/1 var(--f-ui); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.marca small { font: 500 28px/1 var(--f-ui); letter-spacing: .14em; color: #b9b9b3; }
+.pontos { position: relative; width: 42px; height: 42px; flex: none; }
+.pontos i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #f4f4f1; }
+.pontos i:nth-child(1) { left: 3px; top: 6px; } .pontos i:nth-child(2) { left: 18px; top: 1px; }
+.pontos i:nth-child(3) { left: 7px; top: 22px; } .pontos i:nth-child(4) { left: 22px; top: 19px; }
+.pontos i.parado { left: 28px; top: 28px; width: 13px; height: 13px; background: none; border: 3px solid #f4f4f1; }
+.menu { display: flex; gap: 36px; margin-left: 24px; }
+.menu span { padding: 8px 0; font: 700 26px/1 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; color: #b9b9b3; border-bottom: 3px solid transparent; white-space: nowrap; }
+.menu span.on { color: #f4f4f1; border-bottom-color: #f4f4f1; }
+.pag { margin-left: auto; font: 500 26px/1 var(--f-dado); color: #b9b9b3; white-space: nowrap; }
+.pag b { color: #f4f4f1; font-weight: 500; }
+.regua { position: absolute; left: 0; top: 80px; width: 1920px; height: 14px; z-index: 5; pointer-events: none; opacity: .6;
+  background: repeating-linear-gradient(to right, var(--forte) 0 2px, transparent 2px 160px) left bottom / 100% 14px no-repeat,
+              repeating-linear-gradient(to right, var(--forte) 0 1px, transparent 1px 20px) left bottom / 100% 6px no-repeat; }
+
+/* ---------- título (único elemento que "aparece como digitado") ---------- */
+.kick { position: absolute; left: 160px; top: 116px; margin: 0; font: 700 26px/1.2 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; color: var(--fg2); }
+.titulo { position: absolute; left: 160px; top: 156px; margin: 0; width: fit-content; max-width: 1600px; font: 900 84px/1 var(--f-ui); letter-spacing: .01em; text-transform: uppercase; }
+.titulo.gig { font-size: 168px; line-height: .92; letter-spacing: 0; }
+.hip, .hid { display: inline-block; border: 4px solid currentColor; font-weight: 900; letter-spacing: .04em; }
+.hip { margin-right: .3em; padding: .16em .26em .1em; font-size: .42em; line-height: 1; vertical-align: .28em; }
+.hid { width: 110px; padding: 14px 0 10px; text-align: center; font-size: 52px; line-height: 1; }
+@keyframes digitar { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+@keyframes aparece { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.entra .titulo { animation: digitar 450ms steps(16, end) 80ms both; }
+.entra .ap { animation: aparece 260ms ease-out calc(var(--i, 0) * 45ms + 140ms) both; }
+.passo .ap { animation: aparece 240ms ease-out calc(var(--i, 0) * 45ms + 30ms) both; }
+
+/* ---------- texto, rótulo, dado ---------- */
+.rot { margin: 0; font: 700 26px/1.2 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; color: var(--fg2); }
+.rot.fg { color: var(--fg); }
+.tx { margin: 0; font: 500 32px/1.35 var(--f-ui); text-wrap: pretty; }
+.tx b { font-weight: 800; }
+.g { font-size: 36px; line-height: 1.3; }
+.gg { font-size: 44px; line-height: 1.2; }
+.mudo { color: var(--fg2); }
+.verm { color: var(--rt); }
+.dado { font-family: var(--f-dado); font-weight: 500; font-variant-numeric: tabular-nums; }
+.gn { display: flex; align-items: baseline; gap: 14px; margin: 0; font: 900 130px/1 var(--f-ui); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.gn small { font-size: 48px; letter-spacing: 0; }
+.cod { font: 800 64px/1 var(--f-dado); font-variant-numeric: tabular-nums; }
+.cd { display: inline-block; margin: 0 2px; padding: 0 10px; border: 2px solid var(--forte); background: var(--surf); font: 800 32px/1.4 var(--f-dado); }
+.cd.verm { border-color: var(--rt); }
+.tg { display: inline-block; padding: 5px 12px 3px; font: 700 26px/1.15 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; border: 2px solid var(--forte); white-space: nowrap; }
+.tg.cheio { background: var(--forte); color: var(--bg); }
+.tg.aviso { background: var(--atras); color: #0b0b0b; border-color: var(--atras); }
+.tg.rec { background: var(--perd); color: #fff; border-color: var(--perd); }
+.tg.dado { font-family: var(--f-dado); font-weight: 500; text-transform: none; letter-spacing: 0; }
+
+/* ---------- blocos: dossiê com colchetes de alvo, linhas de razão ---------- */
+.dos { position: absolute; background: var(--surf); border: 1px solid var(--forte); padding: 28px 32px; }
+.alvo::after { content: ""; position: absolute; inset: calc(-1 * var(--alvo-fora, 9px)); pointer-events: none;
+  --c: var(--alvo-cor, var(--forte)); --l: var(--alvo-braco, 18px); --t: var(--alvo-traco, 2px);
+  background:
+    linear-gradient(var(--c), var(--c)) left top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left top / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right top / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left bottom / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right bottom / var(--t) var(--l) no-repeat; }
+.lin { display: grid; grid-template-columns: var(--c, 1fr); align-items: center; gap: 24px; border-top: 2px solid var(--forte); padding: 14px 0; }
+.lin.fino { border-top-width: 1px; border-top-color: var(--fio); }
+.sem-borda { border-top: 0; }
+.carimbo { position: absolute; margin: 0; padding: 8px 14px; font: 500 26px/1.3 var(--f-dado); background: var(--surf); border: 1px solid var(--forte); color: var(--fg); }
+.osm { position: absolute; right: 0; bottom: 0; z-index: 6; margin: 0; padding: 6px 18px; font: 500 26px/1.3 var(--f-ui); color: var(--fg); background: var(--surf); border-top: 1px solid var(--forte); border-left: 1px solid var(--forte); }
+.slide:not(.tem-fundo) .osm { display: none; }
+.rodape { position: absolute; left: 160px; top: 974px; width: 1600px; margin: 0; padding-top: 16px; border-top: 2px solid var(--forte); display: flex; justify-content: space-between; font: 600 26px/1.3 var(--f-ui); }
+
+/* dois passos: o "antes" some quando o "depois" entra */
+.slide.p1 [data-s="depois"], .slide.p2 [data-s="antes"] { display: none !important; }
+
+/* selos de estado: cor, forma e texto (DESIGN.md) */
+.selo { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 4px; font: 700 26px/1.15 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.selo::before { content: ""; flex: none; width: 12px; height: 12px; border-radius: 50%; background: currentColor; }
+.selo.ativo { background: var(--ativo); color: #fff; } .selo.atras { background: var(--atras); color: #0b0b0b; }
+.selo.perd { background: var(--perd); color: #fff; } .selo.perd::before { width: 14px; height: 14px; background: none; border: 3px solid currentColor; }
+.selo.sem { background: var(--sem); color: #fff; }
+
+/* prints: quadro com colchetes, imagem 16:10 e reserva se o arquivo faltar */
+.print { position: absolute; margin: 0; width: 640px; }
+.print .q { position: relative; width: 640px; height: 400px; border: 1px solid var(--forte); background: var(--surf); }
+.print.larga, .print.larga .q { width: 780px; } .print.larga .q { height: 487px; }
+.print img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
+.print figcaption { margin-top: 24px; font: 500 26px/1.3 var(--f-ui); color: var(--fg2); }
+.ph { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; padding: 24px; text-align: center; font: 700 26px/1.3 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; color: var(--fg2);
+  background: repeating-linear-gradient(135deg, transparent 0 14px, var(--fio) 14px 16px); }
+.print.sem .ph { display: flex; } .print.sem img { display: none; }
+
+/* setas e ligações desenhadas em CSS */
+.lig { flex: 1; height: 4px; background: repeating-linear-gradient(to right, var(--forte) 0 14px, transparent 14px 24px); }
+.sg { position: relative; flex: 1; height: 4px; background: var(--forte); }
+.sg::after { content: ""; position: absolute; right: -2px; top: -10px; border-left: 20px solid var(--forte); border-top: 12px solid transparent; border-bottom: 12px solid transparent; }
+.sg.trac { background: repeating-linear-gradient(to right, var(--forte) 0 14px, transparent 14px 24px); }
+.cx { padding: 30px 32px; background: var(--surf); border: 1px solid var(--forte); }
+.cx b { display: block; margin-bottom: 14px; font: 900 36px/1.1 var(--f-ui); }
+.cx.eu { background: var(--tinta); color: var(--chao); --forte: var(--tinta); }
+.cx.trac { border: 3px dashed var(--forte); background: transparent; }
+.seq { display: inline-flex; align-items: center; vertical-align: middle; }
+.seq i { position: relative; padding: 4px 12px 2px; border: 2px solid var(--forte); font: 700 28px/1.2 var(--f-dado); font-style: normal; }
+.seq i + i { margin-left: 40px; }
+.seq i + i::before { content: ""; position: absolute; left: -36px; top: calc(50% - 1px); width: 34px; height: 2px; background: var(--forte); }
+.seq i + i::after { content: ""; position: absolute; left: -12px; top: calc(50% - 7px); border-left: 11px solid var(--forte); border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+
+/* hipóteses, recorte, ADRs */
+.hr { display: grid; grid-template-columns: 130px 560px 270px 1fr; gap: 0 32px; align-items: center; min-height: 172px; padding: 18px 0; border-top: 2px solid var(--forte); }
+.inc { display: grid; grid-template-columns: 250px 1fr; gap: 24px; align-items: baseline; padding: 20px 0 22px; border-top: 2px solid var(--forte); }
+.inc .dado { display: block; margin-top: 6px; font-size: 26px; color: var(--fg2); }
+.fora { border: 3px dashed var(--forte); padding: 28px 32px 30px; }
+.fora .tx.it { padding: 9px 0; border-bottom: 1px solid var(--fio); font-weight: 700; }
+.ar { display: grid; grid-template-columns: 360px 1fr; gap: 32px; align-items: baseline; padding: 26px 0 28px; border-top: 2px solid var(--forte); }
+.ar .tx { font-size: 38px; line-height: 1.3; }
+
+/* barras de testes por regra */
+.br { display: grid; grid-template-columns: 100px 400px 1fr; align-items: center; height: 70px; border-top: 1px solid var(--fio); }
+.br .dado { font-size: 28px; font-weight: 800; }
+.br .nm { font: 600 28px/1.1 var(--f-ui); }
+.br .bar { display: flex; align-items: center; gap: 14px; font: 800 30px/1 var(--f-ui); font-variant-numeric: tabular-nums; }
+.br .bar i { display: block; height: 34px; width: calc(var(--v) * 10px); background: var(--tinta); }
+.br.alta { background: var(--surf); border: 1px solid var(--forte); } .br.alta .nm { font-weight: 800; }
+
+/* régua do estado (R9) */
+.reg { position: relative; width: 890px; height: 216px; }
+.reg .seg { position: absolute; top: 76px; height: 64px; display: flex; align-items: center; padding-left: 18px; }
+.reg .seta { clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 50%, calc(100% - 30px) 100%, 0 100%); }
+.reg .lm { position: absolute; top: 4px; width: 240px; text-align: center; font: 500 26px/1 var(--f-dado); }
+.reg .tk { position: absolute; top: 40px; width: 2px; height: 32px; background: var(--forte); }
+.reg .fx { position: absolute; top: 150px; font: 600 26px/1.2 var(--f-ui); color: var(--fg2); }
+
+/* figuras de "o que olhar" (slide 9) */
+.olhar { display: grid; grid-template-columns: 230px 1fr; gap: 28px; align-items: center; padding: 22px 0; border-top: 2px solid var(--forte); }
+.fxm { display: flex; border: 1px solid var(--forte); background: var(--surf); width: 220px; }
+.fxm i { position: relative; flex: 1; height: 44px; border-right: 1px solid var(--fio); }
+.fxm i:last-child { border-right: 0; }
+.fxm i::after { content: ""; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; }
+.fxm .p::after { border: 4px solid var(--perd); } .fxm .t::after { border: 4px dashed var(--atras); }
+.fxm .v::after { background: var(--ativo); } .fxm .s::after { background: var(--sem); } .fxm .d::after { border-radius: 0; border: 2px solid var(--fg2); width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+.mk { position: relative; width: 64px; height: 64px; margin-left: 24px; border: 8px solid var(--perd); border-radius: 50%; --alvo-cor: var(--perd); --alvo-braco: 14px; --alvo-traco: 3px; --alvo-fora: 14px; }
+
+/* abertura e fechamento: motivo dos pontos */
+.motivo { position: absolute; }
+
+/* ---------- varredura (troca de câmera) dos slides escuros: 12 barras, uma por coluna da grade ---------- */
+.varredura { position: absolute; inset: 0; z-index: 50; pointer-events: none; }
+.varredura i { position: absolute; top: 0; width: 161px; height: 100%; background: #0b0b0b; transform: scaleY(0); will-change: transform; }
+.estatico .varredura { display: none; }
+
+/* ---------- cromo da apresentação ---------- */
+.progresso { position: fixed; left: 0; bottom: 0; height: 4px; width: 100%; z-index: 1000; }
+.progresso i { display: block; height: 100%; width: 0; background: #f4f4f1; mix-blend-mode: difference; }
+.painel-notas { display: none; position: fixed; left: 0; right: 0; bottom: 0; max-height: 50vh; overflow: auto; z-index: 2000; background: #0b0b0b; color: #f4f4f1; padding: 18px 28px 22px; font: 400 22px/1.45 var(--f-ui); }
+.mostra-notas .painel-notas { display: block; }
+.painel-notas h2 { margin: 0 0 8px; font: 800 16px/1 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; color: #b9b9b3; }
+.painel-notas p { margin: 0 0 .6em; max-width: 120ch; }
+.painel-notas .cuid { padding-top: .5em; border-top: 1px solid rgba(244,244,241,.35); color: #ecebe6; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+.estatico *, .estatico *::before, .estatico *::after { animation: none !important; transition: none !important; }
+</style>
+</head>
+<body>
+<div class="deck-viewport" id="vp"><div class="deck-stage" id="palco">
+
+<!-- ============ SLIDE 1: ABERTURA (escuro, bloco 1) ============ -->
+<section class="slide escuro active" data-n="1" data-bloco="1" aria-label="Abertura">
+  <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
+  <p class="carimbo a" style="left:160px;top:122px">Demo Day · 15/12/2026</p>
+  <h1 class="titulo gig" style="top:182px"><span>MeshTracker</span><br><span>Central</span></h1>
+  <p class="tx g a ap" style="left:160px;top:516px;width:1300px">Painel do organizador de operações de airsoft do DF</p>
+  <div class="dos ap" style="left:160px;top:622px;width:560px;height:240px"><p class="rot">Problema 1</p><p class="tx" style="margin-top:12px">O operador teria de <b>se cadastrar de novo</b> a cada operação.</p></div>
+  <div class="dos ap" style="left:760px;top:622px;width:560px;height:240px"><p class="rot">Problema 2</p><p class="tx" style="margin-top:12px">Cada dispositivo <b>esquece quem some por 2 minutos</b>, e ninguém vê o conjunto.</p></div>
+  <svg class="motivo ap" style="left:1420px;top:620px" width="340" height="260" viewBox="0 0 340 260" aria-hidden="true">
+    <g fill="#ecebe6"><circle cx="46" cy="62" r="21"/><circle cx="160" cy="24" r="21"/><circle cx="104" cy="150" r="21"/><circle cx="224" cy="116" r="21"/></g>
+    <circle cx="282" cy="204" r="25" fill="none" stroke="#d1242f" stroke-width="8"/>
+    <path d="M236 182V158H260M304 158H328V182M236 226V250H260M304 250H328V226" fill="none" stroke="#d1242f" stroke-width="4"/>
+  </svg>
+  <p class="tx a ap" style="left:160px;top:906px;width:1600px"><span class="tg aviso">Aviso</span>&nbsp; Sinais simulados. Problema ainda não confirmado com a federação.</p>
+  <footer class="rodape"><span>Rafael Alves de Sousa Costa</span><span>Desenvolvimento de Sistemas · CEUB · Demo Day, 15/12/2026</span></footer>
+  <p class="osm">© OpenStreetMap contributors</p>
+  <aside class="notas"><p>Este é o MeshTracker Central, um painel web para o organizador de operações de airsoft do Distrito Federal.</p><p>Vi dois problemas nos meus próprios projetos. O operador teria de se cadastrar de novo a cada operação. E cada dispositivo só enxerga os vizinhos e esquece quem some por 2 minutos, então ninguém vê o conjunto.</p><p>Não confirmei isso com a federação.</p></aside>
+</section>
+
+<!-- ============ SLIDE 2: A CENTRAL QUE FALTAVA (claro, bloco 1) ============ -->
+<section class="slide" data-n="2" data-bloco="1" aria-label="A central que faltava">
+  <h1 class="titulo">A central que faltava</h1>
+  <div class="a ap" style="left:160px;top:300px;width:1600px;display:flex;align-items:center">
+    <div class="cx" style="width:440px;height:290px"><b>operational-command</b><p class="tx g">Gere as operações.</p></div>
+    <i class="lig"></i>
+    <div class="cx eu alvo" style="width:440px;height:290px"><b>MeshTracker Central</b><p class="tx g">Inscreve e mostra no mapa.</p></div>
+    <i class="lig"></i>
+    <div class="cx" style="width:440px;height:290px"><b>Dispositivo MeshTracker</b><p class="tx g">GPS e rádio LoRa de 433 MHz.</p></div>
+  </div>
+  <div class="a lin ap" style="--c:320px 1fr;left:160px;top:660px;width:1600px;padding:22px 0"><span class="rot fg">Nesta demo</span><span class="tx gg">Sem integração com o operational-command, sem dispositivo: <b>sinais simulados</b>.</span></div>
+  <div class="a lin ap" style="--c:320px 1fr;left:160px;top:826px;width:1600px;padding:22px 0"><span class="rot fg">Por que agora</span><span class="tx gg">Os dois projetos já existem; o MVP cabe em <b>três incrementos</b>, até 08/12.</span></div>
+  <aside class="notas"><p>Eu desenvolvo o operational-command, que gere as operações, e o MeshTracker, um dispositivo com GPS e rádio LoRa. Faltava ligar os dois. Por que agora: os dois já existem, e o MVP do Ciclo 2 cabe em três incrementos.</p><p>Nesta demo, a ligação é só o desenho: não integro o operational-command, não uso o dispositivo, e os sinais são simulados.</p></aside>
+</section>
+
+<!-- ============ SLIDE 3: QUATRO HIPÓTESES (claro, bloco 2) ============ -->
+<section class="slide" data-n="3" data-bloco="2" aria-label="Quatro hipóteses">
+  <h1 class="titulo">Quatro hipóteses</h1>
+  <div class="a" style="left:160px;top:276px;width:1600px">
+    <div class="hr ap"><b class="hid">H1</b><p class="tx">O recadastro some quando o perfil é permanente e a inscrição é por operação.</p><p class="gn"><span>3</span><small>min</small></p><p class="tx">Inscrever 5 operadores já cadastrados numa 2ª operação, sem redigitar dados.</p></div>
+    <div class="hr ap"><b class="hid">H2</b><p class="tx">Com o estado de cada operador no mapa, o organizador percebe quem ficou sem contato.</p><p class="gn"><span>10</span><small>s</small></p><p class="tx">Apontar quem está perdido, e há quanto tempo, depois de abrir o mapa.</p></div>
+    <div class="hr ap"><b class="hid">H3</b><p class="tx">Só inscritos com consentimento viram posição, e o observador só lê.</p><p><span class="tg">Testes</span></p><p class="tx">Nenhum sinal de não inscrito vira posição; nenhuma escrita do observador passa.</p></div>
+    <div class="hr ap"><b class="hid">H4</b><p class="tx">A API permite trocar o simulador pelo gateway real sem mudar a regra.</p><p><span class="tg">Teste de API</span></p><p class="tx">O simulador e o curl usam só a API, sem tocar no banco.</p></div>
+  </div>
+  <aside class="notas"><p>São quatro hipóteses, cada uma com um sinal que dá para medir: duas são tempos e duas são testes. H1: inscrever cinco operadores já cadastrados numa segunda operação, sem redigitar dados, em até 3 minutos. H2: apontar quem está perdido, e há quanto tempo, em até 10 segundos depois de abrir o mapa.</p><p>H3: nenhum sinal de quem não está inscrito vira posição, e nenhuma escrita do observador passa. H4: o simulador e o curl usam só a API, sem tocar no banco.</p></aside>
+</section>
+
+<!-- ============ SLIDE 4: O RECORTE (claro, bloco 2) ============ -->
+<section class="slide" data-n="4" data-bloco="2" aria-label="O recorte">
+  <h1 class="titulo">O recorte</h1>
+  <div class="a" style="left:160px;top:276px;width:900px">
+    <p class="rot fg ap" style="margin-bottom:12px">Dentro</p>
+    <div class="inc ap"><div><b class="rot fg">Incremento 1</b><span class="dado">10/11</span></div><p class="tx g">Cadastro do operador, operação e inscrição.</p></div>
+    <div class="inc ap"><div><b class="rot fg">Incremento 2</b><span class="dado">24/11</span></div><p class="tx g">Simulador, sinais filtrados, estado do operador, mapa e observador.</p></div>
+    <div class="inc ap"><div><b class="rot fg">Incremento 3</b><span class="dado">08/12</span></div><p class="tx g">API com token, Guia de reprodução e v1.0.</p></div>
+    <p class="tx ap" style="margin-top:18px;padding-top:18px;border-top:2px solid var(--forte)"><span class="tg">Desejável</span>&nbsp; Só se sobrar tempo: trilha dos últimos 10 pontos e exportação CSV.</p>
+  </div>
+  <div class="a fora ap" style="left:1120px;top:276px;width:640px">
+    <p class="rot fg" style="margin-bottom:10px">Fora</p>
+    <p class="tx it">MQTT</p><p class="tx it">Gateway real</p><p class="tx it">Ordens</p><p class="tx it">Objetivos</p><p class="tx it">Topologia da malha</p><p class="tx it">Integração com o operational-command</p>
+    <p class="tx" style="margin-top:22px"><b>Motivo:</b> exigem hardware, infraestrutura ou outro sistema.</p>
+  </div>
+  <aside class="notas"><p>O recorte: ficou dentro o que cabe em três incrementos. Ficou fora o que exige hardware, infraestrutura ou outro sistema: MQTT, gateway real, ordens, objetivos, topologia da malha e integração com o operational-command.</p><p class="cuid"><b>Conferir no ensaio:</b> a trilha dos últimos 10 pontos e o CSV ficaram de fora ou entraram? Troque a linha "Desejável" do slide.</p></aside>
+</section>
+
+<!-- ============ SLIDE 5: ADR-001 (claro, bloco 3) ============ -->
+<section class="slide" data-n="5" data-bloco="3" aria-label="ADR-001">
+  <p class="kick">ADR-001 · O modelo de dados</p>
+  <h1 class="titulo">Perfil permanente,<br>inscrição por operação</h1>
+  <div class="a" style="left:160px;top:376px;width:1600px">
+    <div class="ar ap"><span class="rot fg">Contexto</span><p class="tx">O operador joga várias operações, e time, classe e dispositivo mudam. A posição é dado pessoal, e o consentimento vale por operação.</p></div>
+    <div class="ar ap"><span class="rot fg">Decisão</span><p class="tx"><b>O perfil é permanente e a inscrição guarda o que muda.</b></p></div>
+    <div class="ar ap"><span class="rot fg">Descartei</span><p class="tx">Cadastrar o operador dentro de cada operação: obriga o recadastro.</p></div>
+    <div class="ar ap"><span class="rot fg">Na demo e nos testes</span><p class="tx">Inscrever os 5 sem recadastro (H1). Regras R1 a R5; <span class="cd verm">R2</span> e <span class="cd verm">R3</span> são UNIQUE no banco.</p></div>
+  </div>
+  <aside class="notas"><p>ADR-001, o modelo de dados. O mesmo operador joga várias operações, e time, classe e dispositivo mudam de uma para outra. A posição em campo é dado pessoal, e o consentimento vale por operação.</p><p>Decidi que o perfil do operador é permanente e a inscrição guarda o que muda. Descartei cadastrar o operador dentro de cada operação, porque obriga o recadastro.</p><p>Na demo, inscrevo os cinco sem recadastro. Nos testes, são as regras R1 a R5; a R2 e a R3 são UNIQUE no banco.</p></aside>
+</section>
+
+<!-- ============ SLIDE 6: ADR-002 (claro, bloco 3) ============ -->
+<section class="slide" data-n="6" data-bloco="3" aria-label="ADR-002">
+  <p class="kick">ADR-002 · A stack</p>
+  <h1 class="titulo">Flask e SQLite</h1>
+  <div class="a" style="left:160px;top:296px;width:1600px">
+    <div class="ar ap"><span class="rot fg">Contexto</span><p class="tx">Vue, Express, MongoDB e Docker eram quatro serviços e um build de front-end, para 9 dias, trabalhando sozinho.</p></div>
+    <div class="ar ap"><span class="rot fg">Decisão</span><p class="tx"><b>Flask e SQLite, em três comandos.</b> O código vai de <span class="seq"><i>rotas</i><i>serviços</i><i>repositório</i></span></p></div>
+    <div class="ar ap"><span class="rot fg">Descartei</span><p class="tx">MEVN e Flask com MongoDB.</p></div>
+    <div class="ar ap"><span class="rot fg">Na demo e nos testes</span><p class="tx">O banco recusa o duplicado (<span class="cd verm">R2</span> e <span class="cd verm">R3</span>). A regra roda em <span class="dado">servicos.py</span>, sem servidor.</p></div>
+    <div class="ar ap"><span class="rot fg">Preço</span><p class="tx">Sem WebSocket: o mapa consulta a API a cada 3 s.</p></div>
+  </div>
+  <aside class="notas"><p>ADR-002, a stack. A proposta da Aula 7 tinha Vue, Express, MongoDB e Docker: quatro serviços e um build de front-end para nove dias, e eu trabalho sozinho.</p><p>Decidi por Flask e SQLite: instalar, testar e rodar em três comandos. O código vai de rotas a serviços a repositório, e a regra fica em servicos.py, testável sem servidor. Descartei o MEVN e o Flask com MongoDB.</p><p>O preço: sem WebSocket, o mapa consulta a cada 3 segundos. Na demo, o banco recusa o duplicado. Nos testes, as regras rodam direto nos serviços.</p></aside>
+</section>
+
+<!-- ============ SLIDE 7: ADR-003 (claro, bloco 3) ============ -->
+<section class="slide" data-n="7" data-bloco="3" aria-label="ADR-003">
+  <p class="kick">ADR-003 · O contrato do sinal</p>
+  <h1 class="titulo">HTTP no lugar de MQTT</h1>
+  <div class="a" style="left:160px;top:296px;width:1600px">
+    <div class="ar ap"><span class="rot fg">Contexto</span><p class="tx">Sem hardware nem gateway real no MVP, mas o simulador, o descarte e o mapa precisam de um contrato.</p></div>
+    <div class="ar ap"><span class="rot fg">Decisão</span><p class="tx"><b><span class="dado">POST /api/v1/sinais</span> com JSON.</b> Os códigos: <span class="cd verm">401</span> sem token, <span class="cd">202</span> descartado, <span class="cd">200</span> duplicado, <span class="cd">201</span> gravado.</p></div>
+    <div class="ar ap"><span class="rot fg">Descartei</span><p class="tx">MQTT com Mosquitto: broker, TLS e permissões por tópico. Ele volta com o gateway real.</p></div>
+    <div class="ar ap"><span class="rot fg">Na demo e nos testes</span><p class="tx">O terminal da demo (H4). Regras R7, R8 e R11.</p></div>
+  </div>
+  <aside class="notas"><p>ADR-003, o contrato do sinal. Sem hardware nem gateway no MVP, o simulador, o descarte e o mapa ainda dependem de um contrato. Qual é o menor que leva o sinal até a regra e ao mapa?</p><p>Decidi por HTTP com JSON. O simulador e o curl falam o mesmo contrato: 401 sem token, 202 descartado, 200 duplicado, 201 gravado. Descartei o MQTT, que traria broker, TLS e permissões por tópico, e volta com o gateway real.</p><p>Na demo, vocês veem esses códigos no terminal. Nos testes, são as regras R7, R8 e R11.</p></aside>
+</section>
+
+<!-- ============ SLIDE 8: DEMO H1 (escuro, bloco 4, dois passos) ============ -->
+<section class="slide escuro p1" data-n="8" data-bloco="4" data-passos="2" aria-label="Demonstração ao vivo: inscrição">
+  <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
+  <p class="carimbo a" data-s="antes" style="left:160px;top:122px">Demo ao vivo · passo 1 de 2</p>
+  <p class="carimbo a" data-s="depois" style="left:160px;top:122px">Demo ao vivo · passo 2 de 2</p>
+  <h1 class="titulo" style="top:182px"><b class="hip">H1</b>Inscrever sem<br>recadastrar</h1>
+  <!-- passo 1: hipótese, meta e o que olhar -->
+  <div class="dos alvo ap" data-s="antes" style="left:160px;top:440px;width:800px;height:520px"><p class="rot">Meta da H1</p><p class="gn" style="font-size:300px;line-height:.95;margin-top:10px"><span>3</span><small style="font-size:110px">min</small></p><p class="tx g" style="margin-top:14px">Os 5 já cadastrados entram na Operação Charlie em até 3 min.</p></div>
+  <div class="dos ap" data-s="antes" style="left:1040px;top:440px;width:720px;height:520px"><p class="rot">O que olhar</p><p class="tx gg" style="margin-top:36px;font-size:56px;line-height:1.15">O formulário <b>não pede nome</b>.</p><p class="tx gg" style="margin-top:44px;padding-top:44px;border-top:2px solid var(--forte);font-size:56px;line-height:1.15">E as <b>três recusas</b>.</p></div>
+  <!-- passo 2: o resultado -->
+  <div class="a ap" data-s="depois" style="left:160px;top:424px;width:900px">
+    <p class="tx" style="font:800 46px/1.1 var(--f-ui)">5 inscritos, nenhum cadastro refeito.</p>
+    <p class="rot" style="margin:30px 0 8px">Três recusas</p>
+    <div class="lin" style="--c:170px 1fr auto;padding:12px 0"><b class="cod verm">R2</b><span class="tx g">operador repetido</span><span class="tg">UNIQUE no banco</span></div>
+    <div class="lin" style="--c:170px 1fr auto;padding:12px 0"><b class="cod verm">R3</b><span class="tx g">dispositivo repetido</span><span class="tg">UNIQUE no banco</span></div>
+    <div class="lin" style="--c:170px 1fr auto;padding:12px 0"><b class="cod verm">R5</b><span class="tx g">sem consentimento</span><span></span></div>
+    <p class="tx mudo" style="margin-top:20px">Por script, nas telas da Aula 14: <span class="dado">554 ms</span>. Mede o fluxo, não uma pessoa.</p>
+  </div>
+  <figure class="print ap" data-s="depois" style="left:1120px;top:424px"><div class="q alvo"><img src="../design/telas/organizador-operacao-charlie-1440.png" alt="Operação Charlie, com os 5 operadores inscritos"><div class="ph">Print da Charlie em preparação</div></div><figcaption>Operação Charlie, com os 5 inscritos.</figcaption></figure>
+  <p class="tx g a ap" data-s="depois" style="left:1120px;top:900px;width:640px"><b>ADR-001:</b> o perfil é permanente.</p>
+  <p class="osm">© OpenStreetMap contributors</p>
+  <aside class="notas" data-p="1"><p>Hipótese 1: inscrever sem recadastrar. A meta é cinco operadores já cadastrados na Operação Charlie em até 3 minutos. Olhem o formulário, que não pede nome, e as três recusas.</p><p class="cuid"><b>Troque para a aba da Operação Charlie</b> (organizador, Planejada, sem inscritos). Não clique em "Iniciar operação".</p><p>Esta é a Charlie, vazia. Os cinco operadores já estão cadastrados. Inscrever pede só time, classe, dispositivo e consentimento.</p><p class="cuid"><b>Inscreva o Falcão</b> (Azul, Fuzileiro, MT-01, consentimento marcado, "Inscrever"). Depois, as três recusas, uma a uma.</p><p><b>Recusa 1</b> (Falcão de novo): Primeira recusa: o Falcão de novo. Regra R2.</p><p><b>Recusa 2</b> (Lobo com MT-01, consentimento marcado): Segunda: o Lobo com o dispositivo do Falcão. Regra R3.</p><p><b>Recusa 3</b> (Lobo com MT-02, consentimento desmarcado): Terceira: o Lobo sem consentimento. Regra R5.</p><p class="cuid"><b>Inscreva o Lobo (MT-02), a Coruja, a Raposa e a Pantera</b>, pelo teclado, em silêncio. Mostre a lista com 5 inscritos. <b>Volte aos slides e avance para o passo 2.</b> Sem F5 depois de uma recusa.</p></aside>
+  <aside class="notas" data-p="2"><p>Cinco inscritos, nenhum cadastro refeito. Por script, o fluxo levou 554 milissegundos. Isso mede o sistema, não uma pessoa.</p><p class="cuid"><b>Conferir no ensaio:</b> o tempo cronometrado de H1 (31 ações e 3 recusas) e, se as telas novas mudarem o fluxo, a medição por script refeita. Troque a linha de apoio do slide e a fala pelo tempo medido.</p></aside>
+</section>
+
+<!-- ============ SLIDE 9: DEMO H2 (escuro, bloco 4, dois passos) ============ -->
+<section class="slide escuro p1" data-n="9" data-bloco="4" data-passos="2" aria-label="Demonstração ao vivo: mapa">
+  <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
+  <p class="carimbo a" data-s="antes" style="left:160px;top:122px">Demo ao vivo · passo 1 de 2</p>
+  <p class="carimbo a" data-s="depois" style="left:160px;top:122px">Demo ao vivo · passo 2 de 2</p>
+  <h1 class="titulo" style="top:182px"><b class="hip">H2</b>Quem está perdido,<br>e há quanto tempo</h1>
+  <!-- passo 1 -->
+  <div class="dos alvo ap" data-s="antes" style="left:160px;top:440px;width:760px;height:520px"><p class="rot">Meta da H2</p><p class="gn" style="font-size:300px;line-height:.95;margin-top:10px"><span>10</span><small style="font-size:110px">s</small></p><p class="tx g" style="margin-top:14px">Apontar quem está perdido, e há quanto tempo, depois de abrir o mapa.</p></div>
+  <div class="dos ap" data-s="antes" style="left:1000px;top:440px;width:760px;height:520px;padding:24px 32px"><p class="rot">O que olhar</p>
+    <div class="olhar" style="margin-top:14px"><span class="fxm"><i class="p"></i><i class="t"></i><i class="v"></i><i class="s"></i><i class="d"></i></span><p class="tx">A <b>faixa de contagem</b> acima do mapa.</p></div>
+    <div class="olhar"><span class="mk alvo"></span><p class="tx">A <b>Coruja (MT-03)</b>, com colchetes.</p></div>
+    <div class="olhar"><span><span class="tg dado">MT-99</span></span><p class="tx">Só no <b>contador de descartados</b>.</p></div>
+  </div>
+  <!-- passo 2 -->
+  <div class="a ap" data-s="depois" style="left:160px;top:424px;width:900px"><p class="rot" style="margin-bottom:10px">R9 · estado pelo tempo desde o último sinal</p>
+    <div class="reg">
+      <span class="lm" style="left:315px">59·60·61 s</span><span class="lm" style="left:540px">119·120·121 s</span>
+      <i class="tk" style="left:431px"></i><i class="tk" style="left:435px"></i><i class="tk" style="left:439px"></i>
+      <i class="tk" style="left:646px"></i><i class="tk" style="left:650px"></i><i class="tk" style="left:654px"></i>
+      <span class="seg selo sem" style="left:0;width:210px">Sem sinal</span>
+      <span class="seg selo ativo" style="left:210px;width:225px">Ativo</span>
+      <span class="seg selo atras" style="left:435px;width:225px">Atrasado</span>
+      <span class="seg selo perd seta" style="left:660px;width:230px">Perdido</span>
+      <span class="fx" style="left:0;width:200px">nunca recebeu</span><span class="fx" style="left:210px">até 60 s</span><span class="fx" style="left:435px">60 a 120 s</span><span class="fx" style="left:660px">acima de 120 s</span>
+    </div>
+  </div>
+  <div class="a ap" data-s="depois" style="left:160px;top:704px;width:900px;display:flex;align-items:center;gap:28px"><b class="dado" style="font-size:44px;font-weight:800">R9</b><p class="gn" style="font-size:120px"><span>39</span></p><p class="tx g" style="line-height:1.15">testes nos limites do tempo, contados em 09/11/2026</p></div>
+  <div class="a lin ap" data-s="depois" style="--c:140px 1fr;left:160px;top:850px;width:900px;padding:10px 0"><b class="cod">202</b><span class="tx" style="font-size:30px"><b>R7:</b> o MT-99, não inscrito, só conta como descartado.</span></div>
+  <div class="a lin ap" data-s="depois" style="--c:140px 1fr;left:160px;top:940px;width:900px;padding:10px 0"><b class="cod">200</b><span class="tx" style="font-size:30px"><b>R8:</b> pacote repetido não grava de novo.</span></div>
+  <figure class="print ap" data-s="depois" style="left:1120px;top:424px"><div class="q alvo"><img src="../design/telas/organizador-mapa-1440.png" alt="Mapa da Operação Bravo, com a Coruja perdida no topo da lista"><div class="ph">Print do mapa em preparação</div></div><figcaption>Mapa da Bravo, com a Coruja perdida.</figcaption></figure>
+  <p class="tx a ap mudo" data-s="depois" style="left:1120px;top:926px;width:640px;font-size:30px">Por script, nas telas da Aula 14: mediana de <span class="dado">94 ms</span>. Mede o fluxo, não uma pessoa.</p>
+  <p class="osm">© OpenStreetMap contributors</p>
+  <aside class="notas" data-p="1"><p>Hipótese 2: apontar quem está perdido, e há quanto tempo, em até 10 segundos depois de abrir o mapa. Olhem a faixa de contagem acima do mapa e o marcador com colchetes.</p><p class="cuid"><b>Troque para a aba do mapa da Bravo</b> (já aberta, setas em movimento).</p><p>Esta é a Operação Bravo, em curso. O simulador envia cinco dispositivos por HTTP, e o mapa consulta a API a cada 3 segundos.</p><p class="cuid"><b>Aponte a faixa e o marcador da Coruja</b> (perdido, com colchetes e "perdido · último sinal há ..."). Confira: 1 perdido e 4 ativos.</p><p>A faixa mostra um perdido: a Coruja, o MT-03, que o simulador parou de propósito. O rótulo diz há quanto tempo, e a lista põe os perdidos primeiro.</p><p class="cuid"><b>Aponte o contador "Sinais descartados".</b></p><p>O contador de descartados vem do MT-99, que não está inscrito: o sistema responde 202, descarta e só conta. É a regra R7. Pacote repetido responde 200 e não grava de novo: regra R8.</p><p class="cuid"><b>Volte aos slides e avance para o passo 2.</b></p></aside>
+  <aside class="notas" data-p="2"><p>Perdido é mais de 120 segundos sem sinal; atrasado, de 60 a 120. A regra do tempo, a R9, tem 39 testes, e eles injetam o relógio: 59, 60, 61, 119, 120 e 121 segundos.</p><p>Por script, a mediana foi 94 milissegundos: mede o fluxo, não uma pessoa.</p><p class="cuid"><b>Conferir no ensaio:</b> a contagem de <span class="dado">test_r9_</span> e o tempo humano de H2 com cronômetro (meta 10 s). Troque o apoio do slide pelo tempo medido.</p></aside>
+</section>
+
+<!-- ============ SLIDE 10: DEMO H3 E H4 (escuro, bloco 4, dois passos) ============ -->
+<section class="slide escuro p1" data-n="10" data-bloco="4" data-passos="2" aria-label="Demonstração ao vivo: acesso e API">
+  <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
+  <p class="carimbo a" data-s="antes" style="left:160px;top:122px">Demo ao vivo · passo 1 de 2</p>
+  <p class="carimbo a" data-s="depois" style="left:160px;top:122px">Demo ao vivo · passo 2 de 2</p>
+  <h1 class="titulo" style="top:182px"><b class="hip">H3 e H4</b>Acesso e API</h1>
+  <!-- passo 1 -->
+  <div class="dos alvo ap" data-s="antes" style="left:160px;top:380px;width:780px;height:580px"><p class="rot">No navegador</p><p style="margin:22px 0 0"><b class="hid" style="font-size:44px;width:96px">H3</b></p><p class="tx g" style="margin-top:22px">Nenhum sinal de não inscrito vira posição; nenhuma escrita do observador passa.</p><p class="rot" style="margin-top:34px;padding-top:26px;border-top:2px solid var(--forte)">O que olhar</p><p class="tx gg" style="margin-top:10px">O observador: só <b>lista e mapa</b>, sem formulários.</p></div>
+  <div class="dos alvo ap" data-s="antes" style="left:980px;top:380px;width:780px;height:580px"><p class="rot">No terminal</p><p style="margin:22px 0 0"><b class="hid" style="font-size:44px;width:96px">H4</b></p><p class="tx g" style="margin-top:22px">O simulador e um curl usam só a API, sem tocar no banco.</p><p class="rot" style="margin-top:34px;padding-top:26px;border-top:2px solid var(--forte)">O que olhar</p><p class="tx gg" style="margin-top:10px">Os <b>códigos da API</b>, sem token e com token.</p></div>
+  <!-- passo 2 -->
+  <div class="a ap" data-s="depois" style="left:160px;top:424px;width:900px">
+    <div class="lin" style="--c:250px 1fr;padding:14px 0 18px"><b class="cod verm" style="font-size:88px">403</b><span class="tx g"><b>Observador (R10).</b> Só lê: toda escrita dele recebe 403.</span></div>
+    <div class="lin" style="--c:250px 1fr;padding:14px 0 18px"><b class="cod verm" style="font-size:88px">401</b><span class="tx g"><b>API (R11).</b> Sem token.</span></div>
+    <div class="lin" style="--c:250px 1fr;padding:14px 0 18px"><b class="cod" style="font-size:88px">201</b><span class="tx g">Com token: pacote <b>gravado</b>.</span></div>
+    <div class="lin" style="--c:250px 1fr;padding:14px 0 18px"><b class="cod" style="font-size:88px">200</b><span class="tx g">O mesmo pacote de novo: <b>duplicado</b> (R8).</span></div>
+  </div>
+  <figure class="print ap" data-s="depois" style="left:1120px;top:424px"><div class="q alvo"><img src="../design/telas/observador-operacao-bravo-1440.png" alt="Operação Bravo vista pelo observador: lista de inscritos, sem formulários"><div class="ph">Print do observador em preparação</div></div><figcaption>Observador: só leitura, sem formulários.</figcaption></figure>
+  <p class="tx g a ap" data-s="depois" style="left:1120px;top:926px;width:640px;line-height:1.3">O contrato que o simulador usa e que um gateway real usaria (ADR-003).</p>
+  <p class="osm">© OpenStreetMap contributors</p>
+  <aside class="notas" data-p="1"><p>Hipóteses 3 e 4. No navegador, o observador: só lista e mapa, sem formulários. No terminal, os códigos da API.</p><p class="cuid"><b>Troque para a aba anônima</b> (observador, na Operação Bravo). <b>No terminal da demo, rode:</b> <span class="dado">python -m pytest tests/test_funcional.py -q -k observador_recebe_403</span> (menos de 1 s).</p><p>A tela não tem formulário, então o 403 aparece no teste: toda escrita do observador é recusada. Passou.</p><p class="cuid"><b>No mesmo terminal, rode o curl 1 (sem token) e o curl 2 (com token); depois repita o curl 2</b> (seta para cima e Enter). Não use o MT-03 no curl. <b>Volte aos slides e avance para o passo 2.</b></p></aside>
+  <aside class="notas" data-p="2"><p>Sem token, 401. Com token, 201. O mesmo sinal de novo, 200, duplicado. É o contrato que o simulador usa e que um gateway real usaria.</p></aside>
+</section>
+
+<!-- ============ SLIDE 11: TESTES POR REGRA (claro, bloco 5) ============ -->
+<section class="slide" data-n="11" data-bloco="5" aria-label="Testes por regra">
+  <h1 class="titulo">Testes por regra</h1>
+  <div class="a ap" style="left:160px;top:290px;width:560px">
+    <p class="rot">Testes na suíte</p>
+    <p class="gn" style="font-size:250px;line-height:.95;margin-top:8px"><span>505</span></p>
+    <p class="tx g" style="margin-top:12px">contados pelo pytest em <span class="dado">09/11/2026</span></p>
+    <p class="tx g" style="margin-top:30px"><span class="dado" style="font-weight:800">66</span> de segurança</p>
+    <p class="tx g" style="margin-top:8px"><span class="dado" style="font-weight:800">31</span> visuais, da fase 2</p>
+    <p class="tx" style="margin-top:34px;padding-top:20px;border-top:2px solid var(--forte)">As barras contam pelo nome do teste, no mínimo.</p>
+  </div>
+  <div class="a ap" style="left:780px;top:262px;width:980px">
+    <div class="br"><span class="dado">R1</span><span class="nm">sem novo cadastro</span><span class="bar"><i style="--v:16"></i>16</span></div>
+    <div class="br"><span class="dado">R2</span><span class="nm">uma inscrição por operação</span><span class="bar"><i style="--v:5"></i>5</span></div>
+    <div class="br"><span class="dado">R3</span><span class="nm">dispositivo em uma inscrição</span><span class="bar"><i style="--v:6"></i>6</span></div>
+    <div class="br"><span class="dado">R4</span><span class="nm">muda só a inscrição</span><span class="bar"><i style="--v:7"></i>7</span></div>
+    <div class="br"><span class="dado">R5</span><span class="nm">exige consentimento</span><span class="bar"><i style="--v:4"></i>4</span></div>
+    <div class="br"><span class="dado">R6</span><span class="nm">operação só avança</span><span class="bar"><i style="--v:17"></i>17</span></div>
+    <div class="br"><span class="dado">R7</span><span class="nm">não inscrito é descartado</span><span class="bar"><i style="--v:13"></i>13</span></div>
+    <div class="br"><span class="dado">R8</span><span class="nm">pacote repetido</span><span class="bar"><i style="--v:11"></i>11</span></div>
+    <div class="br alta"><span class="dado">&nbsp;R9</span><span class="nm">estado por tempo</span><span class="bar"><i style="--v:39"></i>39</span></div>
+    <div class="br"><span class="dado">R10</span><span class="nm">observador só lê</span><span class="bar"><i style="--v:16"></i>16</span></div>
+    <div class="br"><span class="dado">R11</span><span class="nm">token da API</span><span class="bar"><i style="--v:14"></i>14</span></div>
+  </div>
+  <aside class="notas"><p>Qualidade. Cada regra, de R1 a R11, tem testes com o nome dela: de 4 na R5 a 39 na R9, a do tempo. A suíte inteira tem 505 testes, 66 deles de segurança, e 31 são visuais, da fase 2. O número vem do pytest.</p><p class="cuid"><b>Atenção:</b> o roteiro ainda diz 474 na fala deste slide; o pytest de 09/11/2026 dá 505. <b>Conferir no ensaio:</b> total, segurança e por regra (<span class="dado">pytest --collect-only -q</span>, com <span class="dado">-k test_r9_</span> e as demais).</p></aside>
+</section>
+
+<!-- ============ SLIDE 12: REVISÃO DE SEGURANÇA (claro, bloco 5) ============ -->
+<section class="slide" data-n="12" data-bloco="5" aria-label="Revisão de segurança">
+  <p class="kick">S-1 a S-5 · cinco achados, todos de severidade baixa</p>
+  <h1 class="titulo">Revisão de segurança</h1>
+  <div class="a" style="left:160px;top:296px;width:1600px">
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-1</b><span class="tx g">Corpo da requisição sem limite</span><span class="tx"><span class="tg cheio">Corrigido</span>&nbsp; limite de 64 KB, resposta 413</span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-2</b><span class="tx g">JSON aninhado dava erro 500</span><span class="tx"><span class="tg cheio">Corrigido</span>&nbsp; agora responde 400</span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-3</b><span class="tx g">O tempo do login revelava quem existe</span><span class="tx"><span class="tg cheio">Corrigido</span></span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-4</b><span class="tx g">O simulador seguia redirecionamento, levando o token</span><span class="tx"><span class="tg cheio">Corrigido</span></span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-5</b><span class="tx g">Token passado em <span class="dado">--token</span></span><span class="tx"><span class="tg">Aceito</span>&nbsp; o Guia recomenda a variável de ambiente</span></div>
+  </div>
+  <p class="tx a ap" style="left:160px;top:922px;width:1600px;padding-top:18px;border-top:2px solid var(--forte)"><b>bandit:</b> sem achado alto. <b>pip-audit:</b> sem vulnerabilidade conhecida. <span class="mudo">Revisão de <span class="dado">08/11/2026</span>.</span></p>
+  <aside class="notas"><p>Fiz também uma revisão de segurança: cinco achados, todos de severidade baixa. Quatro foram corrigidos: corpo sem limite, JSON aninhado que dava 500, tempo do login que revelava quem existe, e o simulador que seguia redirecionamento levando o token.</p><p>O quinto, o token na linha de comando, aceitei: o Guia manda usar a variável de ambiente. O bandit e o pip-audit não apontaram nada alto nem vulnerabilidade conhecida.</p><p class="cuid"><b>Conferir no ensaio:</b> rodar de novo bandit, pip-audit e tests/test_seguranca.py, e atualizar os achados se houver novos.</p></aside>
+</section>
+
+<!-- ============ SLIDE 13: REPRODUÇÃO PELO GUIA (claro, bloco 5) ============ -->
+<section class="slide" data-n="13" data-bloco="5" aria-label="Reprodução pelo Guia">
+  <h1 class="titulo">Reprodução pelo Guia</h1>
+  <div class="a ap" style="left:160px;top:300px;width:1600px;display:flex;align-items:center">
+    <div class="cx" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">1</span><b style="margin:14px 0 0;font-size:52px">Clone limpo</b></div>
+    <i class="sg"></i>
+    <div class="cx" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">2</span><b style="margin:14px 0 0;font-size:52px">Venv novo</b></div>
+    <i class="sg"></i>
+    <div class="cx eu" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">3</span><b style="margin:14px 0 0;font-size:52px">Só o Guia</b></div>
+  </div>
+  <div class="dos ap" style="left:160px;top:580px;width:780px;height:270px"><p class="rot fg">Feita em 08/11</p><p class="tx gg" style="margin-top:20px">Num clone limpo, com as telas da Aula 14: <b><span class="dado">382</span> testes passaram</b>.</p></div>
+  <div class="a ap" style="left:980px;top:580px;width:780px;height:270px;padding:28px 32px;border:3px dashed var(--forte)"><p class="rot fg">A refazer</p><p class="tx gg" style="margin-top:20px">Com as telas novas, antes da v1.0 (até <span class="dado">05/12</span>).</p></div>
+  <aside class="notas"><p>A reprodução pelo Guia, num clone limpo, é o critério do Incremento 3. Fiz uma em 8 de novembro, com as telas da Aula 14: 382 testes passaram, e o passo 11 travou no PowerShell. Refaço com as telas novas antes da v1.0, até 5 de dezembro.</p><p class="cuid"><b>Conferir no ensaio:</b> data, commit, testes e passos que travaram na reprodução com as telas novas. Troque o painel "A refazer" e a última frase da fala por "Refiz em [data], no commit [hash]: [N] testes passaram e travei em [passos]".</p></aside>
+</section>
+
+<!-- ============ SLIDE 14: O QUE MUDOU DESDE A AULA 14 (claro, bloco 6) ============ -->
+<section class="slide" data-n="14" data-bloco="6" aria-label="O que mudou desde a Aula 14">
+  <h1 class="titulo">O que mudou desde a Aula 14</h1>
+  <p class="rot fg a ap" style="left:160px;top:270px">Aula 14 (10/11)</p>
+  <p class="rot fg a ap" style="left:980px;top:270px">Agora</p>
+  <figure class="print larga ap" style="left:160px;top:316px"><div class="q alvo"><img src="../evidencias/07-mapa-perdido.png" alt="Mapa da Operação Bravo na Aula 14, com a Coruja perdida"><div class="ph">Print da Aula 14 em preparação</div></div><figcaption>O que mostrei em novembro.</figcaption></figure>
+  <figure class="print larga ap" style="left:980px;top:316px"><div class="q alvo"><img src="../design/telas/organizador-mapa-1440.png" alt="Mapa da Operação Bravo com a identidade nova, com a Coruja perdida"><div class="ph">Print do mapa em preparação</div></div></figure>
+  <div class="a ap" style="left:980px;top:852px;width:780px;display:grid;grid-template-columns:.75fr 1.05fr 1.4fr;gap:20px">
+    <p class="tx" style="font-size:28px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="dado">1</b> Moldura preta</p>
+    <p class="tx" style="font-size:28px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="dado">2</b> Faixa com a contagem por estado</p>
+    <p class="tx" style="font-size:28px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="dado">3</b> Perdido com colchetes e “perdido · último sinal há”</p>
+  </div>
+  <p class="tx gg a ap" style="left:160px;top:972px;width:800px;font-weight:800">Os botões têm os mesmos nomes.</p>
+  <aside class="notas"><p>O que mudou desde a Aula 14 foi a identidade das telas. À esquerda, o que mostrei em novembro. À direita, a versão atual: moldura preta, uma faixa com a contagem por estado acima do mapa, e o perdido com colchetes e o rótulo "perdido · último sinal há", com o tempo. Os botões têm os mesmos nomes.</p><p class="cuid"><b>Conferir no ensaio:</b> os prints novos mostram os mesmos dois estados que o da esquerda.</p></aside>
+</section>
+
+<!-- ============ SLIDE 15: LIMITES (claro, bloco 7) ============ -->
+<section class="slide" data-n="15" data-bloco="7" aria-label="Limites">
+  <h1 class="titulo">Limites</h1>
+  <div class="a alvo ap" style="left:160px;top:290px;width:1600px;padding:36px 44px 40px;background:var(--tinta);color:var(--chao);--forte:var(--tinta)"><p class="rot" style="color:#c3c4be">Pendência principal</p><p style="margin:14px 0 0;font:900 68px/1.08 var(--f-ui);letter-spacing:.005em">Validação com a federação: ainda não aconteceu e não tem data.</p></div>
+  <div class="a" style="left:160px;top:640px;width:1600px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px">
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Quem validou</p><p class="tx gg" style="margin-top:14px;font-size:40px">Só o autor, no papel de organizador.</p></div>
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">O que é medido</p><p class="tx gg" style="margin-top:14px;font-size:40px">Sinais simulados e tempos de script.</p></div>
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Dado pessoal</p><p class="tx gg" style="margin-top:14px;font-size:40px">Prazo de guarda das posições (LGPD) por definir.</p></div>
+  </div>
+  <aside class="notas"><p>Os limites. A pendência principal é a validação com a federação: ainda não aconteceu e não tem data. Quem executou os roteiros fui eu, no papel de organizador, então os tempos medem o fluxo, não a primeira impressão de um organizador real.</p><p>Os sinais são simulados. Falta definir por quanto tempo guardar as posições, porque posição de pessoa é dado pessoal, pela LGPD. E o fundo do mapa precisa de internet.</p><p class="cuid"><b>Conferir no ensaio:</b> a situação da federação continua a de 08/11/2026; só mude a fala se você avisar que mudou.</p></aside>
+</section>
+
+<!-- ============ SLIDE 16: PRÓXIMOS PASSOS (claro, bloco 7) ============ -->
+<section class="slide" data-n="16" data-bloco="7" aria-label="Próximos passos">
+  <h1 class="titulo">Próximos passos</h1>
+  <div class="a ap" style="left:160px;top:290px;width:1600px;display:flex;align-items:center">
+    <div style="width:480px;display:flex;flex-direction:column;gap:20px"><div class="cx trac" style="padding:18px 24px"><b style="margin:0;font-size:34px">App de celular</b></div><div class="cx trac" style="padding:18px 24px"><b style="margin:0;font-size:34px">Gateway MeshTracker, por MQTT</b></div></div>
+    <i class="sg trac"></i>
+    <div class="cx" style="width:480px;height:210px;padding:24px 28px"><b style="font-size:32px;margin-bottom:10px">O mesmo contrato HTTP</b><p class="dado" style="margin:0;font-size:28px">POST /api/v1/sinais</p></div>
+    <i class="sg"></i>
+    <div class="cx eu" style="width:280px;height:210px;padding:24px 28px"><b style="font-size:32px">MeshTracker Central</b></div>
+  </div>
+  <p class="tx a ap" style="left:160px;top:568px;width:900px"><span class="tg">Nada disso está pronto</span></p>
+  <div class="a" style="left:160px;top:690px;width:1600px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px">
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Conversar com a federação</p><p class="tx gg" style="margin-top:14px;font-size:38px">É o que falta para saber se o problema é real. Sem data.</p></div>
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Prazo de guarda</p><p class="tx gg" style="margin-top:14px;font-size:38px">Definir por quanto tempo guardar as posições.</p></div>
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Tiles offline</p><p class="tx gg" style="margin-top:14px;font-size:38px">Hoje o fundo do mapa precisa de internet (dúvida em aberto 1).</p></div>
+  </div>
+  <aside class="notas"><p>Os próximos passos. Um app de celular, ou um gateway MeshTracker que recebe os sinais por MQTT, enviando ao mesmo contrato HTTP. Nada disso está pronto, e não testei com dispositivo real. A hipótese 4 diz que trocar a fonte não muda a regra.</p><p>E conversar com a federação, que é o que falta para saber se o problema é real. Obrigado.</p></aside>
+</section>
+
+<!-- ============ SLIDE 17: OBRIGADO (escuro, depois dos 10 minutos) ============ -->
+<section class="slide escuro" data-n="17" data-bloco="0" aria-label="Obrigado e perguntas">
+  <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
+  <p class="carimbo a" style="left:160px;top:122px">Perguntas · depois dos 10 minutos</p>
+  <h1 class="titulo gig" style="top:182px;font-size:200px">Obrigado.</h1>
+  <p class="titulo a" style="top:400px;font-size:112px;font-weight:900;text-transform:uppercase">Perguntas?</p>
+  <svg class="motivo ap" style="left:1420px;top:370px" width="340" height="260" viewBox="0 0 340 260" aria-hidden="true">
+    <g fill="#ecebe6"><circle cx="46" cy="62" r="21"/><circle cx="160" cy="24" r="21"/><circle cx="104" cy="150" r="21"/><circle cx="224" cy="116" r="21"/></g>
+    <circle cx="282" cy="204" r="25" fill="none" stroke="#d1242f" stroke-width="8"/>
+    <path d="M236 182V158H260M304 158H328V182M236 226V250H260M304 250H328V226" fill="none" stroke="#d1242f" stroke-width="4"/>
+  </svg>
+  <div class="a" style="left:160px;top:640px;width:1600px;display:grid;grid-template-columns:1fr 1fr;gap:30px 40px">
+    <div class="dos ap" style="position:static;padding:22px 30px"><p class="rot">Código</p><p class="dado" style="margin:8px 0 0;font-size:32px">tag v1.0, planejada para 08/12</p></div>
+    <div class="dos ap" style="position:static;padding:22px 30px"><p class="rot">API</p><p class="dado" style="margin:8px 0 0;font-size:32px">docs/api.md</p></div>
+    <div class="dos ap" style="position:static;padding:22px 30px"><p class="rot">Para reproduzir</p><p class="dado" style="margin:8px 0 0;font-size:32px">docs/guia-de-reproducao.md</p></div>
+    <div class="dos ap" style="position:static;padding:22px 30px"><p class="rot">Evidências</p><p class="dado" style="margin:8px 0 0;font-size:32px">docs/evidencias/</p></div>
+  </div>
+  <p class="osm">© OpenStreetMap contributors</p>
+  <aside class="notas"><p>Perguntas, à parte, depois dos 10 minutos. Pistas na tela: o código na tag v1.0; a API em docs/api.md; o passo a passo em docs/guia-de-reproducao.md; os prints e medições em docs/evidencias/.</p><p class="cuid"><b>Conferir no ensaio:</b> a tag v1.0 existe e o app roda dela; senão, troque a pista "Código" pelo ramo que estiver integrado.</p></aside>
+</section>
+
+<div class="varredura" id="varr"></div>
+</div></div>
+
+<div class="progresso" aria-hidden="true"><i id="prog"></i></div>
+<div class="painel-notas" id="painel" role="complementary" aria-label="Notas do apresentador"></div>
+
+<template id="t-mold"><header class="mold"><div class="marca"><span class="pontos"><i></i><i></i><i></i><i></i><i class="parado"></i></span><span>MeshTracker <small>Central</small></span></div><nav class="menu" aria-label="Blocos da apresentação"><span data-b="1">Motivo</span><span data-b="2">Hipóteses</span><span data-b="3">ADRs</span><span data-b="4">Demo</span><span data-b="5">Qualidade</span><span data-b="6">Aula 14</span><span data-b="7">Limites</span></nav><span class="pag"></span></header><i class="regua"></i></template>
+
+<script>
+(function () {
+  'use strict';
+  var ESTATICO = /[?&]estatico/.test(location.search);       /* sem animação: prints, plano B */
+  var ANTES = /[?&]antes/.test(location.search);             /* com ?estatico, abre o passo 1 dos slides de demo */
+  var REDUZ = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement;
+  var palco = document.getElementById('palco');
+  var vp = document.getElementById('vp');
+  var slides = Array.prototype.slice.call(palco.querySelectorAll('.slide'));
+  var N = slides.length;
+  var prog = document.getElementById('prog');
+  var painel = document.getElementById('painel');
+  var varr = document.getElementById('varr');
+  var SEM_ANIM = ESTATICO || REDUZ || !Element.prototype.animate;
+  var TRAVA = 380;                                          /* ms: dois comandos mais próximos que isto contam como um só */
+  if (ESTATICO) root.classList.add('estatico');
+  function $$(r, sel) { return Array.prototype.slice.call(r.querySelectorAll(sel)); }
+
+  /* ---------- palco fixo 1920x1080, escalado ---------- */
+  function escala() {
+    var f = Math.min(innerWidth / 1920, innerHeight / 1080);
+    palco.style.transform = 'translate(' + (innerWidth - 1920 * f) / 2 + 'px,' + (innerHeight - 1080 * f) / 2 + 'px) scale(' + f + ')';
+  }
+  escala();
+  addEventListener('resize', escala);
+
+  /* ---------- moldura e régua em cada slide (vêm do <template>, para o PDF também ter) ---------- */
+  var tpl = document.getElementById('t-mold');
+  slides.forEach(function (s, i) {
+    var m = tpl.content.cloneNode(true), b = s.dataset.bloco;
+    $$(m, '.menu span').forEach(function (e) { if (e.dataset.b === b) { e.classList.add('on'); e.setAttribute('aria-current', 'page'); } });
+    m.querySelector('.pag').innerHTML = '<b>' + (i < 9 ? '0' : '') + (i + 1) + '</b> / ' + N;
+    s.insertBefore(m, s.firstChild);
+  });
+
+  /* ---------- fundo do mapa: a atribuição só aparece se a imagem carregou; print ausente vira reserva ---------- */
+  $$(palco, 'img.fundo').forEach(function (im) {
+    var s = im.closest('.slide');
+    function ok() { s.classList.add('tem-fundo'); }
+    function no() { s.classList.remove('tem-fundo'); im.style.display = 'none'; }
+    if (im.complete) { if (im.naturalWidth) ok(); else no(); } else { im.addEventListener('load', ok); im.addEventListener('error', no); }
+  });
+  $$(palco, '.print img').forEach(function (im) {
+    var f = im.closest('.print');
+    function no() { f.classList.add('sem'); }
+    if (im.complete) { if (!im.naturalWidth) no(); } else { im.addEventListener('error', no); }
+  });
+
+  /* ---------- vistas: cada slide tem 1 ou 2 passos ---------- */
+  var V = [];
+  slides.forEach(function (s, i) {
+    var np = +s.dataset.passos || 0;
+    if (np) { for (var p = 1; p <= np; p++) V.push({ s: i, p: p }); } else V.push({ s: i, p: 0 });
+  });
+  function primeira(i) { for (var k = 0; k < V.length; k++) if (V[k].s === i) return k; return 0; }
+
+  /* ---------- varredura: 12 barras, uma por coluna da grade ---------- */
+  for (var k = 0; k < 12; k++) { var bi = document.createElement('i'); bi.style.left = k * 160 + 'px'; varr.appendChild(bi); }
+  var barras = Array.prototype.slice.call(varr.children);
+
+  var cur = 0, alvo = -1, busy = false, tok = 0, anims = [], ultimo = -1e9;
+
+  function indices(s) {                                      /* atraso em cadeia das entradas visíveis */
+    var j = 0;
+    $$(s, '.ap').forEach(function (e) { if (e.offsetParent !== null || getComputedStyle(e).display !== 'none') e.style.setProperty('--i', Math.min(j++, 8)); });
+  }
+  function reiniciar(s, cls) {
+    s.classList.remove('entra', 'passo');
+    void s.offsetWidth;
+    s.classList.add(cls);
+  }
+
+  function mostrar(v, efeito) {
+    var vv = V[v], s = slides[vv.s], mudou = V[cur] && V[cur].s !== vv.s;
+    cur = v;
+    slides.forEach(function (x, i) { x.classList.toggle('active', i === vv.s); });
+    if (vv.p) { s.classList.remove('p1', 'p2'); s.classList.add('p' + vv.p); }
+    indices(s);
+    if (efeito && !SEM_ANIM) reiniciar(s, efeito); else s.classList.remove('entra', 'passo');
+    prog.style.width = ((v + 1) / V.length * 100) + '%';
+    try { history.replaceState(null, '', '#' + (vv.s + 1)); } catch (e) {}
+    var nts = $$(s, '.notas');
+    var nt = vv.p ? nts.filter(function (a) { return +a.dataset.p === vv.p; })[0] : nts[0];
+    painel.innerHTML = '<h2>Notas do slide ' + (vv.s + 1) + ' de ' + N + (vv.p ? ', passo ' + vv.p + ' de ' + (+s.dataset.passos) : '') + '</h2>' + (nt ? nt.innerHTML : '');
+    return mudou;
+  }
+
+  function zerar() { barras.forEach(function (b) { b.style.transform = 'scaleY(0)'; b.style.transformOrigin = '50% 100%'; }); }
+  function parar() { anims.forEach(function (a) { try { a.cancel(); } catch (e) {} }); anims = []; }
+  function concluir() {                                      /* termina na hora o que estiver animando */
+    if (!busy) return;
+    tok++; parar(); zerar();
+    mostrar(alvo, 'entra');
+    busy = false;
+  }
+
+  /* troca de câmera: as barras fecham (176 ms), o slide troca, as barras abrem (176 ms): 352 ms no total.
+     A troca e o fim vêm de temporizadores, não das animações: se a máquina engasgar, o slide certo aparece do mesmo jeito. */
+  var BARRA = 110, DEFASA = 6, FASE = BARRA + 11 * DEFASA;
+  function varredura(v, dir) {
+    var meu = ++tok, seq = barras.slice(), ease = 'cubic-bezier(.7,0,.2,1)';
+    if (dir < 0) seq.reverse();
+    busy = true; alvo = v;
+    anims = seq.map(function (b, i) {
+      b.style.transformOrigin = '50% 100%';
+      return b.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: BARRA, delay: i * DEFASA, easing: ease, fill: 'both' });
+    });
+    setTimeout(function () {
+      if (meu !== tok) return;
+      mostrar(v, 'entra');
+      var abre = seq.map(function (b, i) {
+        b.style.transformOrigin = '50% 0%';
+        return b.animate([{ transform: 'scaleY(1)' }, { transform: 'scaleY(0)' }], { duration: BARRA, delay: i * DEFASA, easing: ease, fill: 'both' });
+      });
+      parar(); anims = abre;
+      setTimeout(function () { if (meu !== tok) return; parar(); zerar(); busy = false; }, FASE);
+    }, FASE);
+  }
+
+  function atual() { return busy ? alvo : cur; }
+  function ir(v, dir) {
+    v = Math.max(0, Math.min(V.length - 1, v));
+    if (busy) concluir();
+    if (v === cur) return;
+    var de = V[cur], pa = V[v];
+    dir = dir || (v > cur ? 1 : -1);
+    if (SEM_ANIM) { mostrar(v, null); return; }
+    var novo = de.s !== pa.s;
+    var escuro = slides[de.s].classList.contains('escuro') || slides[pa.s].classList.contains('escuro');
+    if (novo && escuro) varredura(v, dir); else mostrar(v, novo ? 'entra' : 'passo');
+  }
+
+  /* Duplo clique: dois comandos em menos de TRAVA ms valem um só, então o passo 2 de uma demo não é pulado. */
+  function livre() {
+    var t = performance.now();
+    if (t - ultimo < TRAVA) return false;
+    ultimo = t; return true;
+  }
+  function comando(delta) { if (livre()) ir(atual() + delta, delta); }
+
+  /* o slide do #n abre pronto, sem varredura. Com ?estatico, os slides de dois passos abrem no passo 2; com &antes, no 1. */
+  function daHash() {
+    var n = parseInt(location.hash.replace('#', ''), 10);
+    return n >= 1 ? Math.min(n, N) - 1 : 0;
+  }
+  function iniciar() {
+    var si = daHash(), v = primeira(si);
+    if (ESTATICO && !ANTES && V[v].p) v += (+slides[si].dataset.passos - 1);
+    cur = v;
+    mostrar(v, 'entra');
+    root.classList.remove('anima');
+  }
+
+  addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === ' ' || k === 'Enter') { e.preventDefault(); if (!e.repeat) { if (ESTATICO) ir(atual() + 1, 1); else comando(1); } }
+    else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); if (!e.repeat) { if (ESTATICO) ir(atual() - 1, -1); else comando(-1); } }
+    else if (k === 'Home') { e.preventDefault(); ir(0, -1); }
+    else if (k === 'End') { e.preventDefault(); ir(V.length - 1, 1); }
+    else if (k === 'n' || k === 'N') { document.body.classList.toggle('mostra-notas'); }
+    else if (k === 'f' || k === 'F') { if (document.fullscreenElement) document.exitFullscreen(); else if (root.requestFullscreen) root.requestFullscreen(); }
+  });
+  vp.addEventListener('click', function (e) { if (e.clientX < innerWidth * 0.2) comando(-1); else comando(1); });
+  var tx0 = null;
+  addEventListener('touchstart', function (e) { tx0 = e.touches[0].clientX; }, { passive: true });
+  addEventListener('touchend', function (e) {
+    if (tx0 === null) return;
+    var dx = e.changedTouches[0].clientX - tx0; tx0 = null;
+    if (Math.abs(dx) > 60) comando(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  addEventListener('hashchange', function () { var si = daHash(); if (si !== V[atual()].s) ir(primeira(si)); });
+
+  iniciar();
+})();
+</script>
+</body>
+</html>
