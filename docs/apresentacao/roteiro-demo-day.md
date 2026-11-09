@@ -59,7 +59,7 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 13. **Reprodução pelo Guia** (bloco 5; não é demo)
     - Conteúdo mínimo: a cadeia "clone limpo → venv novo → só o Guia". O estado: "Feita em 08/11, num clone limpo e com as telas da Aula 14: 382 testes passaram. A refazer com as telas novas antes da v1.0 (até 05/12)." `[conferir no ensaio: data, commit, testes e passos que travaram na reprodução com as telas novas; troque a segunda frase pelo resultado]`.
 14. **O que mudou desde a Aula 14** (bloco 6; não é demo)
-    - Conteúdo mínimo: duas colunas de mesmo tamanho, "Aula 14 (10/11)" e "Agora". Esquerda: `docs/evidencias/07-mapa-perdido.png`. Direita: print equivalente em `docs/evidencias/v1/` `[conferir no ensaio: a pasta ainda está vazia]`. Três marcas legendadas na direita: moldura preta; faixa com a contagem por estado; perdido com colchetes e "perdido há X". Uma linha: "Os botões têm os mesmos nomes."
+    - Conteúdo mínimo: duas colunas de mesmo tamanho, "Aula 14 (10/11)" e "Agora". Esquerda: `docs/evidencias/07-mapa-perdido.png`. Direita: print equivalente em `docs/evidencias/v1/` `[conferir no ensaio: a pasta ainda está vazia]`. Três marcas legendadas na direita: moldura preta; faixa com a contagem por estado; perdido com colchetes e "perdido · último sinal há X". Uma linha: "Os botões têm os mesmos nomes."
 15. **Limites** (bloco 7; não é demo)
     - Conteúdo mínimo: em destaque, a pendência principal: "Validação com a federação: ainda não aconteceu e não tem data." Abaixo, três linhas: validado só pelo autor, no papel de organizador; sinais simulados e tempos de script; prazo de guarda das posições (LGPD) por definir. Sem vermelho.
 16. **Próximos passos** (bloco 7; não é demo)
@@ -213,11 +213,11 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 
 *Fonte:* `docs/adr/ADR-003-gateway-por-http.md` (Decisão); `docs/adr/ADR-002-stack-flask-sqlite.md` (Consequências); `docs/historias.md` (US06).
 
-**Aponte a faixa e o marcador da Coruja** (perdido, com colchetes e "perdido há ...").
+**Aponte a faixa e o marcador da Coruja** (perdido, com colchetes e "perdido · último sinal há ...").
 
 > A faixa mostra um perdido: a Coruja, o MT-03, que o simulador parou de propósito. O rótulo diz há quanto tempo, e a lista põe os perdidos primeiro.
 
-*Fonte:* R9 em `docs/backlog.md`; `DESIGN.md` (Faixa de dossiê; Marcador do mapa: "Coruja · perdido há 2 min 10 s"); `docs/evidencias/funcional.md` (seção 3: a lista põe perdidos e atrasados à frente); `docs/guia-de-reproducao.md` (passo 8: `--parar MT-03 --apos 20`). `[conferir no ensaio: a faixa mostra 1 perdido e 4 ativos, e o rótulo "perdido há X" aparece no marcador]`
+*Fonte:* R9 em `docs/backlog.md`; `DESIGN.md` (Faixa de dossiê; Marcador do mapa: "Coruja · perdido · último sinal há 2 min 10 s"); `docs/evidencias/funcional.md` (seção 3: a lista põe perdidos e atrasados à frente); `docs/guia-de-reproducao.md` (passo 8: `--parar MT-03 --apos 20`). `[conferir no ensaio: a faixa mostra 1 perdido e 4 ativos, e o rótulo "perdido · último sinal há X" aparece no marcador]`
 
 **Aponte o contador "Sinais descartados".**
 
@@ -283,7 +283,7 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 
 **Mostre o slide 14.**
 
-> O que mudou desde a Aula 14 foi a identidade das telas. À esquerda, o que mostrei em novembro. À direita, a versão atual: moldura preta, uma faixa com a contagem por estado acima do mapa, e o perdido com colchetes e o rótulo "perdido há", com o tempo. Os botões têm os mesmos nomes.
+> O que mudou desde a Aula 14 foi a identidade das telas. À esquerda, o que mostrei em novembro. À direita, a versão atual: moldura preta, uma faixa com a contagem por estado acima do mapa, e o perdido com colchetes e o tempo desde o último sinal. Os botões têm os mesmos nomes.
 
 *Fonte:* antes: `docs/evidencias/06-mapa-ativos.png` e `07-mapa-perdido.png`; depois: `docs/evidencias/v1/` `[conferir no ensaio: a pasta está vazia; ponha os prints novos e confirme que o slide mostra os mesmos dois estados]`; identidade em `DESIGN.md` (Moldura e menu; Faixa de dossiê; Marcador do mapa); nomes dos botões em `src/servicos.py` (`ROTULO_TRANSICAO`) e `src/templates/operacao.html`.
 
@@ -371,7 +371,7 @@ python -m pytest --collect-only -q -k "test_r9_" | tail -1          # uma regra;
 4. Abas abertas, nesta ordem:
    - Slides, no slide 1.
    - **Operação Charlie**, logado como `organizador` (Operações, Operação Charlie). Planejada, 0 inscritos.
-   - **Mapa da Bravo**, logado como `organizador` (Operações, Operação Bravo, Abrir mapa). Confira o MT-03 perdido, a faixa com 1 perdido e o rótulo "perdido há".
+   - **Mapa da Bravo**, logado como `organizador` (Operações, Operação Bravo, Abrir mapa). Confira o MT-03 perdido, a faixa com 1 perdido e o rótulo "perdido · último sinal há".
    - **Aba anônima**, logada como `observador`, na Operação Bravo.
 5. **Terminal da demo** (Git Bash, raiz do repositório, venv ativo, `MESHTRACKER_TOKEN` exportado), com os comandos abaixo já no histórico. No PowerShell o `curl` é outro comando; use o Git Bash.
 6. Internet ligada, para os tiles do OpenStreetMap (sem ela o fundo do mapa fica liso, e as setas continuam).
@@ -485,7 +485,7 @@ Cada `[conferir no ensaio: ...]` do texto, reunido aqui. Nenhum resultado abaixo
 | 1 | Tag `v1.0` criada em 08/12 e app rodando dela | Abertura deste arquivo; slide 17 | `git tag`; subir o app da tag |
 | 2 | Trilha dos últimos 10 pontos e CSV: de fora ou entregues | Slide 4 | `docs/backlog.md`, linha D |
 | 3 | Tempo cronometrado de H1 (31 ações e 3 recusas, meta 3 min) e medição por script nas telas novas | Bloco 4a; slide 8, passo 2 | Cronômetro no ensaio, com gravação de tela |
-| 4 | Faixa com 1 perdido e 4 ativos; rótulo "perdido há X" no marcador | Bloco 4b; slide 9 | Olhar o mapa depois de 3 minutos de simulador |
+| 4 | Faixa com 1 perdido e 4 ativos; rótulo "perdido · último sinal há X" no marcador | Bloco 4b; slide 9 | Olhar o mapa depois de 3 minutos de simulador |
 | 5 | Tempo humano de H2 (meta 10 s) e mediana por script nas telas novas | Bloco 4b; slide 9, passo 2 | Cronômetro no ensaio |
 | 6 | Total de testes, de segurança e por regra | Bloco 5; slides 9 e 11 | Comandos de contagem em "Preparação" |
 | 7 | bandit, pip-audit e `tests/test_seguranca.py` rodados de novo | Bloco 5; slide 12 | Comandos em "Preparação", item 3 |
