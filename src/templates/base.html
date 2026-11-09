@@ -10,7 +10,8 @@
   {% block head %}{% endblock %}
 </head>
 <body class="{% block classe_corpo %}{% endblock %}">
-  {% set atual = request.endpoint %}
+  {# O item atual do menu sai do caminho, e não do endpoint, para valer também na página que volta de um POST com recusa. #}
+  {% set caminho = request.path %}
   <header class="moldura">
     <div class="marca">
       <span class="pontos" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="parado"></i></span>
@@ -19,8 +20,8 @@
     <div class="moldura-menu">
       {% if current_user.is_authenticated %}
       <nav aria-label="Principal">
-        <a href="{{ url_for('paginas.operadores') }}"{% if atual in ('paginas.operadores', 'paginas.operadores_criar') %} aria-current="page"{% endif %}>Operadores</a>
-        <a href="{{ url_for('paginas.operacoes') }}"{% if atual in ('paginas.operacoes', 'paginas.operacoes_criar', 'paginas.operacao', 'paginas.operacao_avancar', 'paginas.inscricao_criar', 'paginas.inscricao_alterar', 'paginas.mapa') %} aria-current="page"{% endif %}>Operações</a>
+        <a href="{{ url_for('paginas.operadores') }}"{% if caminho.startswith('/operadores') %} aria-current="page"{% endif %}>Operadores</a>
+        <a href="{{ url_for('paginas.operacoes') }}"{% if caminho.startswith('/operacoes') or caminho.startswith('/inscricoes') %} aria-current="page"{% endif %}>Operações</a>
       </nav>
       {% endif %}
       <div id="seletor-tema" class="seletor-tema" role="group" aria-label="Tema" hidden>

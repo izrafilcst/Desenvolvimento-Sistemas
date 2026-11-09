@@ -92,14 +92,27 @@
     grupo.appendChild(seta);
     svg.appendChild(grupo);
     anel.appendChild(svg);
+    // Rótulo: "Coruja" e, no perdido, " · perdido há 2 min 10 s". No celular o CSS quebra em duas linhas.
     const rotulo = el('span', 'mk-apelido');
+    const nome = el('span', 'mk-nome');
+    const separador = el('span', 'mk-sep', ' · ');
+    const tempo = el('span', 'mk-tempo');
+    rotulo.append(nome, separador, tempo);
     icone.append(anel, rotulo);
-    return { icone: icone, anel: anel, grupo: grupo, seta: seta, rotulo: rotulo };
+    return { icone: icone, anel: anel, grupo: grupo, seta: seta, rotulo: rotulo, nome: nome, separador: separador, tempo: tempo };
   }
 
-  function rotuloDoMarcador(inscrito, estado) {
-    if (estado !== 'perdido') { return inscrito.apelido; }
-    return inscrito.apelido + ' · perdido há ' + formatarSegundos(inscrito.segundos);
+  function textoDoTempoPerdido(inscrito) {
+    return Number.isFinite(inscrito.segundos) ? 'perdido há ' + formatarSegundos(inscrito.segundos) : 'perdido';
+  }
+
+  function atualizarRotulo(partes, inscrito, estado) {
+    const perdido = estado === 'perdido';
+    partes.nome.textContent = inscrito.apelido;
+    partes.separador.hidden = !perdido;
+    partes.separador.textContent = perdido ? ' · ' : '';
+    partes.tempo.hidden = !perdido;
+    partes.tempo.textContent = perdido ? textoDoTempoPerdido(inscrito) : '';
   }
 
   function atualizarIcone(partes, inscrito) {
@@ -110,7 +123,40 @@
     partes.anel.className = 'mk-anel estado-' + estado;
     partes.seta.setAttribute('fill', corSegura(inscrito.cor));
     partes.grupo.setAttribute('transform', 'rotate(' + rumo + ')');
-    partes.rotulo.textContent = rotuloDoMarcador(inscrito, estado);
+    atualizarRotulo(partes, inscrito, estado);
+  }
+
+  // O rótulo nunca sai do quadro do mapa: se passaria da borda (ou das réguas), desliza para dentro.
+  function limitesDoQuadro() {
+    const quadro = mapa.getContainer().getBoundingClientRect();
+    return { esq: quadro.left + ESPESSURA_REGUA + 4, dir: quadro.right - 4, topo: quadro.top + ESPESSURA_REGUA + 4, base: quadro.bottom - 4 };
+  }
+
+  // Quanto o rótulo precisa andar para caber no quadro. Se, deslizando de lado, ele cobrisse o anel,
+  // vai para baixo do marcador (ou para cima, se faltar espaço), fora dos colchetes de alvo.
+  function deslocamentoDoRotulo(caixa, anel, limite) {
+    let dx = caixa.right > limite.dir ? limite.dir - caixa.right : 0;
+    if (caixa.left + dx < limite.esq) { dx = limite.esq - caixa.left; }
+    let dy = 0;
+    if (caixa.left + dx < anel.right - 2) {
+      dy = anel.bottom + 14 - caixa.top;
+      if (caixa.bottom + dy > limite.base) { dy = anel.top - 14 - caixa.bottom; }
+    }
+    if (caixa.bottom + dy > limite.base) { dy = limite.base - caixa.bottom; }
+    if (caixa.top + dy < limite.topo) { dy = limite.topo - caixa.top; }
+    return { dx: dx, dy: dy };
+  }
+
+  function manterRotuloNoQuadro(partes) {
+    partes.rotulo.style.transform = '';
+    const desvio = deslocamentoDoRotulo(partes.rotulo.getBoundingClientRect(), partes.anel.getBoundingClientRect(), limitesDoQuadro());
+    if (desvio.dx || desvio.dy) {
+      partes.rotulo.style.transform = 'translate(' + Math.round(desvio.dx) + 'px, ' + Math.round(desvio.dy) + 'px)';
+    }
+  }
+
+  function ajustarRotulos() {
+    marcadores.forEach(function (atual) { manterRotuloNoQuadro(atual.partes); });
   }
 
   function criarMarcador(inscrito) {
@@ -230,7 +276,7 @@
     reguas.esq.setAttribute('aria-hidden', 'true');
     reguas.reticula.setAttribute('aria-hidden', 'true');
     quadro.append(reguas.topo, reguas.esq, reguas.reticula);
-    mapa.on('move zoom resize', atualizarReguas);
+    mapa.on('move zoom resize', function () { atualizarReguas(); ajustarRotulos(); });
     atualizarReguas();
   }
 
@@ -324,6 +370,7 @@
     if (mapa) {
       atualizarMarcadores(dados.inscritos);
       ajustarVistaUmaVez();
+      ajustarRotulos();
     }
   }
 

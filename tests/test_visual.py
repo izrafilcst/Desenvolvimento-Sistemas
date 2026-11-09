@@ -338,3 +338,63 @@ def test_marcador_do_perdido_leva_colchetes_de_alvo_e_rotulo_com_o_tempo():
     assert re.search(r"\.mk\.estado-perdido\s*\{[^}]*--alvo-braco: 12px; --alvo-traco: 3px", MAPA_CSS)
     corpo = dict(regras_css(APP_CSS))[".alvo::after"]
     assert corpo.count("linear-gradient") == 8              # quatro cantos em L, só gradiente, sem imagem
+
+
+# ------------------------------------------------------- correções do Gate 2
+
+def itens_atuais(pagina: str) -> list[str]:
+    return re.findall(r'<a href="[^"]*" aria-current="page">([^<]+)</a>', pagina)
+
+
+def test_menu_marca_o_item_atual_pelo_caminho_inclusive_na_pagina_de_recusa(app, org_client, operacao):
+    with app.app_context():
+        inscricao = servicos.listar_inscritos(db.get_repo(), operacao)[0]["id"]
+    for url in ("/operadores", "/operacoes", f"/operacoes/{operacao}", f"/operacoes/{operacao}/mapa"):
+        esperado = ["Operadores"] if url == "/operadores" else ["Operações"]
+        assert itens_atuais(html(org_client.get(url))) == esperado, url
+    recusas = [("/operadores", {"apelido": "", "nome": ""}, ["Operadores"]),
+               ("/operacoes", {"nome": ""}, ["Operações"]),
+               (f"/operacoes/{operacao}/inscricoes", {"operador_id": "0"}, ["Operações"]),
+               (f"/inscricoes/{inscricao}", {"time": "Roxo", "classe": "Médico"}, ["Operações"])]
+    for url, dados, esperado in recusas:
+        resposta = org_client.post(url, data=dados)
+        assert resposta.status_code == 400, url                   # a página volta com a recusa
+        assert itens_atuais(html(resposta)) == esperado, url
+
+
+def test_menu_decide_o_item_atual_pelo_caminho_e_nao_pelo_endpoint():
+    base = (RAIZ / "src" / "templates" / "base.html").read_text(encoding="utf-8")
+    assert "request.endpoint" not in base
+    assert "caminho.startswith('/operadores')" in base
+    assert "caminho.startswith('/operacoes') or caminho.startswith('/inscricoes')" in base
+
+
+def test_rotulo_do_perdido_tem_duas_partes_e_nunca_sai_do_quadro():
+    codigo = sem_comentarios_js(MAPA_JS)
+    for parte in ("'mk-nome'", "'mk-sep'", "'mk-tempo'", "manterRotuloNoQuadro", "getBoundingClientRect"):
+        assert parte in codigo, parte
+    assert "ajustarRotulos();" in codigo and "mapa.on('move zoom resize'" in codigo
+    celular = MAPA_CSS.split("@media (max-width: 719px)")[1]
+    assert ".mk-tempo { display: block; }" in celular            # duas linhas: apelido e "perdido há X"
+    assert ".mk-sep { display: none; }" in celular
+    assert ".mk-apelido { width: max-content; max-width: 15rem; white-space: normal; }" in celular
+
+
+def test_rotulo_que_cobriria_o_anel_vai_para_baixo_do_marcador_dentro_do_quadro():
+    codigo = sem_comentarios_js(MAPA_JS)
+    for parte in ("deslocamentoDoRotulo", "limitesDoQuadro", "anel.bottom + 14", "anel.top - 14"):
+        assert parte in codigo, parte
+
+
+def test_moldura_nao_quebra_o_login_e_vira_duas_linhas_abaixo_de_1024_px():
+    base = next(corpo for seletor, corpo in regras_css(APP_CSS) if seletor == ".sessao-quem")     # a regra de fora das @media
+    assert "white-space: nowrap" in base
+    assert "@media (max-width: 1023px)" in APP_CSS and "@media (min-width: 1024px) and (max-width: 1279px)" in APP_CSS
+    abaixo = APP_CSS.split("@media (max-width: 1023px)")[1].split("@media (max-width: 719px)")[0]
+    assert ".moldura { flex-wrap: wrap;" in abaixo and ".moldura-menu { order: 3; flex: 1 0 100%;" in abaixo
+
+
+def test_lista_do_mapa_deixa_o_cabecalho_e_o_apelido_quebrarem_em_vez_de_rolar():
+    regras = dict(regras_css(MAPA_CSS))
+    assert "white-space: normal" in regras[".lista-operadores thead th"]
+    assert "overflow-wrap: anywhere" in regras[".lista-operadores tbody th"]

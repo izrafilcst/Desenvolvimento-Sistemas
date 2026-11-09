@@ -26,6 +26,7 @@
 .lista-operadores th:first-child, .lista-operadores td:first-child { padding-left: 14px; }
 .lista-operadores th:last-child, .lista-operadores td:last-child { padding-right: 14px; }
 .lista-operadores thead th { white-space: normal; }
+.lista-operadores tbody th { white-space: normal; overflow-wrap: anywhere; }   /* apelido de 32 letras quebra em vez de rolar */
 .lista-operadores td.num { font-family: var(--f-dado); font-variant-numeric: tabular-nums; }
 
 /* Estado do operador (R9): a cor vem sempre com o texto do selo. */
@@ -92,6 +93,7 @@
 .mk-seta polygon { stroke: var(--tinta); stroke-width: 1.5; stroke-linejoin: round; }
 .mk-anel.estado-perdido .mk-seta { opacity: 0.55; }    /* a última direção conhecida */
 .mk-apelido { position: absolute; top: 6px; left: 42px; padding: 2px 6px; font: 600 1rem/1.2 var(--f-dado); text-transform: uppercase; white-space: nowrap; color: var(--tinta); background: var(--sobreposicao); border: 1px solid var(--fio); }
+.mk-sep { white-space: pre; }
 .mk.estado-perdido { --alvo-cor: var(--perdido); --alvo-braco: 12px; --alvo-traco: 3px; --alvo-fora: 12px; }
 .mk.estado-perdido .mk-apelido { color: var(--perdido-tx); background: var(--perdido); border-color: var(--perdido); }
 
@@ -103,6 +105,10 @@
 }
 
 @media (max-width: 719px) {
+  /* Rótulo do perdido em duas linhas (apelido; perdido há X), com largura máxima. */
+  .mk-apelido { width: max-content; max-width: 15rem; white-space: normal; }
+  .mk-sep { display: none; }
+  .mk-tempo { display: block; }
   .faixa { display: grid; grid-template-columns: repeat(3, auto); }
   .faixa dt { letter-spacing: 0; }
   .faixa-celula { min-width: auto; padding: 10px 4px 10px 8px; border-bottom: 1px solid var(--fio); }

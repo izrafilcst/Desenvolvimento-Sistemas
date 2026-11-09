@@ -130,6 +130,7 @@ h2 { font: 800 1.25rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: 
 
 .sessao { display: flex; align-items: center; gap: var(--e4); font: 400 1rem/1 var(--f-dado); color: var(--moldura-tinta-2); }
 .sessao b { color: var(--moldura-tinta); font-weight: 500; }
+.sessao-quem { white-space: nowrap; }
 .form-sair { margin: 0; }
 .sair { padding: 9px 14px; font: 700 1rem/1 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; background: none; color: var(--moldura-tinta); border: 1px solid var(--moldura-fio); border-radius: 0; cursor: pointer; transition: border-color 150ms ease-out; }
 .sair:hover { border-color: var(--moldura-tinta); }
@@ -247,17 +248,32 @@ select { appearance: none; padding-right: 36px; background-image: linear-gradien
   .duas-colunas.so-tabela { grid-template-columns: minmax(0, 1fr); }
 }
 
-@media (max-width: 719px) {
+/* Moldura apertada: na faixa de 1024 a 1359 px os espaços diminuem; de 1024 a 1279 px o login e o papel saem. */
+@media (max-width: 1359px) {
+  .moldura { gap: var(--e5); padding: 0 var(--e5); }
+  .moldura nav { margin-left: 0; }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .sessao-quem { display: none; }
+}
+
+@media (max-width: 1023px) {
   /* Moldura em duas linhas: marca e Sair em cima; menu e seletor de tema embaixo. */
-  .moldura { flex-wrap: wrap; gap: var(--e2) var(--e3); padding: var(--e2) var(--e4); }
-  .marca { order: 1; flex: 1 1 auto; gap: var(--e2); font-size: 1rem; letter-spacing: 0.02em; }
+  .moldura { flex-wrap: wrap; gap: var(--e2) var(--e3); padding: var(--e2) var(--e5); }
+  .marca { order: 1; flex: 1 1 auto; }
+  .sessao { order: 2; }
+  .moldura-menu { order: 3; flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e2) var(--e4); }
+  .seletor-tema { margin-left: 0; }
+}
+
+@media (max-width: 719px) {
+  .moldura { padding: var(--e2) var(--e4); }
+  .marca { gap: var(--e2); font-size: 1rem; letter-spacing: 0.02em; }
   .marca-nome span { letter-spacing: 0.04em; }
   .sair { padding: 9px 12px; }
-  .sessao { order: 2; }
   .sessao-quem { display: none; }
-  .moldura-menu { order: 3; flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e2) var(--e4); }
-  .moldura nav { margin-left: 0; gap: var(--e4); }
-  .seletor-tema { margin-left: 0; }
+  .moldura nav { gap: var(--e4); }
   .pagina { padding: var(--e5) var(--e4); }
   .dossie { gap: var(--e4) var(--e5); padding: var(--e4); }
   .dossie-acoes { width: 100%; margin-left: 0; }
