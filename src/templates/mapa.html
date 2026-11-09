@@ -27,6 +27,8 @@
     <div class="faixa-celula faixa-fim"><dt>Inscritos</dt><dd><span id="n-inscritos">–</span></dd></div>
   </dl>
 
+  <p id="situacao-status" class="visualmente-oculto" role="status" aria-live="polite"></p>
+
   <section id="mapa-pagina" class="mapa-pagina"
            data-operacao-id="{{ operacao.id }}"
            data-centro-lat="{{ operacao.centro_lat }}"
@@ -34,7 +36,7 @@
            data-url-situacao="{{ url_for('api.situacao') }}">
     <div class="quadro alvo">
       <div id="mapa" class="mapa" role="application" aria-label="Mapa da operação">
-        <p class="carimbo"><span id="atualizacao" aria-live="polite">Carregando...</span></p>
+        <p class="carimbo"><span id="atualizacao">Carregando...</span></p>
       </div>
     </div>
 

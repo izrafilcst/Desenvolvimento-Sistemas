@@ -270,7 +270,9 @@ def test_r1_inscrever_em_duas_operacoes_nao_pede_novo_cadastro(app, org_client):
     operador = semear_operador(app)
     assert inscrever(org_client, primeira, operador).status_code == 302
     assert inscrever(org_client, segunda, operador).status_code == 302
-    assert html(org_client.get("/operadores")).count("Falcao") == 1
+    pagina = html(org_client.get("/operadores"))
+    assert pagina.count('<th scope="row">Falcao</th>') == 1      # uma só linha no cadastro, sem novo cadastro
+    assert pagina.count("Falcao inscrito (") == 2                # e o flash de cada inscrição diz quem foi inscrito
 
 
 def test_r2_inscricao_duplicada_aparece_como_mensagem(app, org_client):

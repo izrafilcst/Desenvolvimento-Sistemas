@@ -36,26 +36,31 @@
   </section>
 
   {% if current_user.eh_organizador %}
-  <section class="bloco" aria-labelledby="titulo-criar">
+  <section class="bloco" id="criar" aria-labelledby="titulo-criar">
     <header><h2 id="titulo-criar">Criar operação</h2></header>
     <form class="corpo" method="post" action="{{ url_for('paginas.operacoes_criar') }}">
+      {% include "_recusa.html" %}
       <p class="nota">A operação começa planejada. Sem centro do mapa, usa Brasília.</p>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label class="campo"><span>Nome</span>
-        <input name="nome" required maxlength="100" value="{{ valores.get('nome', '') }}">
+        <input name="nome" required maxlength="100" value="{{ valores.get('nome', '') }}"{% if 'nome' in erro_campos %} aria-invalid="true" autofocus{% endif %}>
       </label>
       <label class="campo"><span>Data</span>
-        <input type="date" name="data" required value="{{ valores.get('data', '') }}">
+        <input type="date" name="data" required value="{{ valores.get('data', '') }}"{% if 'data' in erro_campos %} aria-invalid="true"{% if 'nome' not in erro_campos %} autofocus{% endif %}{% endif %}>
       </label>
       <label class="campo"><span>Local</span>
-        <input name="local" required maxlength="100" value="{{ valores.get('local', '') }}">
+        <input name="local" required maxlength="100" value="{{ valores.get('local', '') }}"{% if 'local' in erro_campos %} aria-invalid="true"{% if 'nome' not in erro_campos and 'data' not in erro_campos %} autofocus{% endif %}{% endif %}>
       </label>
-      <label class="campo"><span>Latitude do centro (opcional)</span>
-        <input name="centro_lat" class="dado" inputmode="decimal" placeholder="-15.7939" value="{{ valores.get('centro_lat', '') }}">
-      </label>
-      <label class="campo"><span>Longitude do centro (opcional)</span>
-        <input name="centro_lon" class="dado" inputmode="decimal" placeholder="-47.8828" value="{{ valores.get('centro_lon', '') }}">
-      </label>
+      <div class="campo">
+        <label class="rotulo" for="centro_lat">Latitude do centro (opcional)</label>
+        <input id="centro_lat" name="centro_lat" class="dado" inputmode="decimal" aria-describedby="dica-lat" value="{{ valores.get('centro_lat', '') }}"{% if 'centro_lat' in erro_campos %} aria-invalid="true"{% if 'nome' not in erro_campos and 'data' not in erro_campos and 'local' not in erro_campos %} autofocus{% endif %}{% endif %}>
+        <small class="dica" id="dica-lat">ex.: -15.7939 (use ponto)</small>
+      </div>
+      <div class="campo">
+        <label class="rotulo" for="centro_lon">Longitude do centro (opcional)</label>
+        <input id="centro_lon" name="centro_lon" class="dado" inputmode="decimal" aria-describedby="dica-lon" value="{{ valores.get('centro_lon', '') }}"{% if 'centro_lon' in erro_campos %} aria-invalid="true"{% if 'nome' not in erro_campos and 'data' not in erro_campos and 'local' not in erro_campos and 'centro_lat' not in erro_campos %} autofocus{% endif %}{% endif %}>
+        <small class="dica" id="dica-lon">ex.: -47.8828 (use ponto)</small>
+      </div>
       <button type="submit" class="botao cheio">Criar operação</button>
     </form>
   </section>

@@ -175,7 +175,7 @@ A paleta é restrita: tinta, papel e um vermelho, mais as quatro cores de estado
 | Perdido | acima de 120 s | #d1242f | #ffffff (5,24:1) | anel vazado com colchetes de alvo | "Perdido", com anel vazado |
 | Sem sinal | nunca recebeu | #6e7781 | #ffffff (4,55:1) | não aparece no mapa | "Sem sinal", com ponto cheio |
 
-O anel sobre o mapa escuro tem pelo menos 3,26:1 (perdido) e 3,37:1 (ativo). No mapa claro, o anel ganha um contorno de 1,5 px na cor da tinta, porque o âmbar sobre o cinza claro dá só 1,58:1.
+O anel tem um contorno de 1,5 px quase preto (#0b0b0b) nos dois temas, porque a terra do mapa filtrado (#323232 no escuro) não separa sozinha o verde do ativo (2,35:1) nem o âmbar sobre o cinza claro do mapa claro (1,58:1). Contra o contorno, o anel dá 3,87:1 (ativo), 8,78:1 (atrasado) e 3,75:1 (perdido). O anel vazado do perdido ganha por dentro um véu de #0b0b0b a 70%, e o vermelho sobre a terra escura vista por ele dá 3,4:1.
 
 ### Times (dado do servidor)
 As cores dos times vêm de `servicos.TIMES` e chegam pela API no campo `cor`: Azul #1f6feb, Vermelho #d1242f, Verde #1a7f37 e Amarelo #d4a72c. Elas aparecem só na seta do marcador e na amostra quadrada ao lado do nome do time, nunca em fundo, borda ou texto. O time Vermelho tem o mesmo tom do perdido, e o Verde e o Amarelo têm os tons de ativo e atrasado. Por isso o estado nunca depende só da cor: ele tem anel, forma e texto.
@@ -213,12 +213,12 @@ As duas fontes ficam em `src/static/vendor/fonts/` (subconjunto latin, woff2) e 
 
 - **Grade:** a textura do chão mostra colunas de 160 px e uma quadrícula de 32 px, nas cores `grade`, sem dado. Ela é um fundo, não uma grade de encaixe.
 - **Espaçamento:** a escala e1 a e8 (4, 8, 12, 16, 24, 32, 48 e 64 px). O espaço acima de um título de seção é maior que o espaço abaixo dele.
-- **Moldura:** 56 px de altura, no topo da página (rola junto com ela), com 32 px de margem lateral.
+- **Moldura:** 56 px de altura em uma linha, no topo da página (rola junto com ela), com 32 px de margem lateral. Abaixo de 1280 px ela passa para duas linhas (marca, etiqueta de leitura e Sair em cima; menu e seletor de tema embaixo). Entre 1280 e 1359 px os espaços diminuem.
 - **Página comum** (`/operadores`, `/operacoes`, `/operacoes/<id>`): conteúdo de até 1280 px, centralizado, com 32 px de margem. A partir de 1024 px, a tabela fica à esquerda (flexível) e o formulário à direita (400 px). Abaixo de 1024 px, eles se empilham, com a tabela primeiro.
-- **Mapa** (`/operacoes/<id>/mapa`): largura total, com 32 px de margem. Por cima vem o cabeçalho (título, data, local e situação) e, logo abaixo, a faixa de dossiê com a contagem. Depois vêm o mapa (flexível) e a lista (580 px), lado a lado a partir de 1024 px. A altura do mapa é a da janela menos a moldura, o cabeçalho e a faixa, com mínimo de 420 px. Abaixo de 1024 px, a lista desce para baixo do mapa, que fica com 55vh (mínimo de 300 px).
+- **Mapa** (`/operacoes/<id>/mapa`): largura total, com 32 px de margem. Por cima vem o cabeçalho (título, data, local e situação) e, logo abaixo, a faixa de dossiê com a contagem. Depois vêm o mapa (flexível) e a lista (580 px), lado a lado a partir de 1024 px. O mapa e a lista ocupam o espaço que sobra na janela (a página é uma coluna flexível, sem altura fixa em px), com mínimo de 420 px para o mapa. Abaixo de 1024 px, a lista desce para baixo do mapa, que fica com 55vh (mínimo de 300 px).
 - **Login:** um bloco de 28rem centralizado no chão com a grade.
-- **Celular (até 719 px):** a moldura vira duas linhas (marca e Sair em cima; menu e seletor de tema embaixo), a faixa de contagem quebra em 3 + 3, e as tabelas rolam na horizontal dentro do próprio bloco, sem rolar a página.
-- **Pontos de quebra:** 720 px e 1024 px.
+- **Celular (até 719 px):** a moldura fica em duas linhas (marca e Sair em cima; menu e lista nativa de tema embaixo, e o observador ganha embaixo uma tira "Somente leitura"), a faixa de contagem quebra em 3 + 3, a lista do mapa esconde a coluna Time, e as tabelas rolam na horizontal dentro do próprio bloco, sem rolar a página, com uma barra de 3 px na borda em que ainda há tabela (a pista de rolagem). Os alvos de toque têm 44 px: menu, Sair, lista de tema, botões e "Alterar".
+- **Pontos de quebra:** 720 px (celular), 1024 px (colunas) e 1280 px (moldura em uma linha).
 
 ## Elevation & Depth
 
@@ -237,13 +237,14 @@ Os cantos são retos (raio 0) em tudo: botão, campo, bloco, selo e tabela. O c�
 - **Faixa preta** (#0b0b0b), igual em todos os temas, com fio inferior de 1 px a 14% de opacidade.
 - **Marca:** o motivo dos pontos (quatro pontos cheios e o anel vazado, em #f4f4f1, sem vermelho), seguido de "MeshTracker" (Archivo 900) e "Central" (Archivo 500), em caixa alta.
 - **Menu:** Operadores e Operações, em Rótulo, cor #b9b9b3. No hover, o texto fica #f4f4f1. A página atual tem `aria-current="page"`, texto #f4f4f1 e sublinhado de 2 px.
-- **Sessão:** o login e o papel em mono #b9b9b3 e o botão Sair com contorno claro. Sair é o único formulário que o observador vê.
-- **Seletor de tema:** três botões (Sistema, Claro e Escuro), sem formulário e com `aria-pressed`. Vem de `static/js/tema.js`, que aplica `data-tema` no `<html>` antes de pintar a página e guarda a escolha no `localStorage`, dentro de try/catch. Sem JS, os botões ficam escondidos e vale o modo Sistema pelo CSS.
+- **Sessão:** para o organizador, o login e o papel em mono #b9b9b3 e o botão Sair com contorno claro. O observador não vê o login, vê a etiqueta **Somente leitura** (Rótulo, #f4f4f1, contorno claro) antes do Sair. Sair é o único formulário que o observador vê.
+- **Seletor de tema:** três botões (Sistema, Claro e Escuro), sem formulário e com `aria-pressed`. Vem de `static/js/tema.js`, que aplica `data-tema` no `<html>` antes de pintar a página e guarda a escolha no `localStorage`, dentro de try/catch. Sem JS, o seletor fica escondido e vale o modo Sistema pelo CSS. No celular, onde os três botões não cabem ao lado do menu, o mesmo grupo mostra uma lista nativa (`<select>`, 44 px) no lugar dos botões.
 
 ### Botões
 - **Forma:** cantos retos, 44 px de altura, 0 e 24 px de padding, texto em Rótulo e caixa alta.
-- **Primário:** fundo tinta e texto superfície (no escuro, o inverso). Usado em Inscrever, Cadastrar, Criar, Entrar, Iniciar operação e Encerrar operação.
-- **Secundário:** fundo transparente e contorno de 2 px na tinta. Usado em Abrir mapa e Salvar.
+- **Primário:** fundo tinta e texto superfície (no escuro, o inverso). Usado em Abrir mapa, Inscrever, Cadastrar, Criar, Entrar e no envio de Encerrar operação (dentro do `<details>`).
+- **Secundário:** fundo transparente e contorno de 2 px na tinta. Usado em Iniciar operação, no resumo "Encerrar operação…" e em Salvar.
+- **Encerrar operação não tem volta**, então não é um botão direto. O dossiê traz um `<details>` com o resumo "Encerrar operação…" (secundário). Aberto, ele mostra em uma frase a consequência (depois de encerrada, a operação não aceita inscrições nem mudanças, e os sinais que chegarem são descartados) e, abaixo, o botão de envio com o texto "Encerrar operação". Funciona sem JS.
 - **Hover:** o primário clareia um pouco e o secundário ganha fundo superfície 2. **Foco:** contorno de 2 px na cor da tinta, afastado 2 px. **Desabilitado:** 40% de opacidade e cursor padrão.
 - **Link de ação na tabela** ("Alterar"): texto sublinhado, sem caixa. Ele abre o `<details>` da linha.
 
@@ -252,16 +253,18 @@ Os cantos são retos (raio 0) em tudo: botão, campo, bloco, selo e tabela. O c�
 - **Rótulo:** acima do campo, em Rótulo e tinta 2, ligado pelo `<label>`.
 - **Foco:** contorno de 2 px na tinta, sem afastamento.
 - **Checkbox:** 22 px, com `accent-color` na tinta e o texto ao lado em Corpo.
-- **Erro de regra:** a mensagem aparece no topo do formulário (veja Mensagem de regra), e os valores digitados continuam nos campos.
+- **Dica:** nada de `placeholder` que pareça valor. Uma nota curta abaixo do campo, em Corpo e tinta 2, ligada por `aria-describedby`: "ex.: MT-01" no dispositivo e "ex.: -15.7939 (use ponto)" nas coordenadas.
+- **Erro de regra:** a mensagem aparece no topo do formulário que a gerou (veja Mensagem de regra), os valores digitados continuam nos campos, e o campo culpado (pelo código do erro) ganha `aria-invalid="true"`, borda vermelha de 2 px e o foco. O select de operador mostra quem já está inscrito como opção desabilitada ("Falcão · inscrito"), e depois de uma inscrição o formulário volta com o último time e a última classe.
 
 ### Tabela
 - Fundo superfície, cabeçalho em superfície 2 com Rótulo em tinta 2 e fio inferior de 2 px na tinta. Linhas com fio de 1 px e células com 10 px de padding.
 - A primeira coluna (o apelido) é `<th scope="row">` em peso 700. Os números ficam alinhados à direita, na fonte de dado.
 - A linha do perdido tem fundo vermelho a 9% (16% no escuro), e a do atrasado, âmbar a 14% (12% no escuro). O estado continua no selo.
+- **Pista de rolagem:** quando a tabela é mais larga que o bloco, uma barra de 3 px na cor da tinta marca a borda em que ainda há tabela. Ela some quando a rolagem chega ao fim. Sem sombra e sem desfoque.
 
 ### Mensagem de regra
-- **Recusa** (categoria `erro`, `role="alert"`): bloco com fio de 1 px vermelho e fundo vermelho a 6%. À esquerda, uma etiqueta "Recusa" no estilo do selo perdido (fundo vermelho, texto branco). À direita, a mensagem do servidor em Corpo na cor da tinta. A página volta com status 400.
-- **Feito** (categoria `sucesso`, `role="status"`): o mesmo bloco com fio na tinta e etiqueta "Feito" no estilo do selo ativo.
+- **Recusa** (categoria `erro`, `role="alert"`): bloco com fio de 1 px vermelho e fundo vermelho a 6%. À esquerda, uma etiqueta "Recusa" no estilo do selo perdido (fundo vermelho, texto branco). À direita, a mensagem do servidor em Corpo na cor da tinta. A página volta com status 400. O bloco fica no topo do formulário que gerou a recusa (cadastro, criação, inscrição, a linha de "Alterar" ou o painel de Encerrar); só quando esse formulário não está na página a recusa fica sob o título. A etiqueta vem do CSS, e o `<p>` traz só a mensagem.
+- **Feito** (categoria `sucesso`, `role="status"`): o mesmo bloco com fio na tinta e etiqueta "Feito" no estilo do selo ativo. Depois de inscrever, a mensagem diz quem foi ("Coruja inscrito (Amarelo, Suporte).") e o redirect leva à âncora do formulário de inscrição, onde a mensagem aparece no topo.
 - **Aviso** (categoria `aviso` e falha de atualização do mapa): o mesmo bloco com fio na tinta e etiqueta "Aviso" no estilo do selo atrasado.
 
 ### Selo de estado e selo de situação
@@ -271,36 +274,40 @@ Os cantos são retos (raio 0) em tudo: botão, campo, bloco, selo e tabela. O c�
 ### Bloco de dossiê (página da operação)
 - Superfície com fio de 1 px, 24 px de padding e colchetes de alvo 9 px para fora.
 - Itens, só com dados reais: Data, Local, Situação (o selo), Centro (latitude e longitude com 4 casas, na fonte de dado) e Inscritos (o total). Cada item tem o Rótulo em cima e o valor embaixo (Archivo 700 1.25rem, ou dado 1.125rem).
-- As ações ficam no canto direito: o botão de transição (só o organizador vê) e Abrir mapa.
+- As ações ficam no canto direito: Abrir mapa (primário) e a transição (só o organizador vê): "Iniciar operação" como botão secundário e "Encerrar operação…" atrás do `<details>` descrito em Botões.
 - "Ordens e objetivos" estão fora do MVP (`docs/backlog.md`), então o app não tem lista de objetivos.
 
 ### Faixa de dossiê (mapa)
 - Uma linha de células com fio entre elas: Perdidos, Atrasados, Ativos, Sem sinal e Descartados. Cada célula tem o Rótulo e, embaixo, o Número, com o marcador do estado antes dele. O número de perdidos usa o vermelho de texto. No fim, alinhada à direita, fica a célula Inscritos.
 - Os números são contados no navegador a partir da mesma resposta de `/api/v1/situacao` que desenha o mapa. Eles mudam sem animação.
+- Leitor de tela: uma região de status visualmente oculta (`role="status"`) diz "1 operador perdido, 0 atrasados." e só muda quando a contagem de perdidos ou de atrasados muda. O relógio de 3 s não é anunciado.
 
 ### Marcador do mapa
-- **Anel** de 36 px e 4 px de borda na cor do estado: cheio no ativo, tracejado no atrasado e vazado (sem fundo) no perdido. No ativo e no atrasado, o fundo é a superfície a 90%. No mapa claro, o anel tem contorno de 1,5 px na tinta.
+- **Anel** de 36 px e 4 px de borda na cor do estado: cheio no ativo, tracejado no atrasado e vazado no perdido. No ativo e no atrasado, o fundo é a superfície a 90%. No perdido, um véu de #0b0b0b a 70%, que deixa ver o mapa. Os três têm contorno de 1,5 px quase preto (#0b0b0b), nos dois temas.
 - **Seta** de 22 px na cor do time, girada pelo `rumo` (sem giro quando o rumo é nulo), com traço de 1,5 px no contraste do fundo. No perdido, a seta fica com 55% de opacidade, porque é a última direção conhecida.
-- **Rótulo:** o apelido em mono, caixa alta e 1rem, numa etiqueta superfície com fio. No perdido, a etiqueta é vermelha com texto branco e diz "Coruja · perdido há 2 min 10 s", com o tempo vindo de `segundos`.
+- **Rótulo:** o apelido em mono, caixa alta e 1rem, numa etiqueta superfície com fio. No perdido, a etiqueta é vermelha com texto branco e diz "Coruja · perdido · último sinal há 2 min 10 s": o número é o tempo desde o último sinal (vem de `segundos`), e não o tempo "perdido". No celular são duas linhas, "Coruja · perdido" e "último sinal há 2 min 10 s".
+- **Onde o rótulo fica:** à direita do anel; se não couber, à esquerda, acima, abaixo, nos cantos ou mais longe. Ele sempre fica dentro do quadro e nunca cobre outro anel, outro rótulo, o carimbo, o zoom, a escala ou a atribuição. Se nada couber livre, o perdido tenta a versão curta "Coruja · perdido" e, em último caso, fica onde cobrir menos (nunca o próprio anel). Quem escolhe primeiro: perdido, atrasado, ativo, depois o apelido; o ativo que não achar lugar fica só com o anel e a seta.
+- **Rótulo por zoom:** abaixo do zoom 17, e no celular, só o perdido e o atrasado mostram rótulo. O zoom mínimo do mapa é 15 (a operação tem uns 300 m de raio, e o nível 15 já mostra uns 2,5 km), e o máximo é o do tile.
 - **Colchetes de alvo** vermelhos em volta do perdido. O perdido fica acima dos outros (`zIndexOffset`).
 - Todo texto entra por `textContent`. A cor do time passa pela validação de hex de `corSegura`.
 
 ### Quadro do mapa (réguas, retícula, carimbo)
 - **Quadro:** fio de 1 px na tinta e colchetes de alvo em volta.
-- **Réguas:** uma faixa de 26 px no topo (longitude) e outra à esquerda (latitude), com tracinhos a cada 0,0005° e números a cada 0,001° (três casas, vírgula decimal). Tudo é recalculado do próprio mapa em `move` e `zoom`.
+- **Réguas:** uma faixa de 26 px no topo (longitude) e outra à esquerda (latitude), com tracinhos a cada 0,0005° e números a cada 0,001° (três casas, vírgula decimal) no zoom 17. Com menos zoom, o passo cresce (múltiplos de 0,001°) para sobrar pelo menos 96 px entre dois números, e nenhum número fica no fim da régua de latitude, onde ele sairia do quadro. Tudo é recalculado do próprio mapa em `move` e `zoom`.
 - **Retícula:** uma cruz de 56 px no centro da operação (`centro_lat` e `centro_lon`), a 55% de opacidade, sem texto.
-- **Carimbo:** canto superior esquerdo, com "Atualizado às 21:39:36" em dado. É o mesmo `#atualizacao` de hoje, com `aria-live="polite"`.
+- **Carimbo:** canto superior esquerdo, com "Atualizado às 21:39:36" em dado. É o mesmo `#atualizacao` de hoje, sem `aria-live`: o relógio de 3 s não é anunciado (veja a região de status na faixa de dossiê).
 - **Escala métrica** do Leaflet (`L.control.scale`, sem milhas) no canto inferior esquerdo, e o zoom no canto superior direito, com cantos retos.
-- **Tiles do OpenStreetMap filtrados no painel de tiles**, sem trocar de provedor nem mexer na CSP. No claro: `grayscale(1) contrast(.92) brightness(1.04)`. No escuro: `grayscale(1) invert(1) brightness(.78) contrast(1.15)`. Sem internet, o fundo fica liso (claro #d9d9d4, escuro #1a1c1c), e os marcadores, a lista e a faixa continuam funcionando.
+- **Tiles do OpenStreetMap filtrados no painel de tiles**, sem trocar de provedor nem mexer na CSP. No claro: `grayscale(1) contrast(.92) brightness(1.04)`. No escuro: `grayscale(1) brightness(.507) contrast(9.87)`, sem inverter: a terra vira cinza escuro (#323232 no parque), as ruas, que são brancas no OSM, ficam mais claras (#919191), e o lago e os prédios, mais escuros que a terra, ficam pretos. Medido em prints nos zooms 15, 16 e 17, contra a terra do parque o lago dá 1,64:1 e as ruas 4,07:1, e contra a terra urbana do OSM (#424242) o lago dá 2,09:1 e as ruas 3,19:1. O filtro antigo (`invert(1) brightness(.78) contrast(1.15)`) deixava a terra e as ruas pretas. Sem internet, o fundo fica liso (claro #d9d9d4, escuro #393939, a terra filtrada), e os marcadores, a lista e a faixa continuam funcionando.
 
 ### Lista lateral (mapa)
 - A Tabela com Operador, Time, Estado, Último sinal e Bateria, ordenada por prioridade (perdido, atrasado, sem sinal, ativo; depois pelo apelido), como hoje.
 - A bateria abaixo de 20% fica em vermelho de texto, peso 700.
+- No celular a coluna Time sai, o "Último sinal" quebra em duas linhas, e o que ainda passar do bloco rola na horizontal com a pista de rolagem.
 - Abaixo da tabela, uma nota em tinta 2: "Sinais de dispositivos não inscritos são descartados e só contados."
 
 ### Título que aparece como digitado
 - Só no `<h1>`, nunca em dado que muda. É feito só com CSS: `clip-path` de `inset(0 100% 0 0)` até `inset(0)`, em 450 ms com `steps(16)`.
-- Fica desligado com `prefers-reduced-motion: reduce`. O texto inteiro está no HTML desde o início, então leitores de tela não esperam.
+- Fica desligado com `prefers-reduced-motion: reduce` e quando a página chega por um redirect com âncora (o título não digita de novo depois de uma inscrição). O texto inteiro está no HTML desde o início, então leitores de tela não esperam.
 
 ### Movimento
 - **Transições de estado:** 150 a 200 ms, `ease-out`, só na cor de fundo e na borda (hover e foco).

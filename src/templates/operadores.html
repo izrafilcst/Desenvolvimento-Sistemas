@@ -24,16 +24,17 @@
   </section>
 
   {% if current_user.eh_organizador %}
-  <section class="bloco" aria-labelledby="titulo-cadastrar">
+  <section class="bloco" id="cadastrar" aria-labelledby="titulo-cadastrar">
     <header><h2 id="titulo-cadastrar">Cadastrar operador</h2></header>
     <form class="corpo" method="post" action="{{ url_for('paginas.operadores_criar') }}">
+      {% include "_recusa.html" %}
       <p class="nota">O cadastro é feito uma vez só. Depois, o operador é inscrito em cada operação sem novo cadastro.</p>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label class="campo"><span>Apelido</span>
-        <input name="apelido" required maxlength="32" value="{{ valores.get('apelido', '') }}">
+        <input name="apelido" required maxlength="32" value="{{ valores.get('apelido', '') }}"{% if 'apelido' in erro_campos %} aria-invalid="true" autofocus{% endif %}>
       </label>
       <label class="campo"><span>Nome</span>
-        <input name="nome" required maxlength="100" value="{{ valores.get('nome', '') }}">
+        <input name="nome" required maxlength="100" value="{{ valores.get('nome', '') }}"{% if 'nome' in erro_campos %} aria-invalid="true"{% if 'apelido' not in erro_campos %} autofocus{% endif %}{% endif %}>
       </label>
       <button type="submit" class="botao cheio">Cadastrar</button>
     </form>

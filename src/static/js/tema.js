@@ -30,26 +30,30 @@
     if (tema === 'sistema') { raiz.removeAttribute('data-tema'); } else { raiz.setAttribute('data-tema', tema); }
   }
 
-  function marcar(botoes, tema) {
-    botoes.forEach(function (botao) {
+  function marcar(grupo, tema) {
+    grupo.querySelectorAll('button[data-tema]').forEach(function (botao) {
       botao.setAttribute('aria-pressed', String(botao.dataset.tema === tema));
     });
+    const lista = grupo.querySelector('select');      // a lista do celular acompanha os botões
+    if (lista) { lista.value = tema; }
+  }
+
+  function escolher(grupo, tema) {
+    aplicar(tema);
+    guardarEscolha(tema);
+    marcar(grupo, tema);
   }
 
   function ligarSeletor() {
     const grupo = document.getElementById('seletor-tema');
     if (!grupo) { return; }
-    const botoes = Array.prototype.slice.call(grupo.querySelectorAll('button[data-tema]'));
-    marcar(botoes, lerEscolha());
+    marcar(grupo, lerEscolha());
     grupo.hidden = false;
-    botoes.forEach(function (botao) {
-      botao.addEventListener('click', function () {
-        const tema = botao.dataset.tema;
-        aplicar(tema);
-        guardarEscolha(tema);
-        marcar(botoes, tema);
-      });
+    grupo.querySelectorAll('button[data-tema]').forEach(function (botao) {
+      botao.addEventListener('click', function () { escolher(grupo, botao.dataset.tema); });
     });
+    const lista = grupo.querySelector('select');
+    if (lista) { lista.addEventListener('change', function () { escolher(grupo, lista.value); }); }
   }
 
   aplicar(lerEscolha());

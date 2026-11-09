@@ -161,7 +161,7 @@ def test_css_do_tema_tem_modo_sistema_claro_escuro_e_mapa_sempre_escuro_no_siste
     assert re.search(r':root\[data-tema="claro"\]\s*\{\s*color-scheme: light;', APP_CSS)
     assert re.search(r':root\[data-tema="escuro"\],\s*:root:not\(\[data-tema="claro"\]\):has\(\.pagina-mapa\)\s*\{\s*color-scheme: dark;', APP_CSS)
     assert re.search(r':root\[data-tema="claro"\] \.mapa \.leaflet-tile-pane\s*\{\s*filter: grayscale\(1\) contrast\(0\.92\) brightness\(1\.04\)', MAPA_CSS)
-    assert "invert(1) brightness(0.78) contrast(1.15)" in MAPA_CSS                  # o escuro é o padrão do mapa
+    assert "filter: grayscale(1) brightness(0.507) contrast(9.87)" in MAPA_CSS     # o escuro é o padrão do mapa; sem inverter
 
 
 def test_valores_claro_e_escuro_dos_tokens_sao_os_do_design():
@@ -173,7 +173,7 @@ def test_valores_claro_e_escuro_dos_tokens_sao_os_do_design():
     for token, (claro, escuro) in pares.items():
         if claro:
             assert par_claro_escuro(token) == (cores[claro].lower(), cores[escuro].lower()), token
-    assert par_claro_escuro("mapa-liso") == ("#d9d9d4", "#1a1c1c")
+    assert par_claro_escuro("mapa-liso") == ("#d9d9d4", "#393939")           # o liso escuro é a terra do tile filtrado
 
 
 # ---------------------------------------------------------- cores e estados
@@ -226,7 +226,7 @@ def test_vermelho_so_em_perdido_recusa_e_bateria_baixa():
     for seletor, corpo in regras_css(APP_CSS) + regras_css(MAPA_CSS):
         usa = re.search(r"var\(--(perdido|perdido-tx|vermelho-texto|vermelho-fundo)\)", corpo)
         if usa:
-            assert re.search(r"perdido|erro|bateria-baixa", seletor), (seletor, usa.group(0))
+            assert re.search(r"perdido|erro|bateria-baixa|aria-invalid", seletor), (seletor, usa.group(0))
 
 
 def test_regra_do_plano_sem_sombra_desfoque_nem_canto_arredondado():
@@ -262,7 +262,8 @@ def test_digitacao_so_no_titulo_e_desligada_com_movimento_reduzido():
     reduzido = APP_CSS.split("@media (prefers-reduced-motion: reduce)")[1]
     assert "h1 { animation: none; }" in reduzido
     animados = [s for s, corpo in regras_css(APP_CSS) if "animation:" in corpo]
-    assert animados == ["h1", "h1"]                     # o título e o desligamento
+    assert animados == ["h1", "body:has(:target) h1", "h1"]       # o título, o título que vem de uma âncora e o movimento reduzido
+    assert dict(regras_css(APP_CSS))["body:has(:target) h1"].strip() == "animation: none;"
 
 
 def test_fontes_vem_do_proprio_app_e_nao_do_google():
@@ -313,10 +314,12 @@ def test_etiquetas_recusa_feito_e_aviso_vem_do_css_com_as_cores_do_selo():
 def test_mapa_mantem_os_ids_que_o_js_usa_e_a_faixa_de_dossie(org_client, operacao):
     pagina = html(org_client.get(f"/operacoes/{operacao}/mapa"))
     usados = set(re.findall(r"getElementById\('([\w-]+)'\)", MAPA_JS)) | {f"n-{e}" for e in ("perdido", "atrasado", "ativo", "sem_sinal")}
+    assert "situacao-status" in usados
     assert {"atualizacao", "descartados", "aviso", "lista", "mapa-pagina", "n-inscritos"} <= usados
     for id_ in usados | {"mapa"}:
         assert f'id="{id_}"' in pagina, id_
-    assert 'id="atualizacao" aria-live="polite"' in pagina
+    assert re.search(r'<span id="atualizacao">', pagina) and 'aria-live' not in re.search(r'<p class="carimbo">.*?</p>', pagina, re.S).group(0)
+    assert re.search(r'<p id="situacao-status" class="visualmente-oculto" role="status" aria-live="polite"></p>', pagina)
     assert re.search(r'<p id="aviso" class="mensagem mensagem-aviso" role="alert" hidden>', pagina)
     for rotulo in ("Perdidos", "Atrasados", "Ativos", "Sem sinal", "Descartados", "Inscritos"):
         assert f"<dt>{rotulo}</dt>" in pagina
@@ -334,7 +337,7 @@ def test_mapa_js_so_escreve_texto_por_textcontent_e_mantem_o_comportamento():
 
 def test_marcador_do_perdido_leva_colchetes_de_alvo_e_rotulo_com_o_tempo():
     codigo = sem_comentarios_js(MAPA_JS)
-    assert "' alvo'" in codigo and "perdido há " in codigo
+    assert "' alvo'" in codigo and "'perdido'" in codigo and "'último sinal há '" in codigo
     assert re.search(r"\.mk\.estado-perdido\s*\{[^}]*--alvo-braco: 12px; --alvo-traco: 3px", MAPA_CSS)
     corpo = dict(regras_css(APP_CSS))[".alvo::after"]
     assert corpo.count("linear-gradient") == 8              # quatro cantos em L, só gradiente, sem imagem
@@ -369,32 +372,241 @@ def test_menu_decide_o_item_atual_pelo_caminho_e_nao_pelo_endpoint():
     assert "caminho.startswith('/operacoes') or caminho.startswith('/inscricoes')" in base
 
 
-def test_rotulo_do_perdido_tem_duas_partes_e_nunca_sai_do_quadro():
+def test_rotulo_do_perdido_diz_perdido_e_ultimo_sinal_em_duas_partes():
     codigo = sem_comentarios_js(MAPA_JS)
-    for parte in ("'mk-nome'", "'mk-sep'", "'mk-tempo'", "manterRotuloNoQuadro", "getBoundingClientRect"):
+    for parte in ("'mk-nome'", "'mk-sep'", "'mk-estado'", "'mk-sep2'", "'mk-tempo'", "'último sinal há '"):
         assert parte in codigo, parte
-    assert "ajustarRotulos();" in codigo and "mapa.on('move zoom resize'" in codigo
+    assert "perdido há" not in MAPA_JS                           # o número mede o tempo sem sinal, não o tempo "perdido"
     celular = MAPA_CSS.split("@media (max-width: 719px)")[1]
-    assert ".mk-tempo { display: block; }" in celular            # duas linhas: apelido e "perdido há X"
-    assert ".mk-sep { display: none; }" in celular
-    assert ".mk-apelido { width: max-content; max-width: 15rem; white-space: normal; }" in celular
+    assert ".mk-tempo { display: block; }" in celular            # duas linhas: "Coruja · perdido" e "último sinal há X"
+    assert ".mk-sep2 { display: none; }" in celular
+    assert ".mk-apelido { width: max-content; max-width: 18rem; white-space: normal; }" in celular
+    assert ".mk-apelido.curto .mk-sep2, .mk-apelido.curto .mk-tempo { display: none; }" in MAPA_CSS
 
 
-def test_rotulo_que_cobriria_o_anel_vai_para_baixo_do_marcador_dentro_do_quadro():
+def test_rotulos_cabem_no_quadro_e_nao_cobrem_outro_anel_nem_outro_rotulo():
     codigo = sem_comentarios_js(MAPA_JS)
-    for parte in ("deslocamentoDoRotulo", "limitesDoQuadro", "anel.bottom + 14", "anel.top - 14"):
+    for parte in ("limitesDoQuadro", "areaDoAnel", "dentroDoQuadro", "candidatosDoRotulo", "posicaoLivre", "posicionarRotulo",
+                  "compararPrioridade", "getBoundingClientRect", "classList.toggle('curto'"):
         assert parte in codigo, parte
+    assert "mapa.on('move zoom zoomend moveend resize'" in codigo and "ajustarRotulos();" in codigo
+    assert "const esquerda = anel.left - folga - caixa.right;" in codigo and "posicaoMenosRuim" in codigo   # outros lados e, sem lugar livre, o que cobre menos
+    assert "const folga = perdido ? 14 : 6;" in codigo                          # fora dos colchetes de alvo do perdido
+    assert re.search(r"PRIORIDADE\[a\.estado\] - PRIORIDADE\[b\.estado\]\) \|\| a\.apelido\.localeCompare", codigo)
 
 
-def test_moldura_nao_quebra_o_login_e_vira_duas_linhas_abaixo_de_1024_px():
+def test_zoom_minimo_15_e_rotulos_so_do_perdido_e_do_atrasado_abaixo_do_17():
+    codigo = sem_comentarios_js(MAPA_JS)
+    assert "const ZOOM_MINIMO = 15;" in codigo and "L.map('mapa', { minZoom: ZOOM_MINIMO })" in codigo
+    assert "maxZoom: 19," in codigo                                              # o máximo do tile continua o de antes
+    assert "const ZOOM_DOS_ROTULOS = 17;" in codigo and "mapa.getZoom() < ZOOM_DOS_ROTULOS" in codigo
+    assert "atual.estado === 'perdido' || atual.estado === 'atrasado'" in codigo
+    assert "window.matchMedia('(max-width: 719px)').matches" in codigo           # no celular, também só esses dois
+
+
+def test_regua_de_latitude_nao_deixa_numero_no_fim_da_regua_e_o_passo_se_adapta_ao_zoom():
+    codigo = sem_comentarios_js(MAPA_JS)
+    assert "y < tam.y - ESPESSURA_REGUA - 80" in codigo                           # o número desce uns 70 px do tracinho
+    assert "const multiplos = [1, 2, 5, 10, 20, 50, 100];" in codigo and "PX_ENTRE_NUMEROS = 96" in codigo
+
+
+def test_anel_tem_contorno_escuro_nos_dois_temas_e_o_perdido_ganha_veu_translucido():
+    regras = dict(regras_css(MAPA_CSS))
+    assert regras[".mk-anel"].count("outline: 1.5px solid var(--moldura)") == 1
+    assert 'claro"] .mk-anel' not in MAPA_CSS                                    # não é mais só do tema claro
+    assert "color-mix(in srgb, var(--moldura) 70%, transparent)" in regras[".mk-anel.estado-perdido"]
+
+
+def test_moldura_nao_quebra_o_login_e_vira_duas_linhas_abaixo_de_1280_px():
     base = next(corpo for seletor, corpo in regras_css(APP_CSS) if seletor == ".sessao-quem")     # a regra de fora das @media
     assert "white-space: nowrap" in base
-    assert "@media (max-width: 1023px)" in APP_CSS and "@media (min-width: 1024px) and (max-width: 1279px)" in APP_CSS
-    abaixo = APP_CSS.split("@media (max-width: 1023px)")[1].split("@media (max-width: 719px)")[0]
-    assert ".moldura { flex-wrap: wrap;" in abaixo and ".moldura-menu { order: 3; flex: 1 0 100%;" in abaixo
+    abaixo = APP_CSS.split("@media (max-width: 1279px)")[1].split("@media (max-width: 719px)")[0]
+    assert ".moldura { flex-wrap: wrap;" in abaixo and ".moldura-menu { order: 4; flex: 1 0 100%;" in abaixo
 
 
 def test_lista_do_mapa_deixa_o_cabecalho_e_o_apelido_quebrarem_em_vez_de_rolar():
     regras = dict(regras_css(MAPA_CSS))
     assert "white-space: normal" in regras[".lista-operadores thead th"]
     assert "overflow-wrap: anywhere" in regras[".lista-operadores tbody th"]
+
+
+# ------------------------------------------------- crítica impeccable nas telas
+
+@pytest.fixture
+def livre(app):
+    """Operador cadastrado que ainda não está inscrito em nenhuma operação."""
+    with app.app_context():
+        return servicos.cadastrar_operador(db.get_repo(), "livre", "Operador Livre", app.config["RELOGIO"]())
+
+
+@pytest.fixture
+def planejada(app):
+    with app.app_context():
+        return servicos.criar_operacao(db.get_repo(), "Operação Planejada", "2026-11-22", "Parque")
+
+
+def secao(pagina: str, id_: str) -> str:
+    """O texto de <section ... id="..."> até o </section>."""
+    return re.search(rf'<section class="bloco" id="{id_}".*?</section>', pagina, re.S).group(0)
+
+
+def test_abrir_mapa_e_primario_e_encerrar_fica_atras_de_um_details_para_o_organizador(org_client, operacao):
+    pagina = html(org_client.get(f"/operacoes/{operacao}"))
+    assert f'<a class="botao" href="/operacoes/{operacao}/mapa">Abrir mapa</a>' in pagina
+    detalhes = re.search(r'<details class="encerrar" >.*?</details>', pagina, re.S).group(0)
+    assert '<summary class="botao secundario">Encerrar operação…</summary>' in detalhes
+    assert f'<form class="encerrar-corpo" method="post" action="/operacoes/{operacao}/avancar">' in detalhes
+    assert "Depois de encerrada, a operação não aceita inscrições nem mudanças, e os sinais que chegarem são descartados." in detalhes
+    assert detalhes.rstrip().endswith("</details>") and '<button type="submit" class="botao">Encerrar operação</button>' in detalhes
+    assert pagina.count("Encerrar operação") == 2 and "Iniciar operação" not in pagina       # o resumo e o envio real, só
+
+
+def test_iniciar_operacao_e_botao_secundario_direto(org_client, planejada):
+    pagina = html(org_client.get(f"/operacoes/{planejada}"))
+    assert '<button type="submit" class="botao secundario">Iniciar operação</button>' in pagina
+    assert "Encerrar operação" not in pagina and '<details class="encerrar"' not in pagina
+
+
+def test_observador_nao_ve_encerrar_nem_iniciar_e_ganha_a_etiqueta_somente_leitura(obs_client, org_client, operacao, planejada):
+    for id_ in (operacao, planejada):
+        pagina = html(obs_client.get(f"/operacoes/{id_}"))
+        assert "Encerrar" not in pagina and "Iniciar operação" not in pagina and 'class="encerrar' not in pagina
+    for url in paginas_logadas(operacao):
+        assert '<span class="somente-leitura">Somente leitura</span>' in html(obs_client.get(url)), url
+        assert "somente-leitura" not in html(org_client.get(url)), url
+
+
+def test_select_de_operador_desabilita_quem_ja_esta_inscrito(org_client, operacao, livre):
+    pagina = secao(html(org_client.get(f"/operacoes/{operacao}")), "inscrever")
+    assert re.search(r'<option value="\d+" disabled>op1 · inscrito</option>', pagina)
+    assert re.search(rf'<option value="{livre}" >livre</option>', pagina) and "livre · inscrito" not in pagina
+
+
+def test_inscricao_certa_leva_ao_formulario_diz_quem_foi_inscrito_e_lembra_time_e_classe(org_client, operacao, livre):
+    resposta = org_client.post(f"/operacoes/{operacao}/inscricoes", data={
+        "operador_id": str(livre), "time": "Verde", "classe": "Suporte", "dispositivo": "mt-09", "consentimento": "1"})
+    assert resposta.status_code == 302 and resposta.headers["Location"] == f"/operacoes/{operacao}#inscrever"
+    pagina = html(org_client.get(f"/operacoes/{operacao}"))
+    formulario = secao(pagina, "inscrever")
+    assert '<p class="mensagem mensagem-sucesso" role="status">livre inscrito (Verde, Suporte).</p>' in formulario
+    assert "Operador inscrito." not in pagina
+    assert '<option value="Verde" selected>' in formulario.replace("  ", " ") or 'value="Verde" selected' in formulario
+    assert 'value="Suporte" selected' in formulario
+    assert "livre · inscrito" in formulario                                  # e agora ele sai das opções livres
+
+
+def test_recusa_de_inscricao_fica_no_topo_do_formulario_e_marca_o_campo(org_client, operacao, livre):
+    dados = {"operador_id": str(livre), "time": "Azul", "classe": "Fuzileiro", "dispositivo": "MT-01", "consentimento": "1"}
+    resposta = org_client.post(f"/operacoes/{operacao}/inscricoes", data=dados)          # MT-01 é de op1
+    pagina = html(resposta)
+    assert resposta.status_code == 400
+    formulario = secao(pagina, "inscrever")
+    assert '<p class="mensagem mensagem-erro" role="alert">Este dispositivo já pertence a outra inscrição desta operação.</p>' in formulario
+    assert formulario.index("mensagem-erro") < formulario.index('name="operador_id"')      # no topo, antes dos campos
+    assert re.search(r'<input id="dispositivo"[^>]*aria-invalid="true"[^>]*autofocus', formulario)
+    assert formulario.count('aria-invalid="true"') == 1 and pagina.count("mensagem-erro") == 1
+
+
+def test_recusa_de_consentimento_marca_so_a_caixa_e_a_de_dado_invalido_marca_o_campo_certo(org_client, operacao, livre):
+    base = {"operador_id": str(livre), "time": "Azul", "classe": "Fuzileiro", "dispositivo": "MT-20"}
+    sem = html(org_client.post(f"/operacoes/{operacao}/inscricoes", data=base))
+    assert re.search(r'<input type="checkbox" name="consentimento"[^>]*aria-invalid="true"', sem)
+    assert secao(sem, "inscrever").count('aria-invalid="true"') == 1
+    roxo = html(org_client.post(f"/operacoes/{operacao}/inscricoes", data={**base, "time": "Roxo", "consentimento": "1"}))
+    assert re.search(r'<select name="time" required aria-invalid="true"', roxo) and 'name="classe" required aria-invalid' not in roxo
+
+
+def test_recusa_de_cadastro_e_de_criacao_ficam_no_bloco_do_formulario(org_client):
+    cadastro = html(org_client.post("/operadores", data={"apelido": "", "nome": "Fulano"}))
+    assert "mensagem-erro" in secao(cadastro, "cadastrar") and 'name="apelido" required maxlength="32" value="" aria-invalid="true"' in cadastro
+    criacao = html(org_client.post("/operacoes", data={"nome": "X", "data": "2026-11-30", "local": "Y", "centro_lat": "-15.7"}))
+    bloco = secao(criacao, "criar")
+    assert "mensagem-erro" in bloco and bloco.count('aria-invalid="true"') == 2          # latitude e longitude
+
+
+def test_recusa_de_alteracao_fica_dentro_da_linha_que_a_gerou(org_client, app, operacao):
+    with app.app_context():
+        inscricao = servicos.listar_inscritos(db.get_repo(), operacao)[0]["id"]
+    pagina = html(org_client.post(f"/inscricoes/{inscricao}", data={"time": "Roxo", "classe": "Médico"}))
+    linha = re.search(r'<details class="alterar" open>.*?</details>', pagina, re.S).group(0)
+    assert "mensagem-erro" in linha and 'aria-invalid="true"' in linha
+    assert pagina.count("mensagem-erro") == 1
+
+
+def test_recusa_sem_formulario_na_pagina_fica_sob_o_titulo(org_client, operacao, planejada):
+    org_client.post(f"/operacoes/{planejada}/avancar", data={})                            # 400: já há uma em curso
+    pagina = html(org_client.post(f"/operacoes/{planejada}/avancar", data={}))
+    assert pagina.index("mensagem-erro") < pagina.index('class="dossie alvo"')            # sob o título, antes do dossiê
+
+
+def test_codigo_da_recusa_aponta_o_campo_sem_mudar_regra_nenhuma():
+    from paginas import campos_culpados
+    from servicos import ErroDeNegocio
+    esperado = {("dispositivo_em_uso", "x"): {"dispositivo"}, ("inscricao_duplicada", "x"): {"operador_id"},
+                ("sem_consentimento", "x"): {"consentimento"}, ("apelido_duplicado", "x"): {"apelido"},
+                ("dados_invalidos", "Escolha um dos times da lista."): {"time"},
+                ("dados_invalidos", "Escolha uma das classes da lista."): {"classe"},
+                ("dados_invalidos", "O dispositivo deve ter de 1 a 32 caracteres."): {"dispositivo"},
+                ("dados_invalidos", "A data deve estar no formato AAAA-MM-DD."): {"data"},
+                ("dados_invalidos", "Informe latitude e longitude do centro, ou deixe as duas em branco."): {"centro_lat", "centro_lon"},
+                ("operacao_encerrada", "x"): set()}
+    for (codigo, mensagem), campos in esperado.items():
+        assert set(campos_culpados(ErroDeNegocio(codigo, mensagem))) == campos, codigo
+    assert campos_culpados(None) == frozenset()
+
+
+def test_placeholders_que_pareciam_valores_viraram_dica_em_tinta_2(org_client, operacao):
+    for url in ("/operadores", "/operacoes", f"/operacoes/{operacao}"):
+        assert "placeholder=" not in html(org_client.get(url)), url
+    assert '<small class="dica" id="dica-dispositivo">ex.: MT-01</small>' in html(org_client.get(f"/operacoes/{operacao}"))
+    criar = html(org_client.get("/operacoes"))
+    assert '<small class="dica" id="dica-lat">ex.: -15.7939 (use ponto)</small>' in criar
+    assert '<small class="dica" id="dica-lon">ex.: -47.8828 (use ponto)</small>' in criar
+    assert "aria-describedby=\"dica-lat\"" in criar and ".dica { font: 400 1rem/1.4 var(--f-ui); color: var(--tinta-2); }" in APP_CSS
+
+
+def test_campo_com_recusa_ganha_borda_vermelha_de_2_px():
+    corpo = dict(regras_css(APP_CSS))['input[aria-invalid="true"], select[aria-invalid="true"]']
+    assert "border: 2px solid var(--vermelho-texto)" in corpo
+
+
+def test_aria_live_nao_anuncia_o_relogio_de_3_s_so_a_mudanca_de_perdidos_ou_atrasados():
+    codigo = sem_comentarios_js(MAPA_JS)
+    assert "aria-live" not in codigo and "setAttribute('role'" not in codigo
+    assert "if (resumo === ultimoResumo) { return; }" in codigo and "anunciarMudancas(conta);" in codigo
+    assert "' operador perdido'" in codigo and "' atrasados.'" in codigo
+    regras = dict(regras_css(MAPA_CSS))
+    assert "clip-path: inset(50%)" in regras[".visualmente-oculto"]
+
+
+def test_foco_dos_links_da_atribuicao_nao_e_cortado_e_a_altura_do_mapa_nao_tem_px_fixos():
+    assert dict(regras_css(MAPA_CSS))[".mapa .leaflet-control-attribution a:focus-visible"].count("outline-offset: -2px") == 1
+    assert "238px" not in MAPA_CSS and "262px" not in MAPA_CSS
+    desktop = MAPA_CSS.split("@media (min-width: 1024px)")[1].split("@media (max-width: 719px)")[0]
+    assert ".pagina-mapa { display: flex; flex-direction: column; }" in desktop
+    assert "grid-template-rows: minmax(420px, 1fr)" in desktop and ".mapa { height: auto; min-height: 420px; }" in desktop
+
+
+def test_alvos_de_toque_de_44_px_no_celular_e_lista_nativa_de_tema(obs_client):
+    celular = APP_CSS.split("@media (max-width: 719px)")[1].split("@media (prefers-reduced-motion")[0]
+    for regra in (".sair { min-height: 44px;", ".moldura nav a { display: flex; align-items: center; min-height: 44px;",
+                  ".alterar summary { display: inline-flex; align-items: center; min-height: 44px; }",
+                  ".seletor-tema button { display: none; }", ".tema-lista { display: block; }"):
+        assert regra in celular, regra
+    base = next(corpo for seletor, corpo in regras_css(APP_CSS) if seletor == ".tema-lista")     # a de fora das @media
+    assert "display: none" in base and base.count("height: 44px") == 1
+    leitor = Seletor()
+    leitor.feed(html(obs_client.get("/operacoes")))
+    assert leitor.acoes == ["/logout"] and not leitor.grupo["em_form"]
+    assert '<select class="tema-lista" aria-label="Tema">' in html(obs_client.get("/operacoes"))
+    assert "querySelector('select')" in TEMA_JS and "addEventListener('change'" in TEMA_JS
+
+
+def test_lista_do_mapa_no_celular_esconde_a_coluna_time():
+    celular = MAPA_CSS.split("@media (max-width: 719px)")[1]
+    assert ".lista-operadores th:nth-child(2), .lista-operadores td:nth-child(2) { display: none; }" in celular
+
+
+def test_tabelas_rolaveis_ganham_pista_de_rolagem_sem_sombra():
+    corpo = dict(regras_css(APP_CSS))[".tabela-rolavel, .lista-rolavel"]
+    assert corpo.count("local no-repeat") == 2 and corpo.count("scroll no-repeat") == 2 and "shadow" not in corpo

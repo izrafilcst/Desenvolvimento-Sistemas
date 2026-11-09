@@ -1,0 +1,4 @@
+{# Recusa de regra: vem no topo do formulário que a gerou. Só a mensagem fica no <p>; a etiqueta "Recusa" vem do CSS. #}
+{% if erro %}
+  <p class="mensagem mensagem-erro" role="alert">{{ erro }}</p>
+{% endif %}

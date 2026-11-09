@@ -30,7 +30,7 @@
   --vermelho-fundo: light-dark(rgba(209, 36, 47, 0.06), rgba(255, 107, 94, 0.1));
   --linha-perdido: light-dark(rgba(209, 36, 47, 0.09), rgba(209, 36, 47, 0.16));
   --linha-atrasado: light-dark(rgba(212, 167, 44, 0.14), rgba(212, 167, 44, 0.12));
-  --mapa-liso: light-dark(#d9d9d4, #1a1c1c);
+  --mapa-liso: light-dark(#d9d9d4, #393939);
   --botao: var(--tinta);
   --botao-tx: var(--superficie);
   --botao-hover: color-mix(in srgb, var(--botao), #ffffff 20%);
@@ -84,6 +84,7 @@ h1 {
   animation: digitar 450ms steps(16, end) backwards;
 }
 @keyframes digitar { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+body:has(:target) h1 { animation: none; }       /* volta de um redirect com âncora: o título não digita de novo */
 h2 { font: 800 1.25rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; }
 
 .rotulo { font: 700 1rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; color: var(--tinta-2); }
@@ -105,6 +106,7 @@ h2 { font: 800 1.25rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: 
   background: var(--moldura);
   color: var(--moldura-tinta);
   border-bottom: 1px solid rgba(244, 244, 241, 0.14);
+  color-scheme: dark;
 }
 .marca { display: flex; align-items: center; gap: var(--e3); font: 900 1.125rem/1 var(--f-ui); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
 .marca-nome span { font-weight: 500; letter-spacing: 0.14em; color: var(--moldura-tinta-2); }
@@ -131,6 +133,9 @@ h2 { font: 800 1.25rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: 
 .sessao { display: flex; align-items: center; gap: var(--e4); font: 400 1rem/1 var(--f-dado); color: var(--moldura-tinta-2); }
 .sessao b { color: var(--moldura-tinta); font-weight: 500; }
 .sessao-quem { white-space: nowrap; }
+.somente-leitura { padding: 7px 10px 6px; font: 700 1rem/1 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; color: var(--moldura-tinta); border: 1px solid var(--moldura-fio); }
+/* Lista nativa do tema: só no celular, onde os três botões não cabem ao lado do menu. */
+.tema-lista { display: none; width: 92px; height: 44px; padding: 0 24px 0 8px; font: 500 1rem/1 var(--f-ui); color: var(--moldura-tinta); background-color: var(--moldura); border: 1px solid var(--moldura-fio); border-radius: 0; background-image: linear-gradient(45deg, transparent 50%, var(--moldura-tinta) 50%), linear-gradient(135deg, var(--moldura-tinta) 50%, transparent 50%); background-position: calc(100% - 14px) 19px, calc(100% - 8px) 19px; }
 .form-sair { margin: 0; }
 .sair { padding: 9px 14px; font: 700 1rem/1 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; background: none; color: var(--moldura-tinta); border: 1px solid var(--moldura-fio); border-radius: 0; cursor: pointer; transition: border-color 150ms ease-out; }
 .sair:hover { border-color: var(--moldura-tinta); }
@@ -155,7 +160,9 @@ h2 { font: 800 1.25rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: 
 .contagem { font: 500 1rem/1 var(--f-dado); color: var(--tinta-2); }
 .corpo { padding: var(--e5); }
 .vazio { padding: var(--e5); color: var(--tinta-2); }
-.tabela-rolavel { overflow-x: auto; }
+/* Pista de rolagem: uma barra de 3 px na borda em que ainda há tabela para ver. Os dois primeiros planos
+ * (attachment local) escondem a barra quando a rolagem chega ao fim; as barras ficam fixas na caixa. */
+.tabela-rolavel, .lista-rolavel { overflow-x: auto; background: linear-gradient(var(--superficie), var(--superficie)) left center / 12px 100% local no-repeat, linear-gradient(var(--superficie), var(--superficie)) right center / 12px 100% local no-repeat, linear-gradient(var(--tinta), var(--tinta)) left center / 3px 100% scroll no-repeat, linear-gradient(var(--tinta), var(--tinta)) right center / 3px 100% scroll no-repeat; background-color: var(--superficie); }
 
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 10px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--fio); }
@@ -199,8 +206,14 @@ td a, th a { text-decoration-thickness: 1px; }
 .campo > span { font: 700 1rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; color: var(--tinta-2); }
 input:not([type="checkbox"]), select { width: 100%; height: 44px; padding: 0 12px; font: 400 1rem/1 var(--f-ui); color: var(--tinta); background-color: var(--superficie); border: 1px solid var(--tinta-2); border-radius: 0; transition: border-color 150ms ease-out; }
 input.dado { font-family: var(--f-dado); font-weight: 500; }
+.dica { font: 400 1rem/1.4 var(--f-ui); color: var(--tinta-2); }
+/* Campo que a recusa aponta: borda vermelha de 2 px (o texto da recusa fica no topo do formulário). */
+input[aria-invalid="true"], select[aria-invalid="true"] { padding-left: 11px; border: 2px solid var(--vermelho-texto); }
+select[aria-invalid="true"] { padding-right: 35px; }
+.consentimento input[aria-invalid="true"] { outline: 2px solid var(--vermelho-texto); outline-offset: 2px; }
 input::placeholder { color: var(--tinta-2); opacity: 1; }
 input:not([type="checkbox"]):focus-visible, select:focus-visible { outline-offset: 0; border-color: var(--tinta); }
+input[aria-invalid="true"]:focus-visible, select[aria-invalid="true"]:focus-visible { border-color: var(--vermelho-texto); }   /* o foco não apaga o vermelho */
 input:-webkit-autofill { -webkit-text-fill-color: var(--tinta); box-shadow: 0 0 0 100px var(--superficie) inset; }
 select { appearance: none; padding-right: 36px; background-image: linear-gradient(45deg, transparent 50%, var(--tinta) 50%), linear-gradient(135deg, var(--tinta) 50%, transparent 50%); background-position: calc(100% - 18px) 19px, calc(100% - 12px) 19px; background-size: 6px 6px; background-repeat: no-repeat; }
 .par { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--e3); }
@@ -211,6 +224,7 @@ select { appearance: none; padding-right: 36px; background-image: linear-gradien
 .alterar summary::-webkit-details-marker { display: none; }
 .form-linha { display: flex; flex-direction: column; gap: var(--e2); min-width: 12rem; margin: var(--e2) 0 0; }
 .form-linha .botao { min-height: 40px; }
+.form-linha .mensagem { grid-template-columns: 1fr; margin-bottom: 0; }
 
 /* ----------------------------------------------- colchetes de alvo e dossiê */
 /* A assinatura: quatro cantos em L, só no quadro do mapa, no dossiê e no operador perdido. */
@@ -238,8 +252,16 @@ select { appearance: none; padding-right: 36px; background-image: linear-gradien
 .dossie-item { display: flex; flex-direction: column; gap: 6px; }
 .dossie-valor { font: 700 1.25rem/1.2 var(--f-ui); overflow-wrap: anywhere; }
 .dossie-valor.dado { font: 500 1.125rem/1.2 var(--f-dado); }
-.dossie-acoes { display: flex; flex-wrap: wrap; align-self: end; gap: var(--e3); margin-left: auto; }
+.dossie-acoes { display: flex; flex-wrap: wrap; align-items: flex-start; align-self: end; gap: var(--e3); margin-left: auto; }
 .dossie-acoes form { margin: 0; }
+/* Encerrar não tem volta: o resumo parece um botão secundário e o painel explica a consequência. */
+.encerrar summary { list-style: none; }
+.encerrar summary::-webkit-details-marker { display: none; }
+.encerrar[open] { flex: 1 0 100%; }
+.dossie-acoes:has(.encerrar[open]) { flex: 1 0 100%; margin-left: 0; }     /* aberto: as ações ocupam a linha toda, sob os dados */
+.encerrar-corpo { max-width: 34rem; margin-top: var(--e2); padding: var(--e4); background: var(--superficie); border: 1px solid var(--tinta); }
+.encerrar-corpo p:not(.mensagem) { max-width: 60ch; margin-bottom: var(--e4); }
+.encerrar-corpo .mensagem { margin-bottom: var(--e4); }
 .nota-pagina { margin: calc(-1 * var(--e3)) 0 var(--e5); }
 
 /* -------------------------------------------------------------- responsivo */
@@ -248,32 +270,37 @@ select { appearance: none; padding-right: 36px; background-image: linear-gradien
   .duas-colunas.so-tabela { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* Moldura apertada: na faixa de 1024 a 1359 px os espaços diminuem; de 1024 a 1279 px o login e o papel saem. */
+/* Moldura em uma linha a partir de 1280 px. Até 1359 px os espaços diminuem. */
 @media (max-width: 1359px) {
   .moldura { gap: var(--e5); padding: 0 var(--e5); }
   .moldura nav { margin-left: 0; }
 }
 
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .sessao-quem { display: none; }
-}
-
-@media (max-width: 1023px) {
-  /* Moldura em duas linhas: marca e Sair em cima; menu e seletor de tema embaixo. */
+@media (max-width: 1279px) {
+  /* Duas linhas: marca, etiqueta de leitura e Sair em cima; menu e seletor de tema embaixo. */
   .moldura { flex-wrap: wrap; gap: var(--e2) var(--e3); padding: var(--e2) var(--e5); }
   .marca { order: 1; flex: 1 1 auto; }
-  .sessao { order: 2; }
-  .moldura-menu { order: 3; flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e2) var(--e4); }
+  .somente-leitura { order: 2; }
+  .sessao { order: 3; }
+  .moldura-menu { order: 4; flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e2) var(--e4); }
   .seletor-tema { margin-left: 0; }
 }
 
 @media (max-width: 719px) {
-  .moldura { padding: var(--e2) var(--e4); }
+  .moldura { padding: var(--e2) var(--e3); }
+  .moldura-menu { gap: var(--e2); }
   .marca { gap: var(--e2); font-size: 1rem; letter-spacing: 0.02em; }
   .marca-nome span { letter-spacing: 0.04em; }
-  .sair { padding: 9px 12px; }
   .sessao-quem { display: none; }
-  .moldura nav { gap: var(--e4); }
+  /* Alvos de toque de 44 px. Os três botões do tema dão lugar à lista nativa, para o menu e o tema caberem em uma linha. */
+  .sair { min-height: 44px; padding: 0 12px; }
+  .moldura nav { gap: var(--e2); }
+  .moldura nav a { display: flex; align-items: center; min-height: 44px; padding: 0; letter-spacing: 0.02em; }
+  .seletor-tema { border: 0; }
+  .seletor-tema button { display: none; }
+  .tema-lista { display: block; }
+  .somente-leitura { order: 5; flex: 1 0 100%; margin: 0 calc(-1 * var(--e3)) calc(-1 * var(--e2)); padding: 4px var(--e3); border: 0; border-top: 1px solid rgba(244, 244, 241, 0.14); }
+  .alterar summary { display: inline-flex; align-items: center; min-height: 44px; }
   .pagina { padding: var(--e5) var(--e4); }
   .dossie { gap: var(--e4) var(--e5); padding: var(--e4); }
   .dossie-acoes { width: 100%; margin-left: 0; }

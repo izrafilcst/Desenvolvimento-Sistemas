@@ -19,10 +19,14 @@
   const ESPESSURA_REGUA = 26;       // px: faixa das réguas no topo e à esquerda
   const PX_ENTRE_NUMEROS = 96;      // px mínimos entre dois números de uma régua
   const MILESIMO = 0.001;           // grau: os números das réguas são múltiplos dele
+  const ZOOM_MINIMO = 15;           // a operação tem uns 300 m de raio; no nível 15 já cabem uns 2,5 km
+  const ZOOM_DOS_ROTULOS = 17;      // abaixo dele só o perdido e o atrasado levam rótulo
+  const PECAS_FIXAS = '.carimbo, .leaflet-control-zoom, .leaflet-control-scale, .leaflet-control-attribution';   // os rótulos não as cobrem
 
   const aviso = document.getElementById('aviso');
   const atualizacao = document.getElementById('atualizacao');
   const descartados = document.getElementById('descartados');
+  const resumoDeSituacao = document.getElementById('situacao-status');   // região de status só para leitor de tela
   const lista = document.getElementById('lista');
   const urlSituacao = raiz.dataset.urlSituacao + '?operacao=' + encodeURIComponent(raiz.dataset.operacaoId);
 
@@ -34,6 +38,7 @@
   let emAndamento = false;
   let horaDaUltima = null;
   let avisoDoMapa = '';   // problema que não some a cada atualização
+  let ultimoResumo = null;   // o que a região de status disse por último
 
   // ---------------------------------------------------------------- apoio
 
@@ -92,27 +97,27 @@
     grupo.appendChild(seta);
     svg.appendChild(grupo);
     anel.appendChild(svg);
-    // Rótulo: "Coruja" e, no perdido, " · perdido há 2 min 10 s". No celular o CSS quebra em duas linhas.
+    // Rótulo: "Coruja" e, no perdido, "Coruja · perdido · último sinal há 2 min 10 s". O número é o tempo desde o
+    // último sinal, não o tempo "perdido". No celular o CSS quebra em duas linhas: "Coruja · perdido" e o resto.
     const rotulo = el('span', 'mk-apelido');
-    const nome = el('span', 'mk-nome');
-    const separador = el('span', 'mk-sep', ' · ');
-    const tempo = el('span', 'mk-tempo');
-    rotulo.append(nome, separador, tempo);
+    const partesDoRotulo = {
+      nome: el('span', 'mk-nome'), sep: el('span', 'mk-sep'), estado: el('span', 'mk-estado'),
+      sep2: el('span', 'mk-sep2'), tempo: el('span', 'mk-tempo'),
+    };
+    rotulo.append(partesDoRotulo.nome, partesDoRotulo.sep, partesDoRotulo.estado, partesDoRotulo.sep2, partesDoRotulo.tempo);
     icone.append(anel, rotulo);
-    return { icone: icone, anel: anel, grupo: grupo, seta: seta, rotulo: rotulo, nome: nome, separador: separador, tempo: tempo };
-  }
-
-  function textoDoTempoPerdido(inscrito) {
-    return Number.isFinite(inscrito.segundos) ? 'perdido há ' + formatarSegundos(inscrito.segundos) : 'perdido';
+    return { icone: icone, anel: anel, grupo: grupo, seta: seta, rotulo: rotulo, texto: partesDoRotulo };
   }
 
   function atualizarRotulo(partes, inscrito, estado) {
     const perdido = estado === 'perdido';
-    partes.nome.textContent = inscrito.apelido;
-    partes.separador.hidden = !perdido;
-    partes.separador.textContent = perdido ? ' · ' : '';
-    partes.tempo.hidden = !perdido;
-    partes.tempo.textContent = perdido ? textoDoTempoPerdido(inscrito) : '';
+    const comTempo = perdido && Number.isFinite(inscrito.segundos);
+    const texto = partes.texto;
+    texto.nome.textContent = inscrito.apelido;
+    texto.sep.textContent = perdido ? ' · ' : '';
+    texto.estado.textContent = perdido ? 'perdido' : '';
+    texto.sep2.textContent = comTempo ? ' · ' : '';
+    texto.tempo.textContent = comTempo ? 'último sinal há ' + formatarSegundos(inscrito.segundos) : '';
   }
 
   function atualizarIcone(partes, inscrito) {
@@ -126,37 +131,122 @@
     atualizarRotulo(partes, inscrito, estado);
   }
 
-  // O rótulo nunca sai do quadro do mapa: se passaria da borda (ou das réguas), desliza para dentro.
+  // ------------------------------------------------- rótulos dos marcadores
+
   function limitesDoQuadro() {
     const quadro = mapa.getContainer().getBoundingClientRect();
     return { esq: quadro.left + ESPESSURA_REGUA + 4, dir: quadro.right - 4, topo: quadro.top + ESPESSURA_REGUA + 4, base: quadro.bottom - 4 };
   }
 
-  // Quanto o rótulo precisa andar para caber no quadro. Se, deslizando de lado, ele cobrisse o anel,
-  // vai para baixo do marcador (ou para cima, se faltar espaço), fora dos colchetes de alvo.
-  function deslocamentoDoRotulo(caixa, anel, limite) {
-    let dx = caixa.right > limite.dir ? limite.dir - caixa.right : 0;
-    if (caixa.left + dx < limite.esq) { dx = limite.esq - caixa.left; }
-    let dy = 0;
-    if (caixa.left + dx < anel.right - 2) {
-      dy = anel.bottom + 14 - caixa.top;
-      if (caixa.bottom + dy > limite.base) { dy = anel.top - 14 - caixa.bottom; }
-    }
-    if (caixa.bottom + dy > limite.base) { dy = limite.base - caixa.bottom; }
-    if (caixa.top + dy < limite.topo) { dy = limite.topo - caixa.top; }
+  // Retângulo do anel com a folga dos colchetes de alvo (12 px para fora, só no perdido).
+  function areaDoAnel(partes, estado) {
+    const anel = partes.anel.getBoundingClientRect();
+    const folga = estado === 'perdido' ? 12 : 2;
+    return { left: anel.left - folga, right: anel.right + folga, top: anel.top - folga, bottom: anel.bottom + folga };
+  }
+
+  function mover(caixa, d) {
+    return { left: caixa.left + d.dx, right: caixa.right + d.dx, top: caixa.top + d.dy, bottom: caixa.bottom + d.dy };
+  }
+
+  function encosta(a, b) {
+    return a.left < b.right + 1 && a.right > b.left - 1 && a.top < b.bottom + 1 && a.bottom > b.top - 1;
+  }
+
+  // Deslocamento mínimo para a caixa ficar dentro do quadro (e fora das réguas).
+  function dentroDoQuadro(caixa, d, limite) {
+    let dx = d.dx;
+    let dy = d.dy;
+    dx -= Math.max(0, caixa.right + dx - limite.dir);
+    dx += Math.max(0, limite.esq - (caixa.left + dx));
+    dy -= Math.max(0, caixa.bottom + dy - limite.base);
+    dy += Math.max(0, limite.topo - (caixa.top + dy));
     return { dx: dx, dy: dy };
   }
 
-  function manterRotuloNoQuadro(partes) {
-    partes.rotulo.style.transform = '';
-    const desvio = deslocamentoDoRotulo(partes.rotulo.getBoundingClientRect(), partes.anel.getBoundingClientRect(), limitesDoQuadro());
-    if (desvio.dx || desvio.dy) {
-      partes.rotulo.style.transform = 'translate(' + Math.round(desvio.dx) + 'px, ' + Math.round(desvio.dy) + 'px)';
-    }
+  // Onde o rótulo pode ficar em relação ao anel, do mais natural ao mais longe: à direita (origem), à esquerda, acima,
+  // abaixo, nos quatro cantos e, por fim, acima e abaixo com mais folga.
+  function candidatosDoRotulo(caixa, anel, folga) {
+    const meioX = (anel.left + anel.right) / 2 - (caixa.left + caixa.right) / 2;
+    const acima = anel.top - folga - caixa.bottom;
+    const abaixo = anel.bottom + folga - caixa.top;
+    const direita = anel.right + folga - caixa.left;
+    const esquerda = anel.left - folga - caixa.right;
+    return [
+      { dx: 0, dy: 0 }, { dx: esquerda, dy: 0 }, { dx: meioX, dy: acima }, { dx: meioX, dy: abaixo },
+      { dx: direita, dy: acima }, { dx: esquerda, dy: acima }, { dx: direita, dy: abaixo }, { dx: esquerda, dy: abaixo },
+      { dx: meioX, dy: acima - 36 }, { dx: meioX, dy: abaixo + 36 },
+    ];
   }
 
+  // Primeiro lugar que cabe no quadro sem cobrir o próprio anel, outro anel ou outro rótulo.
+  function posicaoLivre(caixa, anel, folga, limite, obstaculos) {
+    return candidatosDoRotulo(caixa, anel, folga)
+      .map(function (candidato) { return dentroDoQuadro(caixa, candidato, limite); })
+      .find(function (d) {
+        const nova = mover(caixa, d);
+        return !encosta(nova, anel) && !obstaculos.some(function (obstaculo) { return encosta(nova, obstaculo); });
+      });
+  }
+
+  // Sem lugar livre (só o perdido chega aqui): o que cobre menos, e nunca o próprio anel.
+  function posicaoMenosRuim(caixa, anel, folga, limite, obstaculos) {
+    let melhor = null;
+    let menor = Infinity;
+    candidatosDoRotulo(caixa, anel, folga).forEach(function (candidato) {
+      const d = dentroDoQuadro(caixa, candidato, limite);
+      const nova = mover(caixa, d);
+      const encostos = (encosta(nova, anel) ? 100 : 0) + obstaculos.filter(function (o) { return encosta(nova, o); }).length;
+      if (encostos < menor) { menor = encostos; melhor = d; }
+    });
+    return melhor;
+  }
+
+  function aplicarPosicao(partes, caixa, d) {
+    partes.rotulo.style.transform = d.dx || d.dy ? 'translate(' + Math.round(d.dx) + 'px, ' + Math.round(d.dy) + 'px)' : '';
+    return mover(caixa, d);
+  }
+
+  // O perdido nunca fica sem rótulo: se o inteiro não couber livre, tenta o curto ("Coruja · perdido") e, em último caso,
+  // fica onde cobrir menos (nunca o próprio anel). Os outros se escondem quando não há lugar livre (devolve null).
+  function posicionarRotulo(atual, obstaculos, limite) {
+    const partes = atual.partes;
+    const perdido = atual.estado === 'perdido';
+    const folga = perdido ? 14 : 6;
+    let caixa = null;
+    for (const curto of perdido ? [false, true] : [false]) {
+      partes.rotulo.classList.toggle('curto', curto);
+      partes.rotulo.style.transform = '';
+      caixa = partes.rotulo.getBoundingClientRect();
+      const d = posicaoLivre(caixa, partes.anel.getBoundingClientRect(), folga, limite, obstaculos);
+      if (d) { return aplicarPosicao(partes, caixa, d); }
+    }
+    if (!perdido) { return null; }
+    return aplicarPosicao(partes, caixa, posicaoMenosRuim(caixa, partes.anel.getBoundingClientRect(), folga, limite, obstaculos));
+  }
+
+  function compararPrioridade(a, b) {
+    return (PRIORIDADE[a.estado] - PRIORIDADE[b.estado]) || a.apelido.localeCompare(b.apelido, 'pt-BR');
+  }
+
+  // Cada rótulo cabe no quadro e não cobre outro anel nem outro rótulo. Quem tem prioridade (perdido, atrasado, ativo,
+  // depois o apelido) escolhe primeiro. No celular e abaixo do zoom 17 só o perdido e o atrasado levam rótulo.
   function ajustarRotulos() {
-    marcadores.forEach(function (atual) { manterRotuloNoQuadro(atual.partes); });
+    if (!mapa) { return; }
+    const poucos = window.matchMedia('(max-width: 719px)').matches || mapa.getZoom() < ZOOM_DOS_ROTULOS;
+    const ordem = Array.from(marcadores.values()).sort(compararPrioridade);
+    ordem.forEach(function (atual) { atual.partes.rotulo.hidden = false; });
+    const limite = limitesDoQuadro();
+    const aneis = ordem.map(function (atual) { return areaDoAnel(atual.partes, atual.estado); });
+    const fixos = Array.from(mapa.getContainer().querySelectorAll(PECAS_FIXAS)).map(function (peca) { return peca.getBoundingClientRect(); });
+    const ocupados = [];
+    ordem.forEach(function (atual, indice) {
+      const comRotulo = !poucos || atual.estado === 'perdido' || atual.estado === 'atrasado';
+      const outros = aneis.filter(function (_, i) { return i !== indice; }).concat(ocupados, fixos);
+      const lugar = comRotulo ? posicionarRotulo(atual, outros, limite) : null;
+      atual.partes.rotulo.hidden = !lugar;
+      if (lugar) { ocupados.push(lugar); }
+    });
   }
 
   function criarMarcador(inscrito) {
@@ -167,7 +257,7 @@
     });
     const marcador = L.marker([inscrito.lat, inscrito.lon], { icon: icone, interactive: false });
     marcador.addTo(mapa);
-    return { marcador: marcador, partes: partes };
+    return { marcador: marcador, partes: partes, estado: 'sem_sinal', apelido: '' };
   }
 
   function atualizarMarcadores(inscritos) {
@@ -182,7 +272,9 @@
         atual = criarMarcador(inscrito);
         marcadores.set(inscrito.inscricao_id, atual);
       }
-      atual.marcador.setZIndexOffset(PESO_Z[estadoSeguro(inscrito.estado)]);
+      atual.estado = estadoSeguro(inscrito.estado);
+      atual.apelido = String(inscrito.apelido);
+      atual.marcador.setZIndexOffset(PESO_Z[atual.estado]);
     });
     marcadores.forEach(function (atual, id) {
       if (!vistos.has(id)) { mapa.removeLayer(atual.marcador); marcadores.delete(id); }
@@ -265,7 +357,7 @@
     desenharRegua(reguas.topo, marcas.lon.filter(dentroDe(30, tam.x - 4)), 'left',
       function (x) { return x < tam.x - 90; });
     desenharRegua(reguas.esq, marcas.lat.filter(dentroDe(6, tam.y - ESPESSURA_REGUA - 4)), 'top',
-      function (y) { return y > 80; });
+      function (y) { return y < tam.y - ESPESSURA_REGUA - 80; });    // o número ocupa uns 70 px abaixo do tracinho
     posicionarReticula();
   }
 
@@ -276,7 +368,7 @@
     reguas.esq.setAttribute('aria-hidden', 'true');
     reguas.reticula.setAttribute('aria-hidden', 'true');
     quadro.append(reguas.topo, reguas.esq, reguas.reticula);
-    mapa.on('move zoom resize', function () { atualizarReguas(); ajustarRotulos(); });
+    mapa.on('move zoom zoomend moveend resize', function () { atualizarReguas(); ajustarRotulos(); });
     atualizarReguas();
   }
 
@@ -316,6 +408,15 @@
 
   // ----------------------------------------------------------------- faixa
 
+  // O leitor de tela só é avisado quando a contagem de perdidos ou de atrasados muda, e não a cada 3 s.
+  function anunciarMudancas(conta) {
+    const resumo = conta.perdido + (conta.perdido === 1 ? ' operador perdido' : ' operadores perdidos') +
+      ', ' + conta.atrasado + (conta.atrasado === 1 ? ' atrasado.' : ' atrasados.');
+    if (resumo === ultimoResumo) { return; }
+    ultimoResumo = resumo;
+    resumoDeSituacao.textContent = resumo;
+  }
+
   // Contagem por estado, feita no navegador com a mesma resposta que desenha o mapa.
   function desenharFaixa(dados) {
     const conta = { perdido: 0, atrasado: 0, ativo: 0, sem_sinal: 0 };
@@ -324,6 +425,7 @@
       document.getElementById('n-' + estado).textContent = String(conta[estado]);
     });
     document.getElementById('n-inscritos').textContent = String(dados.inscritos.length);
+    anunciarMudancas(conta);
     descartados.textContent = String(dados.descartados || 0);
   }
 
@@ -395,7 +497,7 @@
     const lat = parseFloat(raiz.dataset.centroLat);
     const lon = parseFloat(raiz.dataset.centroLon);
     centroOperacao = Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : CENTRO_PADRAO;
-    const novo = L.map('mapa').setView(centroOperacao, 17);
+    const novo = L.map('mapa', { minZoom: ZOOM_MINIMO }).setView(centroOperacao, 17);
     novo.zoomControl.setPosition('topright');
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,

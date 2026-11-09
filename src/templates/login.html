@@ -6,6 +6,7 @@
 {% include "_mensagens.html" %}
 <section class="bloco" aria-label="Entrar no MeshTracker Central">
   <form class="corpo" method="post" action="{{ url_for('paginas.login') }}">
+    {% include "_recusa.html" %}
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% if proximo %}<input type="hidden" name="next" value="{{ proximo }}">{% endif %}
     <label class="campo"><span>Login</span>
