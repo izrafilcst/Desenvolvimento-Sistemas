@@ -21,6 +21,8 @@
   const MILESIMO = 0.001;           // grau: os números das réguas são múltiplos dele
   const ZOOM_MINIMO = 15;           // a operação tem uns 300 m de raio; no nível 15 já cabem uns 2,5 km
   const ZOOM_DOS_ROTULOS = 17;      // abaixo dele só o perdido e o atrasado levam rótulo
+  const FOLGA_DO_ROTULO = 6;        // px entre o rótulo e o anel
+  const DISTANCIA_MAXIMA_DO_ROTULO = 8;   // px: o rótulo nunca fica mais longe que isso do próprio anel
   const PECAS_FIXAS = '.carimbo, .leaflet-control-zoom, .leaflet-control-scale, .leaflet-control-attribution';   // os rótulos não as cobrem
 
   const aviso = document.getElementById('aviso');
@@ -164,42 +166,45 @@
     return { dx: dx, dy: dy };
   }
 
-  // Onde o rótulo pode ficar em relação ao anel, do mais natural ao mais longe: à direita (origem), à esquerda, acima,
-  // abaixo, nos quatro cantos e, por fim, acima e abaixo com mais folga.
-  function candidatosDoRotulo(caixa, anel, folga) {
+  // Distância entre dois retângulos (0 se eles se tocam ou se sobrepõem).
+  function distanciaEntre(a, b) {
+    const dx = Math.max(0, a.left - b.right, b.left - a.right);
+    const dy = Math.max(0, a.top - b.bottom, b.top - a.bottom);
+    return Math.hypot(dx, dy);
+  }
+
+  // Os quatro lados do anel, com o rótulo encostado nele (FOLGA_DO_ROTULO): à direita (a origem), à esquerda, acima e abaixo.
+  function candidatosDoRotulo(caixa, anel) {
     const meioX = (anel.left + anel.right) / 2 - (caixa.left + caixa.right) / 2;
-    const acima = anel.top - folga - caixa.bottom;
-    const abaixo = anel.bottom + folga - caixa.top;
-    const direita = anel.right + folga - caixa.left;
-    const esquerda = anel.left - folga - caixa.right;
     return [
-      { dx: 0, dy: 0 }, { dx: esquerda, dy: 0 }, { dx: meioX, dy: acima }, { dx: meioX, dy: abaixo },
-      { dx: direita, dy: acima }, { dx: esquerda, dy: acima }, { dx: direita, dy: abaixo }, { dx: esquerda, dy: abaixo },
-      { dx: meioX, dy: acima - 36 }, { dx: meioX, dy: abaixo + 36 },
+      { dx: 0, dy: 0 },
+      { dx: anel.left - FOLGA_DO_ROTULO - caixa.right, dy: 0 },
+      { dx: meioX, dy: anel.top - FOLGA_DO_ROTULO - caixa.bottom },
+      { dx: meioX, dy: anel.bottom + FOLGA_DO_ROTULO - caixa.top },
     ];
   }
 
-  // Primeiro lugar que cabe no quadro sem cobrir o próprio anel, outro anel ou outro rótulo.
-  function posicaoLivre(caixa, anel, folga, limite, obstaculos) {
-    return candidatosDoRotulo(caixa, anel, folga)
+  // Um lugar só vale se ficar dentro do quadro, sem cobrir o próprio anel e a no máximo DISTANCIA_MAXIMA_DO_ROTULO dele:
+  // o rótulo nunca anda solto pelo mapa, longe de quem ele nomeia.
+  function lugaresValidos(caixa, anel, limite) {
+    return candidatosDoRotulo(caixa, anel)
       .map(function (candidato) { return dentroDoQuadro(caixa, candidato, limite); })
-      .find(function (d) {
+      .filter(function (d) {
         const nova = mover(caixa, d);
-        return !encosta(nova, anel) && !obstaculos.some(function (obstaculo) { return encosta(nova, obstaculo); });
+        return !encosta(nova, anel) && distanciaEntre(nova, anel) <= DISTANCIA_MAXIMA_DO_ROTULO;
       });
   }
 
-  // Sem lugar livre (só o perdido chega aqui): o que cobre menos, e nunca o próprio anel.
-  function posicaoMenosRuim(caixa, anel, folga, limite, obstaculos) {
-    let melhor = null;
-    let menor = Infinity;
-    candidatosDoRotulo(caixa, anel, folga).forEach(function (candidato) {
-      const d = dentroDoQuadro(caixa, candidato, limite);
-      const nova = mover(caixa, d);
-      const encostos = (encosta(nova, anel) ? 100 : 0) + obstaculos.filter(function (o) { return encosta(nova, o); }).length;
-      if (encostos < menor) { menor = encostos; melhor = d; }
-    });
-    return melhor;
+  function encostos(caixa, d, obstaculos) {
+    const nova = mover(caixa, d);
+    return obstaculos.filter(function (obstaculo) { return encosta(nova, obstaculo); }).length;
+  }
+
+  // Sem lugar livre (só o perdido chega aqui): o lado encostado no anel que cobre menos.
+  function lugarQueCobreMenos(caixa, anel, limite, obstaculos) {
+    const lugares = lugaresValidos(caixa, anel, limite);
+    lugares.sort(function (a, b) { return encostos(caixa, a, obstaculos) - encostos(caixa, b, obstaculos); });
+    return lugares.length ? lugares[0] : { dx: 0, dy: 0 };
   }
 
   function aplicarPosicao(partes, caixa, d) {
@@ -207,22 +212,24 @@
     return mover(caixa, d);
   }
 
-  // O perdido nunca fica sem rótulo: se o inteiro não couber livre, tenta o curto ("Coruja · perdido") e, em último caso,
-  // fica onde cobrir menos (nunca o próprio anel). Os outros se escondem quando não há lugar livre (devolve null).
-  function posicionarRotulo(atual, obstaculos, limite) {
+  // O perdido nunca fica sem rótulo, e o rótulo fica sempre encostado no anel. Primeiro os quatro lados com o texto inteiro;
+  // se todos colidirem (ou com o zoom abaixo de 17, `curtoDireto`), a forma curta ("Coruja · perdido"); se ainda colidir,
+  // o perdido fica por cima e o outro rótulo é que some. Os demais se escondem quando não há lugar livre (devolve null).
+  function posicionarRotulo(atual, obstaculos, limite, curtoDireto) {
     const partes = atual.partes;
     const perdido = atual.estado === 'perdido';
-    const folga = perdido ? 14 : 6;
+    const variantes = perdido ? (curtoDireto ? [true] : [false, true]) : [false];
     let caixa = null;
-    for (const curto of perdido ? [false, true] : [false]) {
+    let anel = null;
+    for (const curto of variantes) {
       partes.rotulo.classList.toggle('curto', curto);
       partes.rotulo.style.transform = '';
       caixa = partes.rotulo.getBoundingClientRect();
-      const d = posicaoLivre(caixa, partes.anel.getBoundingClientRect(), folga, limite, obstaculos);
-      if (d) { return aplicarPosicao(partes, caixa, d); }
+      anel = partes.anel.getBoundingClientRect();
+      const livre = lugaresValidos(caixa, anel, limite).find(function (d) { return encostos(caixa, d, obstaculos) === 0; });
+      if (livre) { return aplicarPosicao(partes, caixa, livre); }
     }
-    if (!perdido) { return null; }
-    return aplicarPosicao(partes, caixa, posicaoMenosRuim(caixa, partes.anel.getBoundingClientRect(), folga, limite, obstaculos));
+    return perdido ? aplicarPosicao(partes, caixa, lugarQueCobreMenos(caixa, anel, limite, obstaculos)) : null;
   }
 
   function compararPrioridade(a, b) {
@@ -233,7 +240,8 @@
   // depois o apelido) escolhe primeiro. No celular e abaixo do zoom 17 só o perdido e o atrasado levam rótulo.
   function ajustarRotulos() {
     if (!mapa) { return; }
-    const poucos = window.matchMedia('(max-width: 719px)').matches || mapa.getZoom() < ZOOM_DOS_ROTULOS;
+    const pouco = mapa.getZoom() < ZOOM_DOS_ROTULOS;         // com pouco zoom, só o perdido e o atrasado, e o perdido na forma curta
+    const poucos = window.matchMedia('(max-width: 719px)').matches || pouco;
     const ordem = Array.from(marcadores.values()).sort(compararPrioridade);
     ordem.forEach(function (atual) { atual.partes.rotulo.hidden = false; });
     const limite = limitesDoQuadro();
@@ -243,7 +251,7 @@
     ordem.forEach(function (atual, indice) {
       const comRotulo = !poucos || atual.estado === 'perdido' || atual.estado === 'atrasado';
       const outros = aneis.filter(function (_, i) { return i !== indice; }).concat(ocupados, fixos);
-      const lugar = comRotulo ? posicionarRotulo(atual, outros, limite) : null;
+      const lugar = comRotulo ? posicionarRotulo(atual, outros, limite, pouco) : null;
       atual.partes.rotulo.hidden = !lugar;
       if (lugar) { ocupados.push(lugar); }
     });

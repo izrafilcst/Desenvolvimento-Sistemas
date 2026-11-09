@@ -386,13 +386,31 @@ def test_rotulo_do_perdido_diz_perdido_e_ultimo_sinal_em_duas_partes():
 
 def test_rotulos_cabem_no_quadro_e_nao_cobrem_outro_anel_nem_outro_rotulo():
     codigo = sem_comentarios_js(MAPA_JS)
-    for parte in ("limitesDoQuadro", "areaDoAnel", "dentroDoQuadro", "candidatosDoRotulo", "posicaoLivre", "posicionarRotulo",
-                  "compararPrioridade", "getBoundingClientRect", "classList.toggle('curto'"):
+    for parte in ("limitesDoQuadro", "areaDoAnel", "dentroDoQuadro", "candidatosDoRotulo", "lugaresValidos", "lugarQueCobreMenos",
+                  "posicionarRotulo", "compararPrioridade", "getBoundingClientRect", "classList.toggle('curto'"):
         assert parte in codigo, parte
     assert "mapa.on('move zoom zoomend moveend resize'" in codigo and "ajustarRotulos();" in codigo
-    assert "const esquerda = anel.left - folga - caixa.right;" in codigo and "posicaoMenosRuim" in codigo   # outros lados e, sem lugar livre, o que cobre menos
-    assert "const folga = perdido ? 14 : 6;" in codigo                          # fora dos colchetes de alvo do perdido
     assert re.search(r"PRIORIDADE\[a\.estado\] - PRIORIDADE\[b\.estado\]\) \|\| a\.apelido\.localeCompare", codigo)
+
+
+def corpo_da_funcao_js(codigo: str, nome: str) -> str:
+    inicio = codigo.index(f"function {nome}(")
+    return codigo[inicio:codigo.index("\n  }\n", inicio)]
+
+
+def test_rotulo_nunca_fica_a_mais_de_8_px_do_proprio_anel_e_so_tem_os_quatro_lados():
+    codigo = sem_comentarios_js(MAPA_JS)
+    assert "const FOLGA_DO_ROTULO = 6;" in codigo and "const DISTANCIA_MAXIMA_DO_ROTULO = 8;" in codigo
+    assert re.search(r"distanciaEntre\(nova, anel\) <= DISTANCIA_MAXIMA_DO_ROTULO", codigo)          # todo lugar passa por este limite
+    assert "!encosta(nova, anel)" in corpo_da_funcao_js(codigo, "lugaresValidos")                       # e nunca cobre o próprio anel
+    candidatos = corpo_da_funcao_js(codigo, "candidatosDoRotulo")
+    assert candidatos.count("{ dx:") == 4 and "FOLGA_DO_ROTULO" in candidatos                          # direita, esquerda, acima, abaixo
+    assert "- 36" not in candidatos and "+ 36" not in candidatos                                       # nada de pular para longe
+    escolha = corpo_da_funcao_js(codigo, "posicionarRotulo")
+    assert "perdido ? (curtoDireto ? [true] : [false, true]) : [false]" in escolha                    # inteiro, depois curto
+    assert "lugaresValidos(caixa, anel, limite)" in escolha and "lugarQueCobreMenos" in escolha
+    assert ": { dx: 0, dy: 0 }" in corpo_da_funcao_js(codigo, "lugarQueCobreMenos")                      # sem lugar válido, fica na origem
+    assert "posicionarRotulo(atual, outros, limite, pouco)" in codigo and "const pouco = mapa.getZoom() < ZOOM_DOS_ROTULOS;" in codigo
 
 
 def test_zoom_minimo_15_e_rotulos_so_do_perdido_e_do_atrasado_abaixo_do_17():
