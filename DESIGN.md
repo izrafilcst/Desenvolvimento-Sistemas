@@ -307,8 +307,10 @@ Os cantos são retos (raio 0) em tudo: botão, campo, bloco, selo e tabela. O c�
 - **Mapa:** os marcadores mudam de posição sem animação a cada 3 s. Nenhuma varredura ou "troca de câmera" no app; elas ficam para o deck.
 
 ### O que vem do Pico e o que é próprio
-- **Padrão:** o Pico continua como base de reset e de formulário, com as variáveis dele (`--pico-*`) redefinidas a partir dos tokens acima: fonte, cores, raio 0, espaçamentos e foco. São próprios: a moldura, os selos, o dossiê, a faixa, a tabela, as mensagens, o seletor de tema e tudo no mapa.
-- **Se quem implementar decidir tirar o Pico:** registre aqui a decisão e garanta estilo próprio para todo elemento usado (`button`, `input`, `select`, `checkbox`, `details`/`summary`, `table`, `label`, `a[role=button]`, `hgroup`), além de devolver aos controles do Leaflet o visual descrito acima.
+- **Decisão da fase 2: o Pico saiu.** As páginas não carregam mais o `pico.min.css`. O `app.css` traz a base própria, com todos os tokens acima como variáveis (`--chao`, `--tinta`, `--ativo`...). O padrão era manter o Pico e redefinir o `--pico-*`, mas três coisas pesaram: o Pico traz um tema escuro automático que briga com o modo Sistema e com o seletor de tema, quase todas as peças visíveis já eram próprias (moldura, selos, dossiê, faixa, tabela, mensagens, seletor e mapa), e sem a camada do `--pico-*` a especificidade fica simples.
+- **Elementos com estilo próprio no `app.css`:** `button` (`.botao`, `.botao.secundario`, `.botao.cheio`), `input`, `select`, checkbox (`.consentimento`), `details`/`summary` (`.alterar`), `table` (com `<th scope="row">` na primeira coluna), `label` (`.campo`), link de ação, o cabeçalho de página (`.cabeca`, no lugar do `hgroup`) e as colunas (`.duas-colunas`). O `<a role="button">` virou `<a class="botao">`, porque é um link.
+- **Leaflet:** o `mapa.css` devolve aos controles de zoom, à escala e à atribuição o visual descrito acima.
+- **O que sobrou:** `src/static/vendor/pico/` continua no repositório só como registro, listado no `ORIGEM.md`, e pode ser apagado.
 
 ## Do's and Don'ts
 

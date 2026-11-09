@@ -2,127 +2,136 @@
 {% block titulo %}{{ operacao.nome }} · MeshTracker Central{% endblock %}
 {% block conteudo %}
 {% set pode_alterar = current_user.eh_organizador and operacao.situacao != 'encerrada' %}
-<p><a href="{{ url_for('paginas.operacoes') }}">&larr; Operações</a></p>
-<hgroup>
-  <h1>{{ operacao.nome }}</h1>
-  <p>{{ operacao.data|data_br }} · {{ operacao.local }}</p>
-</hgroup>
+<p class="voltar"><a href="{{ url_for('paginas.operacoes') }}">&larr; Operações</a></p>
+<h1>{{ operacao.nome }}</h1>
+{% include "_mensagens.html" %}
 
-<article>
-  <header>
-    Situação:
-    <span class="situacao situacao-{{ operacao.situacao }}">{{ operacao.situacao|rotulo_situacao }}</span>
-  </header>
-  <div class="acoes">
+<section class="dossie alvo" aria-label="Dossiê da operação">
+  <div class="dossie-item"><span class="rotulo">Data</span><b class="dossie-valor">{{ operacao.data|data_br }}</b></div>
+  <div class="dossie-item"><span class="rotulo">Local</span><b class="dossie-valor">{{ operacao.local }}</b></div>
+  <div class="dossie-item">
+    <span class="rotulo">Situação</span>
+    <span class="situacao situacao-{{ operacao.situacao|replace('_', '-') }}">{{ operacao.situacao|rotulo_situacao }}</span>
+  </div>
+  {% if operacao.centro_lat is not none and operacao.centro_lon is not none %}
+  <div class="dossie-item">
+    <span class="rotulo">Centro</span>
+    <b class="dossie-valor dado">{{ ('%.4f'|format(operacao.centro_lat))|replace('.', ',')|replace('-', '−') }} {{ ('%.4f'|format(operacao.centro_lon))|replace('.', ',')|replace('-', '−') }}</b>
+  </div>
+  {% endif %}
+  <div class="dossie-item"><span class="rotulo">Inscritos</span><b class="dossie-valor dado">{{ inscritos|length }}</b></div>
+  <div class="dossie-acoes">
     {% if proxima and current_user.eh_organizador %}
     <form method="post" action="{{ url_for('paginas.operacao_avancar', operacao_id=operacao.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit">{{ rotulo_transicao }}</button>
+      <button type="submit" class="botao">{{ rotulo_transicao }}</button>
     </form>
     {% endif %}
-    <a role="button" class="secondary" href="{{ url_for('paginas.mapa', operacao_id=operacao.id) }}">Abrir mapa</a>
+    <a class="botao secundario" href="{{ url_for('paginas.mapa', operacao_id=operacao.id) }}">Abrir mapa</a>
   </div>
-  {% if operacao.situacao == 'encerrada' %}
-  <p><small>Operação encerrada: não aceita novas inscrições nem mudanças.</small></p>
-  {% endif %}
-</article>
-
-<h2>Inscritos</h2>
-<article>
-  {% if inscritos %}
-  <div class="tabela-rolavel">
-  <table>
-    <thead>
-      <tr>
-        <th scope="col">Apelido</th>
-        <th scope="col">Time</th>
-        <th scope="col">Classe</th>
-        <th scope="col">Dispositivo</th>
-        {% if pode_alterar %}<th scope="col">Time e classe</th>{% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for i in inscritos %}
-      {% set time_linha = edicao.time if edicao and edicao.inscricao_id == i.id else i.time %}
-      {% set classe_linha = edicao.classe if edicao and edicao.inscricao_id == i.id else i.classe %}
-      <tr>
-        <td>{{ i.apelido }}</td>
-        <td class="nowrap"><span class="amostra-cor" style="background-color: {{ i.cor }}" aria-hidden="true"></span> {{ i.time }}</td>
-        <td>{{ i.classe }}</td>
-        <td>{{ i.dispositivo }}</td>
-        {% if pode_alterar %}
-        <td>
-          <details class="alterar" {% if edicao and edicao.inscricao_id == i.id %}open{% endif %}>
-            <summary>Alterar</summary>
-            <form method="post" action="{{ url_for('paginas.inscricao_alterar', inscricao_id=i.id) }}" class="form-linha">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <select name="time" aria-label="Time de {{ i.apelido }}">
-                {% for nome in times %}
-                <option value="{{ nome }}" {% if nome == time_linha %}selected{% endif %}>{{ nome }}</option>
-                {% endfor %}
-              </select>
-              <select name="classe" aria-label="Classe de {{ i.apelido }}">
-                {% for nome in classes %}
-                <option value="{{ nome }}" {% if nome == classe_linha %}selected{% endif %}>{{ nome }}</option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="secondary">Salvar</button>
-            </form>
-          </details>
-        </td>
-        {% endif %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  {% else %}
-  <p>Nenhum operador inscrito.</p>
-  {% endif %}
-</article>
-
-{% if pode_alterar %}
-<article>
-  <header>Inscrever operador</header>
-  {% if operadores %}
-  <form method="post" action="{{ url_for('paginas.inscricao_criar', operacao_id=operacao.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label>Operador
-      <select name="operador_id" required>
-        <option value="" {% if not valores.get('operador_id') %}selected{% endif %} disabled>Escolha o operador</option>
-        {% for o in operadores %}
-        <option value="{{ o.id }}" {% if valores.get('operador_id') == o.id|string %}selected{% endif %}>{{ o.apelido }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <div class="grid">
-      <label>Time
-        <select name="time" required>
-          {% for nome in times %}
-          <option value="{{ nome }}" {% if valores.get('time') == nome %}selected{% endif %}>{{ nome }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label>Classe
-        <select name="classe" required>
-          {% for nome in classes %}
-          <option value="{{ nome }}" {% if valores.get('classe') == nome %}selected{% endif %}>{{ nome }}</option>
-          {% endfor %}
-        </select>
-      </label>
-    </div>
-    <label>Dispositivo
-      <input name="dispositivo" required maxlength="32" placeholder="MT-01" value="{{ valores.get('dispositivo', '') }}">
-    </label>
-    <label>
-      <input type="checkbox" name="consentimento" value="1" {% if valores.get('consentimento') %}checked{% endif %}>
-      O operador consente o rastreamento da posição dele durante a operação.
-    </label>
-    <button type="submit">Inscrever</button>
-  </form>
-  {% else %}
-  <p>Cadastre um operador em <a href="{{ url_for('paginas.operadores') }}">Operadores</a> antes de inscrever.</p>
-  {% endif %}
-</article>
+</section>
+{% if operacao.situacao == 'encerrada' %}
+<p class="nota nota-pagina">Operação encerrada: não aceita novas inscrições nem mudanças.</p>
 {% endif %}
+
+<div class="duas-colunas{% if not pode_alterar %} so-tabela{% endif %}">
+  <section class="bloco" aria-labelledby="titulo-inscritos">
+    <header><h2 id="titulo-inscritos">Inscritos <span class="contagem">{{ inscritos|length }}</span></h2></header>
+    {% if inscritos %}
+    <div class="tabela-rolavel">
+      <table class="tabela-inscritos">
+        <thead>
+          <tr>
+            <th scope="col">Apelido</th>
+            <th scope="col">Time</th>
+            <th scope="col">Classe</th>
+            <th scope="col">Dispositivo</th>
+            {% if pode_alterar %}<th scope="col">Time e classe</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in inscritos %}
+          {% set time_linha = edicao.time if edicao and edicao.inscricao_id == i.id else i.time %}
+          {% set classe_linha = edicao.classe if edicao and edicao.inscricao_id == i.id else i.classe %}
+          <tr>
+            <th scope="row" class="quebra">{{ i.apelido }}</th>
+            <td class="nowrap"><span class="amostra-cor" style="background-color: {{ i.cor }}" aria-hidden="true"></span>{{ i.time }}</td>
+            <td>{{ i.classe }}</td>
+            <td>{{ i.dispositivo }}</td>
+            {% if pode_alterar %}
+            <td>
+              <details class="alterar" {% if edicao and edicao.inscricao_id == i.id %}open{% endif %}>
+                <summary>Alterar</summary>
+                <form method="post" action="{{ url_for('paginas.inscricao_alterar', inscricao_id=i.id) }}" class="form-linha">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <select name="time" aria-label="Time de {{ i.apelido }}">
+                    {% for nome in times %}
+                    <option value="{{ nome }}" {% if nome == time_linha %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                  </select>
+                  <select name="classe" aria-label="Classe de {{ i.apelido }}">
+                    {% for nome in classes %}
+                    <option value="{{ nome }}" {% if nome == classe_linha %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="botao secundario">Salvar</button>
+                </form>
+              </details>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="vazio">Nenhum operador inscrito.</p>
+    {% endif %}
+  </section>
+
+  {% if pode_alterar %}
+  <section class="bloco" aria-labelledby="titulo-inscrever">
+    <header><h2 id="titulo-inscrever">Inscrever operador</h2></header>
+    {% if operadores %}
+    <form class="corpo" method="post" action="{{ url_for('paginas.inscricao_criar', operacao_id=operacao.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="campo"><span>Operador</span>
+        <select name="operador_id" required>
+          <option value="" {% if not valores.get('operador_id') %}selected{% endif %} disabled>Escolha o operador</option>
+          {% for o in operadores %}
+          <option value="{{ o.id }}" {% if valores.get('operador_id') == o.id|string %}selected{% endif %}>{{ o.apelido }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="par">
+        <label class="campo"><span>Time</span>
+          <select name="time" required>
+            {% for nome in times %}
+            <option value="{{ nome }}" {% if valores.get('time') == nome %}selected{% endif %}>{{ nome }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="campo"><span>Classe</span>
+          <select name="classe" required>
+            {% for nome in classes %}
+            <option value="{{ nome }}" {% if valores.get('classe') == nome %}selected{% endif %}>{{ nome }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      <label class="campo"><span>Dispositivo</span>
+        <input name="dispositivo" class="dado" required maxlength="32" placeholder="MT-01" value="{{ valores.get('dispositivo', '') }}">
+      </label>
+      <label class="consentimento">
+        <input type="checkbox" name="consentimento" value="1" {% if valores.get('consentimento') %}checked{% endif %}>
+        <span>O operador consente o rastreamento da posição dele durante a operação.</span>
+      </label>
+      <button type="submit" class="botao cheio">Inscrever</button>
+    </form>
+    {% else %}
+    <p class="vazio">Cadastre um operador em <a href="{{ url_for('paginas.operadores') }}">Operadores</a> antes de inscrever.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
 {% endblock %}

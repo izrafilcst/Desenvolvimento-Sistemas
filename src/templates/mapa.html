@@ -6,39 +6,55 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/mapa.css') }}">
 {% endblock %}
 
+{% block classe_corpo %}pagina-mapa{% endblock %}
+{% block classe_main %}pagina pagina-larga{% endblock %}
+
 {% block conteudo %}
-  <hgroup>
+  <div class="cabeca">
     <h1>{{ operacao.nome }}</h1>
-    <p>{{ operacao.data|data_br }} · {{ operacao.local }} · {{ operacao.situacao|rotulo_situacao }}</p>
-  </hgroup>
+    <p class="meta">{{ operacao.data|data_br }} · {{ operacao.local }}</p>
+    <span class="situacao situacao-{{ operacao.situacao|replace('_', '-') }}">{{ operacao.situacao|rotulo_situacao }}</span>
+    <a class="cabeca-link" href="{{ url_for('paginas.operacao', operacao_id=operacao.id) }}">Ver inscrições</a>
+  </div>
+  {% include "_mensagens.html" %}
+
+  <dl class="faixa" aria-label="Situação dos operadores">
+    <div class="faixa-celula faixa-perdido"><dt>Perdidos</dt><dd><i class="faixa-marca" aria-hidden="true"></i><span id="n-perdido">–</span></dd></div>
+    <div class="faixa-celula faixa-atrasado"><dt>Atrasados</dt><dd><i class="faixa-marca" aria-hidden="true"></i><span id="n-atrasado">–</span></dd></div>
+    <div class="faixa-celula faixa-ativo"><dt>Ativos</dt><dd><i class="faixa-marca" aria-hidden="true"></i><span id="n-ativo">–</span></dd></div>
+    <div class="faixa-celula faixa-sem-sinal"><dt>Sem sinal</dt><dd><i class="faixa-marca" aria-hidden="true"></i><span id="n-sem_sinal">–</span></dd></div>
+    <div class="faixa-celula"><dt>Descartados</dt><dd><span id="descartados">–</span></dd></div>
+    <div class="faixa-celula faixa-fim"><dt>Inscritos</dt><dd><span id="n-inscritos">–</span></dd></div>
+  </dl>
 
   <section id="mapa-pagina" class="mapa-pagina"
            data-operacao-id="{{ operacao.id }}"
            data-centro-lat="{{ operacao.centro_lat }}"
            data-centro-lon="{{ operacao.centro_lon }}"
            data-url-situacao="{{ url_for('api.situacao') }}">
-    <div id="mapa" class="mapa" role="application" aria-label="Mapa da operação"></div>
+    <div class="quadro alvo">
+      <div id="mapa" class="mapa" role="application" aria-label="Mapa da operação">
+        <p class="carimbo"><span id="atualizacao" aria-live="polite">Carregando...</span></p>
+      </div>
+    </div>
 
     <aside class="painel" aria-label="Operadores da operação">
-      <p id="aviso" class="aviso" role="alert" hidden></p>
-      <p class="resumo">
-        <span id="atualizacao" aria-live="polite">Carregando...</span><br>
-        Sinais descartados: <strong id="descartados">0</strong>
-      </p>
-      <div class="lista-rolavel">
+      <p id="aviso" class="mensagem mensagem-aviso" role="alert" hidden></p>
+      <div class="bloco lista-rolavel">
         <table class="lista-operadores">
           <thead>
             <tr>
               <th scope="col">Operador</th>
               <th scope="col">Time</th>
               <th scope="col">Estado</th>
-              <th scope="col">Último sinal</th>
-              <th scope="col">Bateria</th>
+              <th scope="col" class="num">Último sinal</th>
+              <th scope="col" class="num">Bateria</th>
             </tr>
           </thead>
           <tbody id="lista"></tbody>
         </table>
       </div>
+      <p class="nota">Sinais de dispositivos não inscritos são descartados e só contados.</p>
     </aside>
   </section>
 {% endblock %}

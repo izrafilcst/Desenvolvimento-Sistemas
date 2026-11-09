@@ -5,40 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}MeshTracker Central{% endblock %}</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/pico/pico.min.css') }}">
+  <script src="{{ url_for('static', filename='js/tema.js') }}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   {% block head %}{% endblock %}
 </head>
-<body>
-  <header class="container">
-    <nav>
-      <ul>
-        <li><strong>MeshTracker Central</strong></li>
-      </ul>
+<body class="{% block classe_corpo %}{% endblock %}">
+  {% set atual = request.endpoint %}
+  <header class="moldura">
+    <div class="marca">
+      <span class="pontos" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="parado"></i></span>
+      <span class="marca-nome">MeshTracker <span>Central</span></span>
+    </div>
+    <div class="moldura-menu">
       {% if current_user.is_authenticated %}
-      <ul>
-        <li><a href="{{ url_for('paginas.operadores') }}">Operadores</a></li>
-        <li><a href="{{ url_for('paginas.operacoes') }}">Operações</a></li>
-        <li><small>{{ current_user.login }} ({{ current_user.papel }})</small></li>
-        <li>
-          <form method="post" action="{{ url_for('paginas.logout') }}" class="form-sair">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="secondary outline">Sair</button>
-          </form>
-        </li>
-      </ul>
+      <nav aria-label="Principal">
+        <a href="{{ url_for('paginas.operadores') }}"{% if atual in ('paginas.operadores', 'paginas.operadores_criar') %} aria-current="page"{% endif %}>Operadores</a>
+        <a href="{{ url_for('paginas.operacoes') }}"{% if atual in ('paginas.operacoes', 'paginas.operacoes_criar', 'paginas.operacao', 'paginas.operacao_avancar', 'paginas.inscricao_criar', 'paginas.inscricao_alterar', 'paginas.mapa') %} aria-current="page"{% endif %}>Operações</a>
+      </nav>
       {% endif %}
-    </nav>
-  </header>
-  <main class="container">
-    {% with mensagens = get_flashed_messages(with_categories=true) %}
-      {% for categoria, mensagem in mensagens %}
-        <p class="mensagem mensagem-{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</p>
-      {% endfor %}
-    {% endwith %}
-    {% if erro %}
-      <p class="mensagem mensagem-erro" role="alert">{{ erro }}</p>
+      <div id="seletor-tema" class="seletor-tema" role="group" aria-label="Tema" hidden>
+        <button type="button" data-tema="sistema" aria-pressed="true">Sistema</button>
+        <button type="button" data-tema="claro" aria-pressed="false">Claro</button>
+        <button type="button" data-tema="escuro" aria-pressed="false">Escuro</button>
+      </div>
+    </div>
+    {% if current_user.is_authenticated %}
+    <div class="sessao">
+      <span class="sessao-quem"><b>{{ current_user.login }}</b> · {{ current_user.papel }}</span>
+      <form method="post" action="{{ url_for('paginas.logout') }}" class="form-sair">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="sair">Sair</button>
+      </form>
+    </div>
     {% endif %}
+  </header>
+  <main class="{% block classe_main %}pagina{% endblock %}">
     {% block conteudo %}{% endblock %}
   </main>
   {% block scripts %}{% endblock %}

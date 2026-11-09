@@ -1,5 +1,6 @@
-/* Mapa ao vivo (US06). Busca /api/v1/situacao a cada 3 s e desenha marcadores e lista.
- * Todo texto vindo do servidor entra por textContent ou setAttribute, nunca por innerHTML. */
+/* Mapa ao vivo (US06). Busca /api/v1/situacao a cada 3 s e desenha marcadores, lista e faixa de dossiê.
+ * Todo texto vindo do servidor entra por textContent ou setAttribute, nunca por innerHTML.
+ * Réguas, retícula e contagens são calculadas aqui, do próprio mapa e da mesma resposta da API. */
 (function () {
   'use strict';
 
@@ -15,6 +16,9 @@
   // Quem precisa de atenção primeiro: perdido, atrasado (H2), sem sinal, ativo.
   const PRIORIDADE = { perdido: 0, atrasado: 1, sem_sinal: 2, ativo: 3 };
   const PESO_Z = { perdido: 1000, atrasado: 500, sem_sinal: 0, ativo: 0 };
+  const ESPESSURA_REGUA = 26;       // px: faixa das réguas no topo e à esquerda
+  const PX_ENTRE_NUMEROS = 96;      // px mínimos entre dois números de uma régua
+  const MILESIMO = 0.001;           // grau: os números das réguas são múltiplos dele
 
   const aviso = document.getElementById('aviso');
   const atualizacao = document.getElementById('atualizacao');
@@ -24,6 +28,8 @@
 
   const marcadores = new Map();   // inscricao_id -> { marcador, partes }
   let mapa = null;
+  let centroOperacao = CENTRO_PADRAO;
+  let reguas = null;              // { topo, esq, reticula }, só existe com o Leaflet carregado
   let ajustouVista = false;
   let emAndamento = false;
   let horaDaUltima = null;
@@ -60,6 +66,10 @@
     return Number.isFinite(bateria) ? Math.round(bateria) + '%' : '-';
   }
 
+  function formatarGrau(valor, casas) {    // vírgula decimal e sinal de menos de verdade
+    return valor.toFixed(casas).replace('.', ',').replace('-', '−');
+  }
+
   function ordenar(inscritos) {
     return inscritos.slice().sort(function (a, b) {
       const porEstado = PRIORIDADE[estadoSeguro(a.estado)] - PRIORIDADE[estadoSeguro(b.estado)];
@@ -78,10 +88,7 @@
     svg.setAttribute('class', 'mk-seta');
     svg.setAttribute('viewBox', '-12 -12 24 24');
     svg.setAttribute('aria-hidden', 'true');
-    seta.setAttribute('points', '0,-10 7,8 0,4 -7,8');
-    seta.setAttribute('stroke', '#ffffff');
-    seta.setAttribute('stroke-width', '1.5');
-    seta.setAttribute('stroke-linejoin', 'round');
+    seta.setAttribute('points', '0,-10 7,8 0,4 -7,8');   // o traço da seta é do CSS
     grupo.appendChild(seta);
     svg.appendChild(grupo);
     anel.appendChild(svg);
@@ -90,12 +97,20 @@
     return { icone: icone, anel: anel, grupo: grupo, seta: seta, rotulo: rotulo };
   }
 
+  function rotuloDoMarcador(inscrito, estado) {
+    if (estado !== 'perdido') { return inscrito.apelido; }
+    return inscrito.apelido + ' · perdido há ' + formatarSegundos(inscrito.segundos);
+  }
+
   function atualizarIcone(partes, inscrito) {
+    const estado = estadoSeguro(inscrito.estado);
     const rumo = Number.isFinite(inscrito.rumo) ? inscrito.rumo : 0;   // rumo null: sem giro
-    partes.anel.className = 'mk-anel estado-' + estadoSeguro(inscrito.estado);
+    // O perdido ganha os colchetes de alvo (classe alvo, no app.css).
+    partes.icone.className = 'mk estado-' + estado + (estado === 'perdido' ? ' alvo' : '');
+    partes.anel.className = 'mk-anel estado-' + estado;
     partes.seta.setAttribute('fill', corSegura(inscrito.cor));
     partes.grupo.setAttribute('transform', 'rotate(' + rumo + ')');
-    partes.rotulo.textContent = inscrito.apelido;
+    partes.rotulo.textContent = rotuloDoMarcador(inscrito, estado);
   }
 
   function criarMarcador(inscrito) {
@@ -131,8 +146,92 @@
   function ajustarVistaUmaVez() {
     if (ajustouVista || marcadores.size === 0) { return; }
     const pontos = Array.from(marcadores.values()).map(function (m) { return m.marcador.getLatLng(); });
-    mapa.fitBounds(L.latLngBounds(pontos), { padding: [40, 40], maxZoom: 18 });
+    mapa.fitBounds(L.latLngBounds(pontos), { paddingTopLeft: [90, 100], paddingBottomRight: [90, 70], maxZoom: 18 });
     ajustouVista = true;
+  }
+
+  // ----------------------------------------------- réguas, retícula e escala
+
+  // Menor múltiplo de 0,001° que deixa PX_ENTRE_NUMEROS px entre dois números da régua.
+  function multiploDoPasso(pxPorMilesimo) {
+    const multiplos = [1, 2, 5, 10, 20, 50, 100];
+    const achado = multiplos.find(function (k) { return k * pxPorMilesimo >= PX_ENTRE_NUMEROS; });
+    return achado || multiplos[multiplos.length - 1];
+  }
+
+  // Tracinho a cada meio passo; número nos passos inteiros (n par).
+  function marcasDoEixo(minimo, maximo, multiplo, posicaoDe) {
+    const meio = multiplo * MILESIMO / 2;
+    const marcas = [];
+    for (let n = Math.ceil(minimo / meio); n * meio <= maximo && marcas.length < 400; n += 1) {
+      marcas.push({ pos: posicaoDe(n * meio), valor: n * meio, maior: n % 2 === 0 });
+    }
+    return marcas;
+  }
+
+  function elementoDaMarca(marca, propriedade, comNumero) {
+    const itens = [];
+    const tracinho = el('i', marca.maior ? 'maior' : null);
+    tracinho.style[propriedade] = marca.pos + 'px';
+    itens.push(tracinho);
+    if (marca.maior && comNumero) {
+      const numero = el('span', null, formatarGrau(marca.valor, 3));
+      numero.style[propriedade] = marca.pos + 'px';
+      itens.push(numero);
+    }
+    return itens;
+  }
+
+  function desenharRegua(regua, marcas, propriedade, cabeNumero) {
+    const itens = [];
+    marcas.forEach(function (marca) { itens.push(...elementoDaMarca(marca, propriedade, cabeNumero(marca.pos))); });
+    regua.replaceChildren(...itens);
+  }
+
+  // Marcas das duas réguas, no sistema de coordenadas do mapa (y já descontado da régua do topo).
+  function marcasDaTela() {
+    const lim = mapa.getBounds();
+    const meio = mapa.getCenter();
+    const emX = function (lon) { return mapa.latLngToContainerPoint([meio.lat, lon]).x; };
+    const emY = function (lat) { return mapa.latLngToContainerPoint([lat, meio.lng]).y - ESPESSURA_REGUA; };
+    const kLon = multiploDoPasso(Math.abs(emX(meio.lng + MILESIMO) - emX(meio.lng)));
+    const kLat = multiploDoPasso(Math.abs(emY(meio.lat + MILESIMO) - emY(meio.lat)));
+    return {
+      lon: marcasDoEixo(lim.getWest(), lim.getEast(), kLon, emX),
+      lat: marcasDoEixo(lim.getSouth(), lim.getNorth(), kLat, emY),
+    };
+  }
+
+  function dentroDe(minimo, maximo) {
+    return function (marca) { return marca.pos > minimo && marca.pos < maximo; };
+  }
+
+  function posicionarReticula() {
+    const ponto = mapa.latLngToContainerPoint(centroOperacao);
+    reguas.reticula.style.left = ponto.x + 'px';
+    reguas.reticula.style.top = ponto.y + 'px';
+  }
+
+  function atualizarReguas() {
+    if (!mapa || !reguas) { return; }
+    const tam = mapa.getSize();
+    const marcas = marcasDaTela();
+    desenharRegua(reguas.topo, marcas.lon.filter(dentroDe(30, tam.x - 4)), 'left',
+      function (x) { return x < tam.x - 90; });
+    desenharRegua(reguas.esq, marcas.lat.filter(dentroDe(6, tam.y - ESPESSURA_REGUA - 4)), 'top',
+      function (y) { return y > 80; });
+    posicionarReticula();
+  }
+
+  function criarReguas() {
+    const quadro = mapa.getContainer();
+    reguas = { topo: el('div', 'regua regua-topo'), esq: el('div', 'regua regua-esq'), reticula: el('div', 'reticula') };
+    reguas.topo.setAttribute('aria-hidden', 'true');
+    reguas.esq.setAttribute('aria-hidden', 'true');
+    reguas.reticula.setAttribute('aria-hidden', 'true');
+    quadro.append(reguas.topo, reguas.esq, reguas.reticula);
+    mapa.on('move zoom resize', atualizarReguas);
+    atualizarReguas();
   }
 
   // ------------------------------------------------------------------ lista
@@ -141,7 +240,8 @@
     const celula = el('td');
     const amostra = el('span', 'amostra-time');
     amostra.style.backgroundColor = corSegura(inscrito.cor);
-    celula.append(amostra, document.createTextNode(' ' + inscrito.time));
+    amostra.setAttribute('aria-hidden', 'true');
+    celula.append(amostra, document.createTextNode(inscrito.time));
     return celula;
   }
 
@@ -158,14 +258,27 @@
       nome,
       celulaDoTime(inscrito),
       celulaEstado,
-      el('td', null, formatarSegundos(inscrito.segundos)),
-      el('td', baixa ? 'bateria-baixa' : null, formatarBateria(inscrito.bateria))
+      el('td', 'num', formatarSegundos(inscrito.segundos)),
+      el('td', baixa ? 'num bateria-baixa' : 'num', formatarBateria(inscrito.bateria))
     );
     return linha;
   }
 
   function desenharLista(inscritos) {
     lista.replaceChildren(...ordenar(inscritos).map(linhaDoInscrito));
+  }
+
+  // ----------------------------------------------------------------- faixa
+
+  // Contagem por estado, feita no navegador com a mesma resposta que desenha o mapa.
+  function desenharFaixa(dados) {
+    const conta = { perdido: 0, atrasado: 0, ativo: 0, sem_sinal: 0 };
+    dados.inscritos.forEach(function (inscrito) { conta[estadoSeguro(inscrito.estado)] += 1; });
+    Object.keys(conta).forEach(function (estado) {
+      document.getElementById('n-' + estado).textContent = String(conta[estado]);
+    });
+    document.getElementById('n-inscritos').textContent = String(dados.inscritos.length);
+    descartados.textContent = String(dados.descartados || 0);
   }
 
   // ----------------------------------------------------------- atualização
@@ -206,7 +319,7 @@
   }
 
   function desenhar(dados) {
-    descartados.textContent = String(dados.descartados || 0);
+    desenharFaixa(dados);
     desenharLista(dados.inscritos);
     if (mapa) {
       atualizarMarcadores(dados.inscritos);
@@ -234,19 +347,22 @@
   function criarMapa() {
     const lat = parseFloat(raiz.dataset.centroLat);
     const lon = parseFloat(raiz.dataset.centroLon);
-    const centro = Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : CENTRO_PADRAO;
-    const novo = L.map('mapa').setView(centro, 17);
+    centroOperacao = Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : CENTRO_PADRAO;
+    const novo = L.map('mapa').setView(centroOperacao, 17);
+    novo.zoomControl.setPosition('topright');
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       // O app manda Referrer-Policy: same-origin, e o OpenStreetMap bloqueia tile sem Referer.
       referrerPolicy: 'strict-origin-when-cross-origin',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(novo);
+    L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(novo);
     return novo;
   }
 
   if (typeof L !== 'undefined') {
     mapa = criarMapa();
+    criarReguas();
   } else {
     avisoDoMapa = 'A biblioteca do mapa não carregou. A lista continua sendo atualizada.';
     mostrarAviso(avisoDoMapa);

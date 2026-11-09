@@ -1,18 +1,20 @@
 {% extends "base.html" %}
 {% block titulo %}Entrar · MeshTracker Central{% endblock %}
+{% block classe_main %}pagina pagina-estreita{% endblock %}
 {% block conteudo %}
-<article class="cartao-estreito">
-  <header>Entrar</header>
-  <form method="post" action="{{ url_for('paginas.login') }}">
+<h1>Entrar</h1>
+{% include "_mensagens.html" %}
+<section class="bloco" aria-label="Entrar no MeshTracker Central">
+  <form class="corpo" method="post" action="{{ url_for('paginas.login') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% if proximo %}<input type="hidden" name="next" value="{{ proximo }}">{% endif %}
-    <label>Login
+    <label class="campo"><span>Login</span>
       <input name="login" autocomplete="username" required autofocus value="{{ valores.get('login', '') }}">
     </label>
-    <label>Senha
+    <label class="campo"><span>Senha</span>
       <input type="password" name="senha" autocomplete="current-password" required>
     </label>
-    <button type="submit">Entrar</button>
+    <button type="submit" class="botao cheio">Entrar</button>
   </form>
-</article>
+</section>
 {% endblock %}
