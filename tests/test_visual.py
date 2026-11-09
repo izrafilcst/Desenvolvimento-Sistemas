@@ -442,6 +442,14 @@ def test_moldura_nao_quebra_o_login_e_vira_duas_linhas_abaixo_de_1280_px():
     assert ".moldura { flex-wrap: wrap;" in abaixo and ".moldura-menu { order: 4; flex: 1 0 100%;" in abaixo
 
 
+def test_lista_do_mapa_cabe_em_580_px_com_qualquer_estado_sem_baixar_de_16_px():
+    regras = dict(regras_css(MAPA_CSS))
+    assert "padding: 10px 6px" in regras[".lista-operadores th, .lista-operadores td"]              # medido: 578/578 em 1440 e 1280
+    assert "padding: 3px 6px 2px" in regras[".lista-operadores .selo"] and "letter-spacing: 0.02em" in regras[".lista-operadores .selo"]
+    assert "font-size" not in regras[".lista-operadores .selo"]                                    # a fonte do selo continua a de 16 px
+    assert "grid-template-columns: minmax(0, 1fr) 580px" in MAPA_CSS
+
+
 def test_lista_do_mapa_deixa_o_cabecalho_e_o_apelido_quebrarem_em_vez_de_rolar():
     regras = dict(regras_css(MAPA_CSS))
     assert "white-space: normal" in regras[".lista-operadores thead th"]
