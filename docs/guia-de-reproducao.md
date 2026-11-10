@@ -109,7 +109,9 @@ Use o terminal em que você exportou `MESHTRACKER_TOKEN`:
 python src/app.py
 ```
 
-O servidor fica em `http://127.0.0.1:5000`. Deixe esse terminal aberto.
+O servidor fica em `http://127.0.0.1:5000`. Deixe esse terminal aberto. O aviso
+`WARNING: This is a development server` é esperado: o app roda com o servidor
+de desenvolvimento do Flask, que basta para a demo.
 
 ## 8. Rodar o simulador (terminal 2)
 
@@ -128,19 +130,32 @@ O simulador manda posições dos dispositivos MT-01 a MT-05 para a Operação Br
 Ele também manda sinais de um dispositivo sem inscrição (MT-99), que o sistema
 descarta. O `--parar MT-03 --apos 20` faz o MT-03 parar 20 segundos depois do início.
 
+O simulador imprime uma linha por sinal. As linhas `201 gravado` são posições
+aceitas, as `202 descartado` são do MT-99, e as `200 duplicado` são pacotes que
+ele reenvia de propósito para mostrar que o mesmo sinal vale uma vez só (R8).
+
 ## 9. Abrir o mapa
 
 1. Abra `http://127.0.0.1:5000` no navegador.
-2. Entre como `organizador`, com a senha anotada no passo 6.
-3. Clique em **Operações**.
-4. Clique em **Operação Bravo**.
-5. Clique em **Abrir mapa**.
+2. Entre como `organizador`, com a senha anotada no passo 6. Depois do login, o
+   app já abre a lista de operações.
+3. Clique em **Operação Bravo**.
+4. Clique em **Abrir mapa**, o botão principal da página.
+
+Na página da operação, não abra **Encerrar operação…**: encerrar não tem volta, e
+depois disso todo sinal que chegar é descartado.
 
 ## 10. O que você deve ver
 
-- Cinco setas se movendo no mapa, uma por dispositivo.
-- MT-03 para. Cerca de 60 s depois, ele aparece como **atrasado**.
-  Depois de 120 s parado, aparece como **perdido**.
+- Cinco setas se movendo no mapa, uma por operador, com o apelido ao lado (por
+  exemplo, Falcão e Lobo), e não o código do dispositivo.
+- O MT-03, que é a Coruja, para. Cerca de 60 s depois, ela aparece como
+  **atrasado**. Depois de 120 s parada, aparece como **perdido**, com colchetes
+  vermelhos em volta e o rótulo "perdido · último sinal há ...".
+- A faixa acima do mapa conta perdidos, atrasados, ativos, sem sinal, descartados
+  e inscritos.
+- No tema padrão (Sistema), o mapa abre sempre escuro, mesmo com o sistema claro.
+  O seletor **Claro** na moldura deixa tudo claro, inclusive o mapa.
 - MT-99 não aparece no mapa. Ele só aumenta o contador de **descartados**.
 
 ## 11. Conferir a API com curl
