@@ -98,12 +98,13 @@ No Linux, no macOS e no Git Bash, a ativação é `source .venv/bin/activate` (G
 | Operações | `/operacoes` | `src/templates/operacoes.html` |
 | Uma operação (inscrição, recusas, transições) | `/operacoes/3` (Charlie) | `src/templates/operacao.html` |
 | Mapa ao vivo | `/operacoes/2/mapa` (Bravo) | `src/templates/mapa.html`, `src/static/js/mapa.js`, `src/static/css/mapa.css` |
-| Moldura comum (menu, mensagens) | todas | `src/templates/base.html`, `src/static/css/app.css` |
+| Moldura comum (menu, seletor de tema, mensagens) | todas | `src/templates/base.html`, `src/templates/_mensagens.html`, `src/static/css/app.css`, `src/static/js/tema.js` |
 
-- O visual segue o [`DESIGN.md`](DESIGN.md) (tokens, estados e componentes). O CSS fica em `app.css` (base, moldura e páginas comuns) e `mapa.css`, sem framework. O app não tem build de front-end: o que você salva é o que o navegador recebe.
+- O visual segue o [`DESIGN.md`](DESIGN.md): tokens, tabela de estados, componentes e a seção "Como levar para o Figma". O contexto do produto (usuário, modo de cada superfície, o que não pode aparecer) está no [`PRODUCT.md`](PRODUCT.md). O CSS fica em `app.css` (base, moldura e páginas comuns) e `mapa.css`, sem framework, e as fontes (Archivo e Chivo Mono) em `src/static/vendor/fonts/`. O app não tem build de front-end: o que você salva é o que o navegador recebe.
+- **Tema:** o padrão é o modo Sistema (as telas seguem o esquema claro ou escuro do sistema, e o mapa fica sempre escuro). O seletor na moldura troca para Claro ou Escuro, e a escolha fica guardada no navegador.
 - **Mudou CSS ou JS:** recarregue a página com Ctrl+F5. **Mudou um template:** pare o app (Ctrl+C) e suba de novo, porque ele roda sem o modo de depuração.
 - Para ver a tela do observador, entre com o usuário `observador` numa janela anônima.
-- Os prints de todas as telas, bons para importar no Figma como referência, estão em [docs/evidencias/](docs/evidencias/). Os slides da demo ficam em `docs/apresentacao/` e abrem direto no navegador (setas para navegar, N para as notas).
+- Os prints de todas as telas, do organizador e do observador, em 1440 e 390 de largura, estão em [docs/design/telas/](docs/design/telas/), com o `LEIAME.md` que explica como importá-los no Figma. Os prints da Aula 14 ficam em `docs/evidencias/` como histórico. Os slides ficam em `docs/apresentacao/` e abrem direto no navegador (setas para navegar, N para as notas); sirva a pasta `docs/`, e não `docs/apresentacao/`, para as imagens carregarem.
 - Depois de qualquer mudança, rode `python -m pytest -q`. Alguns testes conferem o HTML: o observador não pode ver formulários, todo formulário leva o `csrf_token` e nenhum texto vindo do servidor entra no mapa por `innerHTML`.
 
 ## Como regenerar o Caderno e o Kit
@@ -123,6 +124,8 @@ O modelo do Kit precisa estar na pasta pai do repositório, com o nome padrão (
 
 ```
 README.md
+PRODUCT.md                                usuário, propósito, modos das superfícies e o que não pode aparecer
+DESIGN.md                                 identidade visual: tokens, estados, componentes e Figma
 docs/
   Caderno_Aula7_MeshTracker_Central.pdf   caderno de dinâmicas preenchido
   Kit_Aula10_MeshTracker_Central.xlsx     kit de artefatos da Aula 10 preenchido
@@ -137,8 +140,9 @@ docs/
     ADR-001-perfil-e-inscricao.md         perfil permanente separado da inscrição
     ADR-002-stack-flask-sqlite.md         Flask e SQLite no lugar da stack MEVN
     ADR-003-gateway-por-http.md           sinais do gateway por HTTP no lugar de MQTT
-  evidencias/                             prints, tempos e revisão de segurança da demo
-  apresentacao/                           roteiro e slides da demo de 10/11
+  evidencias/                             prints, tempos e revisão de segurança (Aula 14 e v1/)
+  design/telas/                           prints das telas para o Figma e recortes para o deck
+  apresentacao/                           roteiros (5 min e Demo Day) e slides (suíço e briefing)
 requirements.txt                          dependências para instalar, testar e rodar
 requirements-dev.txt                      bandit e pip-audit, para a revisão de segurança
 scripts/                                  gerador do Caderno e do Kit
