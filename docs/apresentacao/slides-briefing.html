@@ -48,7 +48,7 @@ img, svg { max-width: none; max-height: none; }
   --fio: rgba(11,11,11,.16); --forte: var(--tinta); --rt: var(--verm); --grade: rgba(11,11,11,.06);
 }
 .slide.escuro { /* sala de briefing */
-  --bg: var(--e-chao); --fg: var(--e-tinta); --fg2: var(--e-tinta-2); --surf: rgba(21,23,23,.94); --surf2: rgba(28,31,31,.94);
+  --bg: var(--e-chao); --fg: var(--e-tinta); --fg2: var(--e-tinta-2); --surf: rgb(21,23,23); --surf2: rgb(28,31,31);
   --fio: rgba(236,235,230,.2); --forte: #ecebe6; --rt: #ff6b5e; --grade: rgba(236,235,230,.05);
 }
 
@@ -59,19 +59,19 @@ img, svg { max-width: none; max-height: none; }
 .alvo { position: relative; }
 .a { position: absolute; margin: 0; }
 .fundo { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; z-index: -2; }
-.scrim { position: absolute; inset: 0; z-index: -1; background: rgba(12,13,13,.64); }
+.scrim { position: absolute; inset: 0; z-index: -1; background: rgba(12,13,13,.72); }
 
 /* ---------- moldura preta (igual em todos os temas) e régua ---------- */
 .mold { position: absolute; left: 0; top: 0; width: 1920px; height: 80px; z-index: 10; display: flex; align-items: center; gap: 40px; padding: 0 48px;
   background: #0b0b0b; color: #f4f4f1; border-bottom: 1px solid rgba(244,244,241,.14); }
-.marca { display: flex; align-items: center; gap: 16px; font: 900 28px/1 var(--f-ui); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-.marca small { font: 500 28px/1 var(--f-ui); letter-spacing: .14em; color: #b9b9b3; }
+.marca { display: flex; align-items: center; gap: 16px; font: 900 26px/1 var(--f-ui); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.marca small { font: 500 26px/1 var(--f-ui); letter-spacing: .14em; color: #b9b9b3; }
 .pontos { position: relative; width: 42px; height: 42px; flex: none; }
 .pontos i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #f4f4f1; }
 .pontos i:nth-child(1) { left: 3px; top: 6px; } .pontos i:nth-child(2) { left: 18px; top: 1px; }
 .pontos i:nth-child(3) { left: 7px; top: 22px; } .pontos i:nth-child(4) { left: 22px; top: 19px; }
 .pontos i.parado { left: 28px; top: 28px; width: 13px; height: 13px; background: none; border: 3px solid #f4f4f1; }
-.menu { display: flex; gap: 36px; margin-left: 24px; }
+.menu { display: flex; gap: 26px; margin-left: 24px; }
 .menu span { padding: 8px 0; font: 700 26px/1 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; color: #b9b9b3; border-bottom: 3px solid transparent; white-space: nowrap; }
 .menu span.on { color: #f4f4f1; border-bottom-color: #f4f4f1; }
 .pag { margin-left: auto; font: 500 26px/1 var(--f-dado); color: #b9b9b3; white-space: nowrap; }
@@ -81,12 +81,11 @@ img, svg { max-width: none; max-height: none; }
               repeating-linear-gradient(to right, var(--forte) 0 1px, transparent 1px 20px) left bottom / 100% 6px no-repeat; }
 
 /* ---------- título (único elemento que "aparece como digitado") ---------- */
-.kick { position: absolute; left: 160px; top: 116px; margin: 0; font: 700 26px/1.2 var(--f-ui); letter-spacing: .04em; text-transform: uppercase; color: var(--fg2); }
 .titulo { position: absolute; left: 160px; top: 156px; margin: 0; width: fit-content; max-width: 1600px; font: 900 84px/1 var(--f-ui); letter-spacing: .01em; text-transform: uppercase; }
 .titulo.gig { font-size: 168px; line-height: .92; letter-spacing: 0; }
 .hip, .hid { display: inline-block; border: 4px solid currentColor; font-weight: 900; letter-spacing: .04em; }
 .hip { margin-right: .3em; padding: .16em .26em .1em; font-size: .42em; line-height: 1; vertical-align: .28em; }
-.hid { width: 110px; padding: 14px 0 10px; text-align: center; font-size: 52px; line-height: 1; }
+.hid { width: 110px; padding: 14px 0 10px; text-align: center; font-size: 56px; line-height: 1; }
 @keyframes digitar { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
 @keyframes aparece { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .entra .titulo { animation: digitar 450ms steps(16, end) 80ms both; }
@@ -98,13 +97,15 @@ img, svg { max-width: none; max-height: none; }
 .rot.fg { color: var(--fg); }
 .tx { margin: 0; font: 500 32px/1.35 var(--f-ui); text-wrap: pretty; }
 .tx b { font-weight: 800; }
-.g { font-size: 36px; line-height: 1.3; }
+.g { font-size: 38px; line-height: 1.3; }
 .gg { font-size: 44px; line-height: 1.2; }
 .mudo { color: var(--fg2); }
 .verm { color: var(--rt); }
+.nb { white-space: nowrap; }
+.lacuna { font-family: var(--f-dado); font-weight: 500; white-space: nowrap; border-bottom: 3px dashed currentColor; }
 .dado { font-family: var(--f-dado); font-weight: 500; font-variant-numeric: tabular-nums; }
 .gn { display: flex; align-items: baseline; gap: 14px; margin: 0; font: 900 130px/1 var(--f-ui); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-.gn small { font-size: 48px; letter-spacing: 0; }
+.gn small { font-size: 44px; letter-spacing: 0; }
 .cod { font: 800 64px/1 var(--f-dado); font-variant-numeric: tabular-nums; }
 .cd { display: inline-block; margin: 0 2px; padding: 0 10px; border: 2px solid var(--forte); background: var(--surf); font: 800 32px/1.4 var(--f-dado); }
 .cd.verm { border-color: var(--rt); }
@@ -126,8 +127,7 @@ img, svg { max-width: none; max-height: none; }
 .lin { display: grid; grid-template-columns: var(--c, 1fr); align-items: center; gap: 24px; border-top: 2px solid var(--forte); padding: 14px 0; }
 .lin.fino { border-top-width: 1px; border-top-color: var(--fio); }
 .sem-borda { border-top: 0; }
-.carimbo { position: absolute; margin: 0; padding: 8px 14px; font: 500 26px/1.3 var(--f-dado); background: var(--surf); border: 1px solid var(--forte); color: var(--fg); }
-.osm { position: absolute; right: 0; bottom: 0; z-index: 6; margin: 0; padding: 6px 18px; font: 500 26px/1.3 var(--f-ui); color: var(--fg); background: var(--surf); border-top: 1px solid var(--forte); border-left: 1px solid var(--forte); }
+.osm { position: absolute; right: 0; bottom: 0; z-index: 6; margin: 0; padding: 8px 24px 6px 20px; font: 500 26px/1.3 var(--f-ui); color: var(--fg2); background: var(--bg); }
 .slide:not(.tem-fundo) .osm { display: none; }
 .rodape { position: absolute; left: 160px; top: 974px; width: 1600px; margin: 0; padding-top: 16px; border-top: 2px solid var(--forte); display: flex; justify-content: space-between; font: 600 26px/1.3 var(--f-ui); }
 
@@ -151,17 +151,27 @@ img, svg { max-width: none; max-height: none; }
   background: repeating-linear-gradient(135deg, transparent 0 14px, var(--fio) 14px 16px); }
 .print.sem .ph { display: flex; } .print.sem img { display: none; }
 
+/* recortes da prova: tamanho original (1:1) no palco de 1920, sem escala */
+.fig { position: absolute; margin: 0; }
+.fig .q { position: relative; display: block; border: 1px solid var(--forte); background: var(--surf); }
+.fig img { display: block; width: auto; height: auto; max-width: none; max-height: none; }
+.fig .ph { position: static; min-height: 160px; min-width: 520px; }
+.fig.sem .q { width: 640px; } .fig.sem .ph { display: flex; } .fig.sem img { display: none; }
+/* marca numerada sobre o print (slide 14): aponta para algo visível */
+.mrc { position: absolute; z-index: 3; width: 40px; height: 40px; margin: -20px 0 0 -20px; display: flex; align-items: center; justify-content: center; background: var(--chao); color: var(--tinta); border: 2px solid var(--tinta); font: 800 26px/1 var(--f-dado); }
+.mrc.i { position: static; display: inline-flex; width: 36px; height: 36px; margin: 0 8px 0 0; vertical-align: -6px; }
+
 /* setas e ligações desenhadas em CSS */
 .lig { flex: 1; height: 4px; background: repeating-linear-gradient(to right, var(--forte) 0 14px, transparent 14px 24px); }
 .sg { position: relative; flex: 1; height: 4px; background: var(--forte); }
 .sg::after { content: ""; position: absolute; right: -2px; top: -10px; border-left: 20px solid var(--forte); border-top: 12px solid transparent; border-bottom: 12px solid transparent; }
 .sg.trac { background: repeating-linear-gradient(to right, var(--forte) 0 14px, transparent 14px 24px); }
 .cx { padding: 30px 32px; background: var(--surf); border: 1px solid var(--forte); }
-.cx b { display: block; margin-bottom: 14px; font: 900 36px/1.1 var(--f-ui); }
+.cx b { display: block; margin-bottom: 14px; font: 900 38px/1.1 var(--f-ui); }
 .cx.eu { background: var(--tinta); color: var(--chao); --forte: var(--tinta); }
 .cx.trac { border: 3px dashed var(--forte); background: transparent; }
 .seq { display: inline-flex; align-items: center; vertical-align: middle; }
-.seq i { position: relative; padding: 4px 12px 2px; border: 2px solid var(--forte); font: 700 28px/1.2 var(--f-dado); font-style: normal; }
+.seq i { position: relative; padding: 4px 12px 2px; border: 2px solid var(--forte); font: 700 26px/1.2 var(--f-dado); font-style: normal; }
 .seq i + i { margin-left: 40px; }
 .seq i + i::before { content: ""; position: absolute; left: -36px; top: calc(50% - 1px); width: 34px; height: 2px; background: var(--forte); }
 .seq i + i::after { content: ""; position: absolute; left: -12px; top: calc(50% - 7px); border-left: 11px solid var(--forte); border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
@@ -176,20 +186,20 @@ img, svg { max-width: none; max-height: none; }
 .ar .tx { font-size: 38px; line-height: 1.3; }
 
 /* barras de testes por regra */
-.br { display: grid; grid-template-columns: 100px 400px 1fr; align-items: center; height: 70px; border-top: 1px solid var(--fio); }
-.br .dado { font-size: 28px; font-weight: 800; }
-.br .nm { font: 600 28px/1.1 var(--f-ui); }
-.br .bar { display: flex; align-items: center; gap: 14px; font: 800 30px/1 var(--f-ui); font-variant-numeric: tabular-nums; }
-.br .bar i { display: block; height: 34px; width: calc(var(--v) * 10px); background: var(--tinta); }
-.br.alta { background: var(--surf); border: 1px solid var(--forte); } .br.alta .nm { font-weight: 800; }
+.br { display: grid; grid-template-columns: 100px 430px 1fr; align-items: center; height: 70px; border-top: 1px solid var(--fio); }
+.br .dado { font-size: 32px; font-weight: 800; }
+.br .nm { font: 600 32px/1.1 var(--f-ui); }
+.br .bar { display: flex; align-items: center; gap: 14px; font: 800 32px/1 var(--f-ui); font-variant-numeric: tabular-nums; }
+.br .bar i { display: block; height: 34px; width: calc(var(--v) * 9px); background: var(--tinta); }
+.br.alta { margin: 0 -18px; padding: 0 18px; background: var(--surf); border: 1px solid var(--forte); } .br.alta .nm { font-weight: 800; }
 
 /* régua do estado (R9) */
-.reg { position: relative; width: 890px; height: 216px; }
-.reg .seg { position: absolute; top: 76px; height: 64px; display: flex; align-items: center; padding-left: 18px; }
+.reg { position: relative; width: 890px; height: 154px; }
+.reg .seg { position: absolute; top: 58px; height: 56px; display: flex; align-items: center; padding-left: 18px; }
 .reg .seta { clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 50%, calc(100% - 30px) 100%, 0 100%); }
-.reg .lm { position: absolute; top: 4px; width: 240px; text-align: center; font: 500 26px/1 var(--f-dado); }
-.reg .tk { position: absolute; top: 40px; width: 2px; height: 32px; background: var(--forte); }
-.reg .fx { position: absolute; top: 150px; font: 600 26px/1.2 var(--f-ui); color: var(--fg2); }
+.reg .lm { position: absolute; top: 3px; width: 240px; text-align: center; font: 500 26px/1 var(--f-dado); }
+.reg .tk { position: absolute; top: 30px; width: 2px; height: 26px; background: var(--forte); }
+.reg .fx { position: absolute; top: 120px; font: 600 26px/1.2 var(--f-ui); color: var(--fg2); }
 
 /* figuras de "o que olhar" (slide 9) */
 .olhar { display: grid; grid-template-columns: 230px 1fr; gap: 28px; align-items: center; padding: 22px 0; border-top: 2px solid var(--forte); }
@@ -227,17 +237,16 @@ img, svg { max-width: none; max-height: none; }
 <!-- ============ SLIDE 1: ABERTURA (escuro, bloco 1) ============ -->
 <section class="slide escuro active" data-n="1" data-bloco="1" aria-label="Abertura">
   <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
-  <p class="carimbo a" style="left:160px;top:122px">Demo Day · 15/12/2026</p>
-  <h1 class="titulo gig" style="top:182px"><span>MeshTracker</span><br><span>Central</span></h1>
-  <p class="tx g a ap" style="left:160px;top:516px;width:1300px">Painel do organizador de operações de airsoft do DF</p>
-  <div class="dos ap" style="left:160px;top:622px;width:560px;height:240px"><p class="rot">Problema 1</p><p class="tx" style="margin-top:12px">O operador teria de <b>se cadastrar de novo</b> a cada operação.</p></div>
-  <div class="dos ap" style="left:760px;top:622px;width:560px;height:240px"><p class="rot">Problema 2</p><p class="tx" style="margin-top:12px">Cada dispositivo <b>esquece quem some por 2 minutos</b>, e ninguém vê o conjunto.</p></div>
-  <svg class="motivo ap" style="left:1420px;top:620px" width="340" height="260" viewBox="0 0 340 260" aria-hidden="true">
+  <h1 class="titulo gig" style="top:150px"><span>MeshTracker</span><br><span>Central</span></h1>
+  <p class="tx g a ap" style="left:160px;top:486px;width:1300px">Painel do organizador de operações de airsoft do DF</p>
+  <div class="dos ap" style="left:160px;top:590px;width:560px;height:240px"><p class="rot">Problema 1</p><p class="tx" style="margin-top:12px">O operador teria de <b>se cadastrar de novo</b> a cada operação.</p></div>
+  <div class="dos ap" style="left:760px;top:590px;width:560px;height:240px"><p class="rot">Problema 2</p><p class="tx" style="margin-top:12px">Cada dispositivo <b>esquece quem some por 2 minutos</b>, e ninguém vê o conjunto.</p></div>
+  <svg class="motivo ap" style="left:1420px;top:586px" width="340" height="260" viewBox="0 0 340 260" aria-hidden="true">
     <g fill="#ecebe6"><circle cx="46" cy="62" r="21"/><circle cx="160" cy="24" r="21"/><circle cx="104" cy="150" r="21"/><circle cx="224" cy="116" r="21"/></g>
     <circle cx="282" cy="204" r="25" fill="none" stroke="#d1242f" stroke-width="8"/>
     <path d="M236 182V158H260M304 158H328V182M236 226V250H260M304 250H328V226" fill="none" stroke="#d1242f" stroke-width="4"/>
   </svg>
-  <p class="tx a ap" style="left:160px;top:906px;width:1600px"><span class="tg aviso">Aviso</span>&nbsp; Sinais simulados. Problema ainda não confirmado com a federação.</p>
+  <p class="tx a ap" style="left:160px;top:880px;width:1600px"><span class="tg aviso">Aviso</span>&nbsp; Sinais simulados. Problema ainda não confirmado com a federação.</p>
   <footer class="rodape"><span>Rafael Alves de Sousa Costa</span><span>Desenvolvimento de Sistemas · CEUB · Demo Day, 15/12/2026</span></footer>
   <p class="osm">© OpenStreetMap contributors</p>
   <aside class="notas"><p>Este é o MeshTracker Central, um painel web para o organizador de operações de airsoft do Distrito Federal.</p><p>Vi dois problemas nos meus próprios projetos. O operador teria de se cadastrar de novo a cada operação. E cada dispositivo só enxerga os vizinhos e esquece quem some por 2 minutos, então ninguém vê o conjunto.</p><p>Não confirmei isso com a federação.</p></aside>
@@ -290,8 +299,7 @@ img, svg { max-width: none; max-height: none; }
 
 <!-- ============ SLIDE 5: ADR-001 (claro, bloco 3) ============ -->
 <section class="slide" data-n="5" data-bloco="3" aria-label="ADR-001">
-  <p class="kick">ADR-001 · O modelo de dados</p>
-  <h1 class="titulo">Perfil permanente,<br>inscrição por operação</h1>
+  <h1 class="titulo"><b class="hip">ADR-001</b>Perfil permanente,<br>inscrição por operação</h1>
   <div class="a" style="left:160px;top:376px;width:1600px">
     <div class="ar ap"><span class="rot fg">Contexto</span><p class="tx">O operador joga várias operações, e time, classe e dispositivo mudam. A posição é dado pessoal, e o consentimento vale por operação.</p></div>
     <div class="ar ap"><span class="rot fg">Decisão</span><p class="tx"><b>O perfil é permanente e a inscrição guarda o que muda.</b></p></div>
@@ -303,8 +311,7 @@ img, svg { max-width: none; max-height: none; }
 
 <!-- ============ SLIDE 6: ADR-002 (claro, bloco 3) ============ -->
 <section class="slide" data-n="6" data-bloco="3" aria-label="ADR-002">
-  <p class="kick">ADR-002 · A stack</p>
-  <h1 class="titulo">Flask e SQLite</h1>
+  <h1 class="titulo"><b class="hip">ADR-002</b>Flask e SQLite</h1>
   <div class="a" style="left:160px;top:296px;width:1600px">
     <div class="ar ap"><span class="rot fg">Contexto</span><p class="tx">Vue, Express, MongoDB e Docker eram quatro serviços e um build de front-end, para 9 dias, trabalhando sozinho.</p></div>
     <div class="ar ap"><span class="rot fg">Decisão</span><p class="tx"><b>Flask e SQLite, em três comandos.</b> O código vai de <span class="seq"><i>rotas</i><i>serviços</i><i>repositório</i></span></p></div>
@@ -317,8 +324,7 @@ img, svg { max-width: none; max-height: none; }
 
 <!-- ============ SLIDE 7: ADR-003 (claro, bloco 3) ============ -->
 <section class="slide" data-n="7" data-bloco="3" aria-label="ADR-003">
-  <p class="kick">ADR-003 · O contrato do sinal</p>
-  <h1 class="titulo">HTTP no lugar de MQTT</h1>
+  <h1 class="titulo"><b class="hip">ADR-003</b>HTTP no lugar de MQTT</h1>
   <div class="a" style="left:160px;top:296px;width:1600px">
     <div class="ar ap"><span class="rot fg">Contexto</span><p class="tx">Sem hardware nem gateway real no MVP, mas o simulador, o descarte e o mapa precisam de um contrato.</p></div>
     <div class="ar ap"><span class="rot fg">Decisão</span><p class="tx"><b><span class="dado">POST /api/v1/sinais</span> com JSON.</b> Os códigos: <span class="cd verm">401</span> sem token, <span class="cd">202</span> descartado, <span class="cd">200</span> duplicado, <span class="cd">201</span> gravado.</p></div>
@@ -331,23 +337,24 @@ img, svg { max-width: none; max-height: none; }
 <!-- ============ SLIDE 8: DEMO H1 (escuro, bloco 4, dois passos) ============ -->
 <section class="slide escuro p1" data-n="8" data-bloco="4" data-passos="2" aria-label="Demonstração ao vivo: inscrição">
   <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
-  <p class="carimbo a" data-s="antes" style="left:160px;top:122px">Demo ao vivo · passo 1 de 2</p>
-  <p class="carimbo a" data-s="depois" style="left:160px;top:122px">Demo ao vivo · passo 2 de 2</p>
-  <h1 class="titulo" style="top:182px"><b class="hip">H1</b>Inscrever sem<br>recadastrar</h1>
+  <h1 class="titulo"><b class="hip">H1</b>Inscrever sem<br>recadastrar</h1>
   <!-- passo 1: hipótese, meta e o que olhar -->
-  <div class="dos alvo ap" data-s="antes" style="left:160px;top:440px;width:800px;height:520px"><p class="rot">Meta da H1</p><p class="gn" style="font-size:300px;line-height:.95;margin-top:10px"><span>3</span><small style="font-size:110px">min</small></p><p class="tx g" style="margin-top:14px">Os 5 já cadastrados entram na Operação Charlie em até 3 min.</p></div>
+  <div class="dos alvo ap" data-s="antes" style="left:160px;top:440px;width:800px;height:520px"><p class="rot">Meta da H1</p><p class="gn" style="font-size:300px;line-height:.95;margin-top:10px"><span>3</span><small style="font-size:130px">min</small></p><p class="tx g" style="margin-top:14px">Os 5 já cadastrados entram na Operação Charlie em até 3 min.</p></div>
   <div class="dos ap" data-s="antes" style="left:1040px;top:440px;width:720px;height:520px"><p class="rot">O que olhar</p><p class="tx gg" style="margin-top:36px;font-size:56px;line-height:1.15">O formulário <b>não pede nome</b>.</p><p class="tx gg" style="margin-top:44px;padding-top:44px;border-top:2px solid var(--forte);font-size:56px;line-height:1.15">E as <b>três recusas</b>.</p></div>
   <!-- passo 2: o resultado -->
-  <div class="a ap" data-s="depois" style="left:160px;top:424px;width:900px">
-    <p class="tx" style="font:800 46px/1.1 var(--f-ui)">5 inscritos, nenhum cadastro refeito.</p>
-    <p class="rot" style="margin:30px 0 8px">Três recusas</p>
-    <div class="lin" style="--c:170px 1fr auto;padding:12px 0"><b class="cod verm">R2</b><span class="tx g">operador repetido</span><span class="tg">UNIQUE no banco</span></div>
-    <div class="lin" style="--c:170px 1fr auto;padding:12px 0"><b class="cod verm">R3</b><span class="tx g">dispositivo repetido</span><span class="tg">UNIQUE no banco</span></div>
-    <div class="lin" style="--c:170px 1fr auto;padding:12px 0"><b class="cod verm">R5</b><span class="tx g">sem consentimento</span><span></span></div>
-    <p class="tx mudo" style="margin-top:20px">Por script, nas telas da Aula 14: <span class="dado">554 ms</span>. Mede o fluxo, não uma pessoa.</p>
+  <div class="dos ap" data-s="depois" style="left:160px;top:380px;width:712px;padding:26px 32px 24px">
+    <p class="tx" style="font:900 56px/1.1 var(--f-ui)">5 inscritos, nenhum cadastro refeito.</p>
+    <p class="tx" style="margin-top:18px">Meta <b class="nb">3 min</b> · cronometrado no ensaio: <span class="lacuna">[conferir no ensaio]</span></p>
+    <p class="rot" style="margin-top:24px;padding-top:18px;border-top:2px solid var(--forte)">Três recusas</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px">
+      <div><b class="cod verm" style="font-size:44px">R2</b><p class="tx" style="margin-top:6px;font-size:26px;line-height:1.25">operador repetido</p><p class="tx mudo" style="margin-top:6px;font-size:26px;line-height:1.25">UNIQUE no banco</p></div>
+      <div><b class="cod verm" style="font-size:44px">R3</b><p class="tx" style="margin-top:6px;font-size:26px;line-height:1.25">dispositivo repetido</p><p class="tx mudo" style="margin-top:6px;font-size:26px;line-height:1.25">UNIQUE no banco</p></div>
+      <div><b class="cod verm" style="font-size:44px">R5</b><p class="tx" style="margin-top:6px;font-size:26px;line-height:1.25">sem consentimento</p></div>
+    </div>
+    <p class="tx mudo" style="margin-top:22px;padding-top:18px;border-top:1px solid var(--fio);font-size:26px;line-height:1.3">Por script, nas telas da Aula 14: <span class="dado nb">554 ms</span>. Mede o fluxo, não uma pessoa.</p>
   </div>
-  <figure class="print ap" data-s="depois" style="left:1120px;top:424px"><div class="q alvo"><img src="../design/telas/organizador-operacao-charlie-1440.png" alt="Operação Charlie, com os 5 operadores inscritos"><div class="ph">Print da Charlie em preparação</div></div><figcaption>Operação Charlie, com os 5 inscritos.</figcaption></figure>
-  <p class="tx g a ap" data-s="depois" style="left:1120px;top:900px;width:640px"><b>ADR-001:</b> o perfil é permanente.</p>
+  <figure class="fig ap" data-s="depois" style="left:912px;top:380px"><div class="q alvo"><img src="../design/telas/recortes/h1-charlie-inscritos.png" alt="Tabela de inscritos da Operação Charlie com os 5 operadores: Coruja, Falcão, Lobo, Pantera e Raposa"><div class="ph">Print da Charlie em preparação</div></div></figure>
+  <div class="dos ap" data-s="depois" style="left:912px;top:752px;width:848px;padding:18px 28px"><p class="tx g">Operação Charlie, com os 5 inscritos.</p><p class="tx g" style="margin-top:8px"><b>ADR-001:</b> o perfil é permanente.</p></div>
   <p class="osm">© OpenStreetMap contributors</p>
   <aside class="notas" data-p="1"><p>Hipótese 1: inscrever sem recadastrar. A meta é cinco operadores já cadastrados na Operação Charlie em até 3 minutos. Olhem o formulário, que não pede nome, e as três recusas.</p><p class="cuid"><b>Troque para a aba da Operação Charlie</b> (organizador, Planejada, sem inscritos). Não clique em "Iniciar operação".</p><p>Esta é a Charlie, vazia. Os cinco operadores já estão cadastrados. Inscrever pede só time, classe, dispositivo e consentimento.</p><p class="cuid"><b>Inscreva o Falcão</b> (Azul, Fuzileiro, MT-01, consentimento marcado, "Inscrever"). Depois, as três recusas, uma a uma.</p><p><b>Recusa 1</b> (Falcão de novo): Primeira recusa: o Falcão de novo. Regra R2.</p><p><b>Recusa 2</b> (Lobo com MT-01, consentimento marcado): Segunda: o Lobo com o dispositivo do Falcão. Regra R3.</p><p><b>Recusa 3</b> (Lobo com MT-02, consentimento desmarcado): Terceira: o Lobo sem consentimento. Regra R5.</p><p class="cuid"><b>Inscreva o Lobo (MT-02), a Coruja, a Raposa e a Pantera</b>, pelo teclado, em silêncio. Mostre a lista com 5 inscritos. <b>Volte aos slides e avance para o passo 2.</b> Sem F5 depois de uma recusa.</p></aside>
   <aside class="notas" data-p="2"><p>Cinco inscritos, nenhum cadastro refeito. Por script, o fluxo levou 554 milissegundos. Isso mede o sistema, não uma pessoa.</p><p class="cuid"><b>Conferir no ensaio:</b> o tempo cronometrado de H1 (31 ações e 3 recusas) e, se as telas novas mudarem o fluxo, a medição por script refeita. Troque a linha de apoio do slide e a fala pelo tempo medido.</p></aside>
@@ -356,18 +363,20 @@ img, svg { max-width: none; max-height: none; }
 <!-- ============ SLIDE 9: DEMO H2 (escuro, bloco 4, dois passos) ============ -->
 <section class="slide escuro p1" data-n="9" data-bloco="4" data-passos="2" aria-label="Demonstração ao vivo: mapa">
   <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
-  <p class="carimbo a" data-s="antes" style="left:160px;top:122px">Demo ao vivo · passo 1 de 2</p>
-  <p class="carimbo a" data-s="depois" style="left:160px;top:122px">Demo ao vivo · passo 2 de 2</p>
-  <h1 class="titulo" style="top:182px"><b class="hip">H2</b>Quem está perdido,<br>e há quanto tempo</h1>
+  <h1 class="titulo"><b class="hip">H2</b>Quem está perdido,<br>e há quanto tempo</h1>
   <!-- passo 1 -->
-  <div class="dos alvo ap" data-s="antes" style="left:160px;top:440px;width:760px;height:520px"><p class="rot">Meta da H2</p><p class="gn" style="font-size:300px;line-height:.95;margin-top:10px"><span>10</span><small style="font-size:110px">s</small></p><p class="tx g" style="margin-top:14px">Apontar quem está perdido, e há quanto tempo, depois de abrir o mapa.</p></div>
+  <div class="dos alvo ap" data-s="antes" style="left:160px;top:440px;width:760px;height:520px"><p class="rot">Meta da H2</p><p class="gn" style="font-size:300px;line-height:.95;margin-top:10px"><span>10</span><small style="font-size:130px">s</small></p><p class="tx g" style="margin-top:14px">Apontar quem está perdido, e há quanto tempo, depois de abrir o mapa.</p></div>
   <div class="dos ap" data-s="antes" style="left:1000px;top:440px;width:760px;height:520px;padding:24px 32px"><p class="rot">O que olhar</p>
     <div class="olhar" style="margin-top:14px"><span class="fxm"><i class="p"></i><i class="t"></i><i class="v"></i><i class="s"></i><i class="d"></i></span><p class="tx">A <b>faixa de contagem</b> acima do mapa.</p></div>
     <div class="olhar"><span class="mk alvo"></span><p class="tx">A <b>Coruja (MT-03)</b>, com colchetes.</p></div>
     <div class="olhar"><span><span class="tg dado">MT-99</span></span><p class="tx">Só no <b>contador de descartados</b>.</p></div>
   </div>
   <!-- passo 2 -->
-  <div class="a ap" data-s="depois" style="left:160px;top:424px;width:900px"><p class="rot" style="margin-bottom:10px">R9 · estado pelo tempo desde o último sinal</p>
+  <div class="dos ap" data-s="depois" style="left:160px;top:372px;width:1600px;height:104px;padding:0 32px;display:grid;grid-template-columns:760px 1fr;align-items:center;gap:32px">
+    <p class="tx" style="font:900 56px/1.1 var(--f-ui)">Perdido: mais de 120 s.</p>
+    <p class="tx">Meta <b class="nb">10 s</b> · cronometrado no ensaio: <span class="lacuna">[conferir no ensaio]</span></p>
+  </div>
+  <div class="dos ap" data-s="depois" style="left:160px;top:486px;width:940px;height:182px;padding:14px 25px">
     <div class="reg">
       <span class="lm" style="left:315px">59·60·61 s</span><span class="lm" style="left:540px">119·120·121 s</span>
       <i class="tk" style="left:431px"></i><i class="tk" style="left:435px"></i><i class="tk" style="left:439px"></i>
@@ -379,11 +388,14 @@ img, svg { max-width: none; max-height: none; }
       <span class="fx" style="left:0;width:200px">nunca recebeu</span><span class="fx" style="left:210px">até 60 s</span><span class="fx" style="left:435px">60 a 120 s</span><span class="fx" style="left:660px">acima de 120 s</span>
     </div>
   </div>
-  <div class="a ap" data-s="depois" style="left:160px;top:704px;width:900px;display:flex;align-items:center;gap:28px"><b class="dado" style="font-size:44px;font-weight:800">R9</b><p class="gn" style="font-size:120px"><span>39</span></p><p class="tx g" style="line-height:1.15">testes nos limites do tempo, contados em 09/11/2026</p></div>
-  <div class="a lin ap" data-s="depois" style="--c:140px 1fr;left:160px;top:850px;width:900px;padding:10px 0"><b class="cod">202</b><span class="tx" style="font-size:30px"><b>R7:</b> o MT-99, não inscrito, só conta como descartado.</span></div>
-  <div class="a lin ap" data-s="depois" style="--c:140px 1fr;left:160px;top:940px;width:900px;padding:10px 0"><b class="cod">200</b><span class="tx" style="font-size:30px"><b>R8:</b> pacote repetido não grava de novo.</span></div>
-  <figure class="print ap" data-s="depois" style="left:1120px;top:424px"><div class="q alvo"><img src="../design/telas/organizador-mapa-1440.png" alt="Mapa da Operação Bravo, com a Coruja perdida no topo da lista"><div class="ph">Print do mapa em preparação</div></div><figcaption>Mapa da Bravo, com a Coruja perdida.</figcaption></figure>
-  <p class="tx a ap mudo" data-s="depois" style="left:1120px;top:926px;width:640px;font-size:30px">Por script, nas telas da Aula 14: mediana de <span class="dado">94 ms</span>. Mede o fluxo, não uma pessoa.</p>
+  <div class="dos ap" data-s="depois" style="left:160px;top:678px;width:940px;height:254px;padding:12px 32px 10px">
+    <div style="display:flex;align-items:center;gap:22px"><b class="dado" style="font-size:44px;font-weight:800">R9</b><p class="gn" style="font-size:84px"><span>39</span></p><p class="tx" style="line-height:1.2">testes nos limites do tempo, contados em <span class="dado nb">10/11/2026</span></p></div>
+    <div class="lin" style="--c:130px 1fr;padding:4px 0;gap:12px"><b class="cod" style="font-size:44px">202</b><span class="tx" style="font-size:26px"><b>R7:</b> o MT-99, não inscrito, só conta como descartado.</span></div>
+    <div class="lin" style="--c:130px 1fr;padding:4px 0;gap:12px"><b class="cod" style="font-size:44px">200</b><span class="tx" style="font-size:26px"><b>R8:</b> pacote repetido não grava de novo.</span></div>
+    <p class="tx mudo" style="margin-top:6px;font-size:26px">Por script (Aula 14): mediana de <span class="dado nb">94 ms</span>. Mede o fluxo, não uma pessoa.</p>
+  </div>
+  <figure class="fig ap" data-s="depois" style="left:1120px;top:486px"><div class="q"><img src="../design/telas/recortes/h2-coruja.png" alt="Mapa da Bravo: a Coruja perdida, com colchetes e o rótulo perdido · último sinal há 4 min 16 s"><div class="ph">Print da Coruja em preparação</div></div></figure>
+  <figure class="fig ap" data-s="depois" style="left:160px;top:942px"><div class="q"><img src="../design/telas/recortes/h2-faixa.png" alt="Faixa de contagem do mapa: 1 perdido, 0 atrasados, 4 ativos, 0 sem sinal, 105 descartados, 5 inscritos"><div class="ph">Print da faixa em preparação</div></div></figure>
   <p class="osm">© OpenStreetMap contributors</p>
   <aside class="notas" data-p="1"><p>Hipótese 2: apontar quem está perdido, e há quanto tempo, em até 10 segundos depois de abrir o mapa. Olhem a faixa de contagem acima do mapa e o marcador com colchetes.</p><p class="cuid"><b>Troque para a aba do mapa da Bravo</b> (já aberta, setas em movimento).</p><p>Esta é a Operação Bravo, em curso. O simulador envia cinco dispositivos por HTTP, e o mapa consulta a API a cada 3 segundos.</p><p class="cuid"><b>Aponte a faixa e o marcador da Coruja</b> (perdido, com colchetes e "perdido · último sinal há ..."). Confira: 1 perdido e 4 ativos.</p><p>A faixa mostra um perdido: a Coruja, o MT-03, que o simulador parou de propósito. O rótulo diz há quanto tempo, e a lista põe os perdidos primeiro.</p><p class="cuid"><b>Aponte o contador "Sinais descartados".</b></p><p>O contador de descartados vem do MT-99, que não está inscrito: o sistema responde 202, descarta e só conta. É a regra R7. Pacote repetido responde 200 e não grava de novo: regra R8.</p><p class="cuid"><b>Volte aos slides e avance para o passo 2.</b></p></aside>
   <aside class="notas" data-p="2"><p>Perdido é mais de 120 segundos sem sinal; atrasado, de 60 a 120. A regra do tempo, a R9, tem 39 testes, e eles injetam o relógio: 59, 60, 61, 119, 120 e 121 segundos.</p><p>Por script, a mediana foi 94 milissegundos: mede o fluxo, não uma pessoa.</p><p class="cuid"><b>Conferir no ensaio:</b> a contagem de <span class="dado">test_r9_</span> e o tempo humano de H2 com cronômetro (meta 10 s). Troque o apoio do slide pelo tempo medido.</p></aside>
@@ -392,21 +404,19 @@ img, svg { max-width: none; max-height: none; }
 <!-- ============ SLIDE 10: DEMO H3 E H4 (escuro, bloco 4, dois passos) ============ -->
 <section class="slide escuro p1" data-n="10" data-bloco="4" data-passos="2" aria-label="Demonstração ao vivo: acesso e API">
   <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
-  <p class="carimbo a" data-s="antes" style="left:160px;top:122px">Demo ao vivo · passo 1 de 2</p>
-  <p class="carimbo a" data-s="depois" style="left:160px;top:122px">Demo ao vivo · passo 2 de 2</p>
-  <h1 class="titulo" style="top:182px"><b class="hip">H3 e H4</b>Acesso e API</h1>
+  <h1 class="titulo"><b class="hip">H3 e H4</b>Acesso e API</h1>
   <!-- passo 1 -->
   <div class="dos alvo ap" data-s="antes" style="left:160px;top:380px;width:780px;height:580px"><p class="rot">No navegador</p><p style="margin:22px 0 0"><b class="hid" style="font-size:44px;width:96px">H3</b></p><p class="tx g" style="margin-top:22px">Nenhum sinal de não inscrito vira posição; nenhuma escrita do observador passa.</p><p class="rot" style="margin-top:34px;padding-top:26px;border-top:2px solid var(--forte)">O que olhar</p><p class="tx gg" style="margin-top:10px">O observador: só <b>lista e mapa</b>, sem formulários.</p></div>
   <div class="dos alvo ap" data-s="antes" style="left:980px;top:380px;width:780px;height:580px"><p class="rot">No terminal</p><p style="margin:22px 0 0"><b class="hid" style="font-size:44px;width:96px">H4</b></p><p class="tx g" style="margin-top:22px">O simulador e um curl usam só a API, sem tocar no banco.</p><p class="rot" style="margin-top:34px;padding-top:26px;border-top:2px solid var(--forte)">O que olhar</p><p class="tx gg" style="margin-top:10px">Os <b>códigos da API</b>, sem token e com token.</p></div>
   <!-- passo 2 -->
-  <div class="a ap" data-s="depois" style="left:160px;top:424px;width:900px">
-    <div class="lin" style="--c:250px 1fr;padding:14px 0 18px"><b class="cod verm" style="font-size:88px">403</b><span class="tx g"><b>Observador (R10).</b> Só lê: toda escrita dele recebe 403.</span></div>
-    <div class="lin" style="--c:250px 1fr;padding:14px 0 18px"><b class="cod verm" style="font-size:88px">401</b><span class="tx g"><b>API (R11).</b> Sem token.</span></div>
-    <div class="lin" style="--c:250px 1fr;padding:14px 0 18px"><b class="cod" style="font-size:88px">201</b><span class="tx g">Com token: pacote <b>gravado</b>.</span></div>
-    <div class="lin" style="--c:250px 1fr;padding:14px 0 18px"><b class="cod" style="font-size:88px">200</b><span class="tx g">O mesmo pacote de novo: <b>duplicado</b> (R8).</span></div>
+  <figure class="fig ap" data-s="depois" style="left:160px;top:316px"><div class="q alvo"><img src="../design/telas/recortes/h3-observador.png" alt="Operação Bravo vista pelo observador: marca Somente leitura, só o botão Abrir mapa, sem Encerrar operação nem formulário"><div class="ph">Print do observador em preparação</div></div></figure>
+  <div class="dos ap" data-s="depois" style="left:160px;top:682px;width:1600px;padding:16px 28px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:0 28px">
+    <div><b class="cod verm" style="font-size:84px">403</b><p class="tx" style="margin-top:6px;line-height:1.25"><b>Observador (R10).</b> Só lê: toda escrita recebe 403.</p></div>
+    <div><b class="cod verm" style="font-size:84px">401</b><p class="tx" style="margin-top:6px;line-height:1.25"><b>API (R11).</b> Sem token.</p></div>
+    <div><b class="cod" style="font-size:84px">201</b><p class="tx" style="margin-top:6px;line-height:1.25">Com token: pacote <b>gravado</b>.</p></div>
+    <div><b class="cod" style="font-size:84px">200</b><p class="tx" style="margin-top:6px;line-height:1.25">O mesmo pacote de novo: <b>duplicado</b> (R8).</p></div>
   </div>
-  <figure class="print ap" data-s="depois" style="left:1120px;top:424px"><div class="q alvo"><img src="../design/telas/observador-operacao-bravo-1440.png" alt="Operação Bravo vista pelo observador: lista de inscritos, sem formulários"><div class="ph">Print do observador em preparação</div></div><figcaption>Observador: só leitura, sem formulários.</figcaption></figure>
-  <p class="tx g a ap" data-s="depois" style="left:1120px;top:926px;width:640px;line-height:1.3">O contrato que o simulador usa e que um gateway real usaria (ADR-003).</p>
+  <div class="dos ap" data-s="depois" style="left:160px;top:954px;width:1600px;padding:12px 28px"><p class="tx">O contrato que o simulador usa e que um gateway real usaria (ADR-003).</p></div>
   <p class="osm">© OpenStreetMap contributors</p>
   <aside class="notas" data-p="1"><p>Hipóteses 3 e 4. No navegador, o observador: só lista e mapa, sem formulários. No terminal, os códigos da API.</p><p class="cuid"><b>Troque para a aba anônima</b> (observador, na Operação Bravo). <b>No terminal da demo, rode:</b> <span class="dado">python -m pytest tests/test_funcional.py -q -k observador_recebe_403</span> (menos de 1 s).</p><p>A tela não tem formulário, então o 403 aparece no teste: toda escrita do observador é recusada. Passou.</p><p class="cuid"><b>No mesmo terminal, rode o curl 1 (sem token) e o curl 2 (com token); depois repita o curl 2</b> (seta para cima e Enter). Não use o MT-03 no curl. <b>Volte aos slides e avance para o passo 2.</b></p></aside>
   <aside class="notas" data-p="2"><p>Sem token, 401. Com token, 201. O mesmo sinal de novo, 200, duplicado. É o contrato que o simulador usa e que um gateway real usaria.</p></aside>
@@ -417,40 +427,39 @@ img, svg { max-width: none; max-height: none; }
   <h1 class="titulo">Testes por regra</h1>
   <div class="a ap" style="left:160px;top:290px;width:560px">
     <p class="rot">Testes na suíte</p>
-    <p class="gn" style="font-size:250px;line-height:.95;margin-top:8px"><span>505</span></p>
-    <p class="tx g" style="margin-top:12px">contados pelo pytest em <span class="dado">09/11/2026</span></p>
+    <p class="gn" style="font-size:250px;line-height:.95;margin-top:8px"><span>528</span></p>
+    <p class="tx g" style="margin-top:12px">contados pelo pytest em <span class="dado nb">10/11/2026</span></p>
     <p class="tx g" style="margin-top:30px"><span class="dado" style="font-weight:800">66</span> de segurança</p>
-    <p class="tx g" style="margin-top:8px"><span class="dado" style="font-weight:800">31</span> visuais, da fase 2</p>
+    <p class="tx g" style="margin-top:8px"><span class="dado" style="font-weight:800">54</span> visuais, da fase 2</p>
     <p class="tx" style="margin-top:34px;padding-top:20px;border-top:2px solid var(--forte)">As barras contam pelo nome do teste, no mínimo.</p>
   </div>
   <div class="a ap" style="left:780px;top:262px;width:980px">
     <div class="br"><span class="dado">R1</span><span class="nm">sem novo cadastro</span><span class="bar"><i style="--v:16"></i>16</span></div>
     <div class="br"><span class="dado">R2</span><span class="nm">uma inscrição por operação</span><span class="bar"><i style="--v:5"></i>5</span></div>
-    <div class="br"><span class="dado">R3</span><span class="nm">dispositivo em uma inscrição</span><span class="bar"><i style="--v:6"></i>6</span></div>
+    <div class="br"><span class="dado">R3</span><span class="nm">dispositivo único</span><span class="bar"><i style="--v:6"></i>6</span></div>
     <div class="br"><span class="dado">R4</span><span class="nm">muda só a inscrição</span><span class="bar"><i style="--v:7"></i>7</span></div>
     <div class="br"><span class="dado">R5</span><span class="nm">exige consentimento</span><span class="bar"><i style="--v:4"></i>4</span></div>
     <div class="br"><span class="dado">R6</span><span class="nm">operação só avança</span><span class="bar"><i style="--v:17"></i>17</span></div>
     <div class="br"><span class="dado">R7</span><span class="nm">não inscrito é descartado</span><span class="bar"><i style="--v:13"></i>13</span></div>
     <div class="br"><span class="dado">R8</span><span class="nm">pacote repetido</span><span class="bar"><i style="--v:11"></i>11</span></div>
-    <div class="br alta"><span class="dado">&nbsp;R9</span><span class="nm">estado por tempo</span><span class="bar"><i style="--v:39"></i>39</span></div>
+    <div class="br alta"><span class="dado">R9</span><span class="nm">estado por tempo</span><span class="bar"><i style="--v:39"></i>39</span></div>
     <div class="br"><span class="dado">R10</span><span class="nm">observador só lê</span><span class="bar"><i style="--v:16"></i>16</span></div>
     <div class="br"><span class="dado">R11</span><span class="nm">token da API</span><span class="bar"><i style="--v:14"></i>14</span></div>
   </div>
-  <aside class="notas"><p>Qualidade. Cada regra, de R1 a R11, tem testes com o nome dela: de 4 na R5 a 39 na R9, a do tempo. A suíte inteira tem 505 testes, 66 deles de segurança, e 31 são visuais, da fase 2. O número vem do pytest.</p><p class="cuid"><b>Atenção:</b> o roteiro ainda diz 474 na fala deste slide; o pytest de 09/11/2026 dá 505. <b>Conferir no ensaio:</b> total, segurança e por regra (<span class="dado">pytest --collect-only -q</span>, com <span class="dado">-k test_r9_</span> e as demais).</p></aside>
+  <aside class="notas"><p>Qualidade. Cada regra, de R1 a R11, tem testes com o nome dela: de 4 na R5 a 39 na R9, a do tempo. A suíte inteira tem 528 testes, 66 deles de segurança, e 54 são visuais, da fase 2. O número vem do pytest.</p><p class="cuid"><b>Atenção:</b> o roteiro ainda diz 474 na fala deste slide; o pytest de 10/11/2026 dá 528. <b>Conferir no ensaio:</b> total, segurança e por regra (<span class="dado">pytest --collect-only -q</span>, com <span class="dado">-k test_r9_</span> e as demais).</p></aside>
 </section>
 
 <!-- ============ SLIDE 12: REVISÃO DE SEGURANÇA (claro, bloco 5) ============ -->
 <section class="slide" data-n="12" data-bloco="5" aria-label="Revisão de segurança">
-  <p class="kick">S-1 a S-5 · cinco achados, todos de severidade baixa</p>
-  <h1 class="titulo">Revisão de segurança</h1>
+  <h1 class="titulo"><b class="hip">S-1 a S-5</b>Revisão de segurança</h1>
   <div class="a" style="left:160px;top:296px;width:1600px">
-    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-1</b><span class="tx g">Corpo da requisição sem limite</span><span class="tx"><span class="tg cheio">Corrigido</span>&nbsp; limite de 64 KB, resposta 413</span></div>
-    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-2</b><span class="tx g">JSON aninhado dava erro 500</span><span class="tx"><span class="tg cheio">Corrigido</span>&nbsp; agora responde 400</span></div>
-    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-3</b><span class="tx g">O tempo do login revelava quem existe</span><span class="tx"><span class="tg cheio">Corrigido</span></span></div>
-    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-4</b><span class="tx g">O simulador seguia redirecionamento, levando o token</span><span class="tx"><span class="tg cheio">Corrigido</span></span></div>
-    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:36px;font-weight:800">S-5</b><span class="tx g">Token passado em <span class="dado">--token</span></span><span class="tx"><span class="tg">Aceito</span>&nbsp; o Guia recomenda a variável de ambiente</span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:38px;font-weight:800">S-1</b><span class="tx g">Corpo da requisição sem limite</span><span class="tx"><span class="tg cheio">Corrigido</span>&nbsp; limite de 64 KB, resposta 413</span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:38px;font-weight:800">S-2</b><span class="tx g">JSON aninhado dava erro 500</span><span class="tx"><span class="tg cheio">Corrigido</span>&nbsp; agora responde 400</span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:38px;font-weight:800">S-3</b><span class="tx g">O tempo do login revelava quem existe</span><span class="tx"><span class="tg cheio">Corrigido</span></span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:38px;font-weight:800">S-4</b><span class="tx g">O simulador seguia redirecionamento, levando o token</span><span class="tx"><span class="tg cheio">Corrigido</span></span></div>
+    <div class="lin ap" style="--c:130px 1fr 600px;padding:16px 0"><b class="dado" style="font-size:38px;font-weight:800">S-5</b><span class="tx g">Token passado em <span class="dado">--token</span></span><span class="tx"><span class="tg">Aceito</span>&nbsp; o Guia recomenda a variável de ambiente</span></div>
   </div>
-  <p class="tx a ap" style="left:160px;top:922px;width:1600px;padding-top:18px;border-top:2px solid var(--forte)"><b>bandit:</b> sem achado alto. <b>pip-audit:</b> sem vulnerabilidade conhecida. <span class="mudo">Revisão de <span class="dado">08/11/2026</span>.</span></p>
+  <p class="tx a ap" style="left:160px;top:906px;width:1600px;padding-top:18px;border-top:2px solid var(--forte)">Os cinco achados são de <b>severidade baixa</b>. <b>bandit:</b> sem achado alto. <b>pip-audit:</b> sem vulnerabilidade conhecida. <span class="mudo">Revisão de <span class="dado nb">08/11/2026</span>.</span></p>
   <aside class="notas"><p>Fiz também uma revisão de segurança: cinco achados, todos de severidade baixa. Quatro foram corrigidos: corpo sem limite, JSON aninhado que dava 500, tempo do login que revelava quem existe, e o simulador que seguia redirecionamento levando o token.</p><p>O quinto, o token na linha de comando, aceitei: o Guia manda usar a variável de ambiente. O bandit e o pip-audit não apontaram nada alto nem vulnerabilidade conhecida.</p><p class="cuid"><b>Conferir no ensaio:</b> rodar de novo bandit, pip-audit e tests/test_seguranca.py, e atualizar os achados se houver novos.</p></aside>
 </section>
 
@@ -458,11 +467,11 @@ img, svg { max-width: none; max-height: none; }
 <section class="slide" data-n="13" data-bloco="5" aria-label="Reprodução pelo Guia">
   <h1 class="titulo">Reprodução pelo Guia</h1>
   <div class="a ap" style="left:160px;top:300px;width:1600px;display:flex;align-items:center">
-    <div class="cx" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">1</span><b style="margin:14px 0 0;font-size:52px">Clone limpo</b></div>
+    <div class="cx" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">1</span><b style="margin:14px 0 0;font-size:56px">Clone limpo</b></div>
     <i class="sg"></i>
-    <div class="cx" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">2</span><b style="margin:14px 0 0;font-size:52px">Venv novo</b></div>
+    <div class="cx" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">2</span><b style="margin:14px 0 0;font-size:56px">Venv novo</b></div>
     <i class="sg"></i>
-    <div class="cx eu" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">3</span><b style="margin:14px 0 0;font-size:52px">Só o Guia</b></div>
+    <div class="cx eu" style="width:480px;height:200px"><span class="dado" style="font-size:32px;font-weight:800">3</span><b style="margin:14px 0 0;font-size:56px">Só o Guia</b></div>
   </div>
   <div class="dos ap" style="left:160px;top:580px;width:780px;height:270px"><p class="rot fg">Feita em 08/11</p><p class="tx gg" style="margin-top:20px">Num clone limpo, com as telas da Aula 14: <b><span class="dado">382</span> testes passaram</b>.</p></div>
   <div class="a ap" style="left:980px;top:580px;width:780px;height:270px;padding:28px 32px;border:3px dashed var(--forte)"><p class="rot fg">A refazer</p><p class="tx gg" style="margin-top:20px">Com as telas novas, antes da v1.0 (até <span class="dado">05/12</span>).</p></div>
@@ -475,11 +484,12 @@ img, svg { max-width: none; max-height: none; }
   <p class="rot fg a ap" style="left:160px;top:270px">Aula 14 (10/11)</p>
   <p class="rot fg a ap" style="left:980px;top:270px">Agora</p>
   <figure class="print larga ap" style="left:160px;top:316px"><div class="q alvo"><img src="../evidencias/07-mapa-perdido.png" alt="Mapa da Operação Bravo na Aula 14, com a Coruja perdida"><div class="ph">Print da Aula 14 em preparação</div></div><figcaption>O que mostrei em novembro.</figcaption></figure>
-  <figure class="print larga ap" style="left:980px;top:316px"><div class="q alvo"><img src="../design/telas/organizador-mapa-1440.png" alt="Mapa da Operação Bravo com a identidade nova, com a Coruja perdida"><div class="ph">Print do mapa em preparação</div></div></figure>
+  <figure class="print larga ap" style="left:980px;top:316px"><div class="q alvo"><img src="../design/telas/organizador-mapa-1440.png" alt="Mapa da Operação Bravo com a identidade nova: moldura preta, faixa de contagem e a Coruja perdida com colchetes"><div class="ph">Print do mapa em preparação</div>
+    <b class="mrc" style="left:48.6%;top:3.2%">1</b><b class="mrc" style="left:70.1%;top:21.2%">2</b><b class="mrc" style="left:43.6%;top:70.4%">3</b></div></figure>
   <div class="a ap" style="left:980px;top:852px;width:780px;display:grid;grid-template-columns:.75fr 1.05fr 1.4fr;gap:20px">
-    <p class="tx" style="font-size:28px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="dado">1</b> Moldura preta</p>
-    <p class="tx" style="font-size:28px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="dado">2</b> Faixa com a contagem por estado</p>
-    <p class="tx" style="font-size:28px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="dado">3</b> Perdido com colchetes e “perdido · último sinal há”</p>
+    <p class="tx" style="font-size:26px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="mrc i">1</b>Moldura preta</p>
+    <p class="tx" style="font-size:26px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="mrc i">2</b>Faixa com a contagem por estado</p>
+    <p class="tx" style="font-size:26px;line-height:1.2;padding-top:12px;border-top:4px solid var(--forte)"><b class="mrc i">3</b>Perdido com colchetes e “perdido · último sinal há”</p>
   </div>
   <p class="tx gg a ap" style="left:160px;top:972px;width:800px;font-weight:800">Os botões têm os mesmos nomes.</p>
   <aside class="notas"><p>O que mudou desde a Aula 14 foi a identidade das telas. À esquerda, o que mostrei em novembro. À direita, a versão atual: moldura preta, uma faixa com a contagem por estado acima do mapa, e o perdido com colchetes e o rótulo "perdido · último sinal há", com o tempo. Os botões têm os mesmos nomes.</p><p class="cuid"><b>Conferir no ensaio:</b> os prints novos mostram os mesmos dois estados que o da esquerda.</p></aside>
@@ -488,11 +498,11 @@ img, svg { max-width: none; max-height: none; }
 <!-- ============ SLIDE 15: LIMITES (claro, bloco 7) ============ -->
 <section class="slide" data-n="15" data-bloco="7" aria-label="Limites">
   <h1 class="titulo">Limites</h1>
-  <div class="a alvo ap" style="left:160px;top:290px;width:1600px;padding:36px 44px 40px;background:var(--tinta);color:var(--chao);--forte:var(--tinta)"><p class="rot" style="color:#c3c4be">Pendência principal</p><p style="margin:14px 0 0;font:900 68px/1.08 var(--f-ui);letter-spacing:.005em">Validação com a federação: ainda não aconteceu e não tem data.</p></div>
+  <div class="a alvo ap" style="left:160px;top:290px;width:1600px;padding:36px 44px 40px;background:var(--tinta);color:var(--chao);--forte:var(--tinta)"><p class="rot" style="color:#c3c4be">Pendência principal</p><p style="margin:14px 0 0;font:900 64px/1.1 var(--f-ui);letter-spacing:.005em">Validação com a federação: ainda não aconteceu e não tem data.</p></div>
   <div class="a" style="left:160px;top:640px;width:1600px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px">
-    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Quem validou</p><p class="tx gg" style="margin-top:14px;font-size:40px">Só o autor, no papel de organizador.</p></div>
-    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">O que é medido</p><p class="tx gg" style="margin-top:14px;font-size:40px">Sinais simulados e tempos de script.</p></div>
-    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Dado pessoal</p><p class="tx gg" style="margin-top:14px;font-size:40px">Prazo de guarda das posições (LGPD) por definir.</p></div>
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Quem validou</p><p class="tx gg" style="margin-top:14px;font-size:38px">Só o autor, no papel de organizador.</p></div>
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">O que é medido</p><p class="tx gg" style="margin-top:14px;font-size:38px">Sinais simulados e tempos de script.</p></div>
+    <div class="ap" style="padding-top:20px;border-top:4px solid var(--forte)"><p class="rot fg">Dado pessoal</p><p class="tx gg" style="margin-top:14px;font-size:38px">Prazo de guarda das posições (LGPD) por definir.</p></div>
   </div>
   <aside class="notas"><p>Os limites. A pendência principal é a validação com a federação: ainda não aconteceu e não tem data. Quem executou os roteiros fui eu, no papel de organizador, então os tempos medem o fluxo, não a primeira impressão de um organizador real.</p><p>Os sinais são simulados. Falta definir por quanto tempo guardar as posições, porque posição de pessoa é dado pessoal, pela LGPD. E o fundo do mapa precisa de internet.</p><p class="cuid"><b>Conferir no ensaio:</b> a situação da federação continua a de 08/11/2026; só mude a fala se você avisar que mudou.</p></aside>
 </section>
@@ -501,9 +511,9 @@ img, svg { max-width: none; max-height: none; }
 <section class="slide" data-n="16" data-bloco="7" aria-label="Próximos passos">
   <h1 class="titulo">Próximos passos</h1>
   <div class="a ap" style="left:160px;top:290px;width:1600px;display:flex;align-items:center">
-    <div style="width:480px;display:flex;flex-direction:column;gap:20px"><div class="cx trac" style="padding:18px 24px"><b style="margin:0;font-size:34px">App de celular</b></div><div class="cx trac" style="padding:18px 24px"><b style="margin:0;font-size:34px">Gateway MeshTracker, por MQTT</b></div></div>
+    <div style="width:480px;display:flex;flex-direction:column;gap:20px"><div class="cx trac" style="padding:18px 24px"><b style="margin:0;font-size:32px">App de celular</b></div><div class="cx trac" style="padding:18px 24px"><b style="margin:0;font-size:32px">Gateway MeshTracker, por MQTT</b></div></div>
     <i class="sg trac"></i>
-    <div class="cx" style="width:480px;height:210px;padding:24px 28px"><b style="font-size:32px;margin-bottom:10px">O mesmo contrato HTTP</b><p class="dado" style="margin:0;font-size:28px">POST /api/v1/sinais</p></div>
+    <div class="cx" style="width:480px;height:210px;padding:24px 28px"><b style="font-size:32px;margin-bottom:10px">O mesmo contrato HTTP</b><p class="dado" style="margin:0;font-size:26px">POST /api/v1/sinais</p></div>
     <i class="sg"></i>
     <div class="cx eu" style="width:280px;height:210px;padding:24px 28px"><b style="font-size:32px">MeshTracker Central</b></div>
   </div>
@@ -519,13 +529,12 @@ img, svg { max-width: none; max-height: none; }
 <!-- ============ SLIDE 17: OBRIGADO (escuro, depois dos 10 minutos) ============ -->
 <section class="slide escuro" data-n="17" data-bloco="0" aria-label="Obrigado e perguntas">
   <img class="fundo" src="../design/telas/fundo-mapa-parque-1920x1080.png" alt=""><i class="scrim"></i>
-  <p class="carimbo a" style="left:160px;top:122px">Perguntas · depois dos 10 minutos</p>
-  <h1 class="titulo gig" style="top:182px;font-size:200px">Obrigado.</h1>
-  <p class="titulo a" style="top:400px;font-size:112px;font-weight:900;text-transform:uppercase">Perguntas?</p>
-  <svg class="motivo ap" style="left:1420px;top:370px" width="340" height="260" viewBox="0 0 340 260" aria-hidden="true">
+  <h1 class="titulo gig" style="top:150px">Obrigado.</h1>
+  <p class="titulo a" style="top:350px;font-size:130px">Perguntas?</p>
+  <svg class="motivo ap" style="left:1420px;top:330px" width="340" height="260" viewBox="0 0 340 260" aria-hidden="true">
     <g fill="#ecebe6"><circle cx="46" cy="62" r="21"/><circle cx="160" cy="24" r="21"/><circle cx="104" cy="150" r="21"/><circle cx="224" cy="116" r="21"/></g>
-    <circle cx="282" cy="204" r="25" fill="none" stroke="#d1242f" stroke-width="8"/>
-    <path d="M236 182V158H260M304 158H328V182M236 226V250H260M304 250H328V226" fill="none" stroke="#d1242f" stroke-width="4"/>
+    <circle cx="282" cy="204" r="25" fill="none" stroke="#ecebe6" stroke-width="8"/>
+    <path d="M236 182V158H260M304 158H328V182M236 226V250H260M304 250H328V226" fill="none" stroke="#ecebe6" stroke-width="4"/>
   </svg>
   <div class="a" style="left:160px;top:640px;width:1600px;display:grid;grid-template-columns:1fr 1fr;gap:30px 40px">
     <div class="dos ap" style="position:static;padding:22px 30px"><p class="rot">Código</p><p class="dado" style="margin:8px 0 0;font-size:32px">tag v1.0, planejada para 08/12</p></div>
@@ -577,7 +586,6 @@ img, svg { max-width: none; max-height: none; }
   slides.forEach(function (s, i) {
     var m = tpl.content.cloneNode(true), b = s.dataset.bloco;
     $$(m, '.menu span').forEach(function (e) { if (e.dataset.b === b) { e.classList.add('on'); e.setAttribute('aria-current', 'page'); } });
-    m.querySelector('.pag').innerHTML = '<b>' + (i < 9 ? '0' : '') + (i + 1) + '</b> / ' + N;
     s.insertBefore(m, s.firstChild);
   });
 
@@ -588,8 +596,8 @@ img, svg { max-width: none; max-height: none; }
     function no() { s.classList.remove('tem-fundo'); im.style.display = 'none'; }
     if (im.complete) { if (im.naturalWidth) ok(); else no(); } else { im.addEventListener('load', ok); im.addEventListener('error', no); }
   });
-  $$(palco, '.print img').forEach(function (im) {
-    var f = im.closest('.print');
+  $$(palco, '.print img, .fig img').forEach(function (im) {
+    var f = im.closest('.print, .fig');
     function no() { f.classList.add('sem'); }
     if (im.complete) { if (!im.naturalWidth) no(); } else { im.addEventListener('error', no); }
   });
@@ -624,6 +632,7 @@ img, svg { max-width: none; max-height: none; }
     slides.forEach(function (x, i) { x.classList.toggle('active', i === vv.s); });
     if (vv.p) { s.classList.remove('p1', 'p2'); s.classList.add('p' + vv.p); }
     indices(s);
+    s.querySelector('.pag').innerHTML = '<b>' + (vv.s < 9 ? '0' : '') + (vv.s + 1) + '</b>/' + N + (vv.p ? ' · passo ' + vv.p + '/' + (+s.dataset.passos) : '');
     if (efeito && !SEM_ANIM) reiniciar(s, efeito); else s.classList.remove('entra', 'passo');
     prog.style.width = ((v + 1) / V.length * 100) + '%';
     try { history.replaceState(null, '', '#' + (vv.s + 1)); } catch (e) {}
