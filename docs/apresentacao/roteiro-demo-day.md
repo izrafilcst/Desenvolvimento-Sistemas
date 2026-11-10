@@ -53,7 +53,7 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
     - Passo 1: hipóteses H3 e H4 com o sinal de cada uma; o que olhar: "No navegador, o observador: só lista e mapa, sem formulários. No terminal, os códigos da API."
     - Passo 2: tabela de códigos com a regra ao lado: **403** observador (R10) e **401** sem token (R11), em vermelho, porque são recusas; **201** com token, gravado; **200** o mesmo pacote, duplicado (R8). Uma linha: "O contrato que o simulador usa e que um gateway real usaria (ADR-003)." Print do observador (`docs/evidencias/v1/`, ou `08-observador.png` enquanto não houver).
 11. **Testes por regra** (bloco 5; não é demo)
-    - Conteúdo mínimo: número em destaque, o total de testes das regras R1 a R11 (474 em 08/11/2026) `[conferir no ensaio: total e segurança]`, com "66 de segurança" ao lado, em corpo de leitura; barras de R1 a R11 com o nome da regra (R9, "estado por tempo", é a mais alta); a nota "contagem pelo nome do teste, no mínimo".
+    - Conteúdo mínimo: número em destaque, o total de testes das regras R1 a R11 (528 em 10/11/2026) `[conferir no ensaio: total e segurança]`, com "66 de segurança" ao lado, em corpo de leitura; barras de R1 a R11 com o nome da regra (R9, "estado por tempo", é a mais alta); a nota "contagem pelo nome do teste, no mínimo".
 12. **Revisão de segurança: S-1 a S-5** (bloco 5; não é demo)
     - Conteúdo mínimo: tabela com id, achado em poucas palavras e destino, todos de severidade Baixa e sem vermelho: S-1 corpo sem limite, corrigido (64 KB, 413); S-2 JSON aninhado dava 500, corrigido (400); S-3 tempo do login revelava usuário, corrigido; S-4 o simulador seguia redirecionamento levando o token, corrigido; S-5 token em `--token`, aceito (o Guia recomenda a variável de ambiente). Rodapé: bandit sem achado alto; pip-audit sem vulnerabilidade conhecida `[conferir no ensaio: rodar de novo]`.
 13. **Reprodução pelo Guia** (bloco 5; não é demo)
@@ -259,9 +259,9 @@ São 17 slides. As falas (linhas `>`) de cada slide vão nas notas dele; nos sli
 
 **Mostre o slide 11.**
 
-> Qualidade. Cada regra, de R1 a R11, tem testes com o nome dela: de 4 na R5 a 39 na R9, a do tempo. A suíte inteira tem 474 testes, 66 deles de segurança. O número vem do pytest.
+> Qualidade. Cada regra, de R1 a R11, tem testes com o nome dela: de 4 na R5 a 39 na R9, a do tempo. A suíte inteira tem 528 testes, 66 deles de segurança. O número vem do pytest.
 
-*Fonte:* contagem por prefixo do nome do teste (`test_r5_`: 4; `test_r9_`: 39), e total e segurança do `pytest --collect-only`, conferidos em 08/11/2026 (474 e 66). Como contar, no ensaio: ver "Preparação". `[conferir no ensaio: total, segurança e por regra; se o número for outro, troque na fala e no slide 11]`
+*Fonte:* contagem por prefixo do nome do teste (`test_r5_`: 4; `test_r9_`: 39), e total e segurança do `pytest --collect-only`, conferidos em 10/11/2026 (528 e 66; 54 são os testes visuais da fase 2). Como contar, no ensaio: ver "Preparação". `[conferir no ensaio: total, segurança e por regra; se o número for outro, troque na fala e no slide 11]`
 
 **Avance para o slide 12.**
 
@@ -353,7 +353,7 @@ Se mudar uma fala, conte de novo. O bloco 4 tem a maior folga (cerca de 40 s) po
 2. **Conte os testes** e troque os números na fala do bloco 5 e no slide 11 se forem outros:
 
 ```bash
-python -m pytest --collect-only -q | tail -1                        # total (474 em 08/11/2026)
+python -m pytest --collect-only -q | tail -1                        # total (528 em 10/11/2026)
 python -m pytest --collect-only -q tests/test_seguranca.py | tail -1   # segurança (66)
 python -m pytest --collect-only -q -k "test_r9_" | tail -1          # uma regra; troque r9 por r1 a r11
 ```
