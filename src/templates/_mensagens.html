@@ -1,0 +1,6 @@
+{# Feito (sucesso) e Aviso, vindos do flash. A recusa de regra está em _recusa.html. A etiqueta de cada um vem do CSS (app.css). #}
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+  {% for categoria, mensagem in mensagens %}
+    <p class="mensagem mensagem-{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</p>
+  {% endfor %}
+{% endwith %}

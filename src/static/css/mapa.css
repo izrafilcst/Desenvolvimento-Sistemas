@@ -1,0 +1,136 @@
+/* Mapa ao vivo (US06): faixa de dossiê, quadro com réguas e retícula, marcadores e lista.
+ * Os tokens e os colchetes de alvo (.alvo) vêm do app.css. Sem sombra e sem canto arredondado,
+ * fora o círculo do operador. */
+
+/* -------------------------------------------------------- faixa de dossiê */
+.faixa { display: flex; flex-wrap: wrap; margin-bottom: var(--e5); background: var(--superficie); border: 1px solid var(--tinta); }
+.faixa-celula { min-width: 132px; padding: 10px 20px; border-right: 1px solid var(--fio); }
+.faixa dt { font: 700 1rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; color: var(--tinta-2); }
+.faixa dd { display: flex; align-items: center; gap: 10px; margin-top: 4px; font: 900 2rem/1 var(--f-ui); font-variant-numeric: tabular-nums; }
+.faixa-marca { flex: none; width: 14px; height: 14px; border-radius: 50%; }
+.faixa-perdido .faixa-marca { border: 3px solid var(--perdido); }
+.faixa-atrasado .faixa-marca { border: 3px dashed var(--atrasado); }
+.faixa-ativo .faixa-marca { background: var(--ativo); }
+.faixa-sem-sinal .faixa-marca { background: var(--sem-sinal); }
+.faixa-perdido dd { color: var(--vermelho-texto); }
+.faixa-fim { margin-left: auto; border-right: 0; border-left: 1px solid var(--fio); }
+
+/* ------------------------------------------------------------ mapa e lista */
+.mapa-pagina { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--e6); align-items: start; }
+.quadro { position: relative; display: flex; flex-direction: column; }
+.mapa { position: relative; flex: 1 1 auto; height: 55vh; min-height: 300px; background: var(--mapa-liso); border: 1px solid var(--tinta); }
+.painel { display: flex; flex-direction: column; gap: var(--e4); min-width: 0; }
+.painel .mensagem, .painel .nota { margin-bottom: 0; }
+.lista-rolavel { overflow: auto; }
+/* Texto só para leitor de tela: a região de status do mapa (muda só quando a contagem de perdidos ou atrasados muda). */
+.visualmente-oculto { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.lista-operadores th, .lista-operadores td { padding: 10px 6px; white-space: nowrap; }
+.lista-operadores th:first-child, .lista-operadores td:first-child { padding-left: 12px; }
+.lista-operadores th:last-child, .lista-operadores td:last-child { padding-right: 12px; }
+.lista-operadores thead th { white-space: normal; }
+.lista-operadores tbody th { white-space: normal; overflow-wrap: anywhere; }   /* apelido de 32 letras quebra em vez de rolar */
+.lista-operadores td.num { font-family: var(--f-dado); font-variant-numeric: tabular-nums; }
+.lista-operadores .selo { padding: 3px 6px 2px; letter-spacing: 0.02em; }   /* "SEM SINAL" e "ATRASADO" cabem nas cinco colunas */
+
+/* Estado do operador (R9): a cor vem sempre com o texto do selo. */
+.selo { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px 2px; font: 700 1rem/1.15 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.selo::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.selo.estado-ativo { background: var(--ativo); color: var(--ativo-tx); }
+.selo.estado-atrasado { background: var(--atrasado); color: var(--atrasado-tx); }
+.selo.estado-perdido { background: var(--perdido); color: var(--perdido-tx); }
+.selo.estado-perdido::before { width: 9px; height: 9px; background: none; border: 2px solid currentColor; }
+.selo.estado-sem_sinal { background: var(--sem-sinal); color: var(--sem-sinal-tx); }
+.linha-perdido > * { background: var(--linha-perdido); }
+.linha-atrasado > * { background: var(--linha-atrasado); }
+.bateria-baixa { color: var(--vermelho-texto); font-weight: 700; }
+.amostra-time { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; outline: 1px solid var(--fio); }
+
+/* ------------------------------------------------- quadro: Leaflet por dentro */
+.mapa.leaflet-container { font: 400 1rem/1.5 var(--f-ui); background: var(--mapa-liso); }
+/* Tiles do OpenStreetMap filtrados por CSS (sem trocar de provedor). Sistema e Escuro: mapa escuro. Sem inverter: a terra
+ * vira cinza escuro, as ruas (brancas no OSM) ficam mais claras, e o lago e os prédios (mais escuros que a terra) ficam pretos.
+ * Medido em prints nos zooms 15, 16 e 17: contra a terra do parque, lago 1,64:1 e ruas 4,07:1; contra a terra urbana do OSM, lago 2,09:1 e ruas 3,19:1. */
+.mapa .leaflet-tile-pane { filter: grayscale(1) brightness(0.507) contrast(9.87); }
+:root[data-tema="claro"] .mapa .leaflet-tile-pane { filter: grayscale(1) contrast(0.92) brightness(1.04); }
+
+.mapa .leaflet-control-attribution { font: 400 0.75rem/1.4 var(--f-ui); color: var(--tinta-2); background: var(--sobreposicao); }
+.mapa .leaflet-control-attribution { padding: 2px 6px; }
+.mapa .leaflet-control-attribution a { color: var(--tinta); }
+.mapa .leaflet-control-attribution a:focus-visible { outline: 2px solid var(--tinta); outline-offset: -2px; }   /* para dentro: o canto do mapa cortaria o contorno */
+.mapa .leaflet-control-scale-line { font: 500 1rem/1.2 var(--f-dado); color: var(--tinta); background: var(--sobreposicao); border-color: var(--tinta); text-shadow: none; }
+.mapa .leaflet-bar { border: 1px solid var(--tinta); border-radius: 0; box-shadow: none; background: none; }
+.mapa .leaflet-bar a { display: block; box-sizing: content-box; width: 32px; height: 32px; margin: 0; padding: 0; color: var(--tinta); background-color: var(--superficie); border: 0; border-bottom: 1px solid var(--fio); border-radius: 0 !important; font: 700 18px/32px var(--f-ui); text-align: center; text-decoration: none; }
+.mapa .leaflet-bar a:hover, .mapa .leaflet-bar a:focus { color: var(--tinta); background-color: var(--superficie-2); }
+.mapa .leaflet-bar a:last-child { border-bottom: 0; }
+.mapa .leaflet-top.leaflet-right { top: 32px; right: 8px; }
+.mapa .leaflet-bottom.leaflet-left { left: 26px; }
+
+/* Réguas de latitude e longitude, calculadas do próprio mapa (mapa.js). */
+.regua { position: absolute; z-index: 500; pointer-events: none; font: 500 1rem/1 var(--f-dado); color: var(--tinta); background: var(--sobreposicao); }
+.regua-topo { top: 0; right: 0; left: 0; height: 26px; border-bottom: 1px solid var(--tinta); }
+.regua-esq { top: 26px; bottom: 0; left: 0; width: 26px; border-right: 1px solid var(--tinta); }
+.regua i { position: absolute; background: var(--tinta); }
+.regua-topo i { bottom: 0; width: 1px; height: 6px; }
+.regua-topo i.maior { height: 12px; }
+.regua-esq i { right: 0; width: 6px; height: 1px; }
+.regua-esq i.maior { width: 12px; }
+.regua span { position: absolute; white-space: nowrap; }
+.regua-topo span { top: 4px; transform: translateX(4px); }
+.regua-esq span { left: 4px; transform: rotate(-90deg) translateX(-100%); transform-origin: left top; margin-top: -4px; }
+
+/* Retícula no centro da operação (centro_lat e centro_lon). */
+.reticula { position: absolute; z-index: 450; width: 0; height: 0; pointer-events: none; }
+.reticula::before, .reticula::after { content: ""; position: absolute; background: var(--tinta); opacity: 0.55; }
+.reticula::before { top: 0; left: -28px; width: 56px; height: 1px; }
+.reticula::after { top: -28px; left: 0; width: 1px; height: 56px; }
+
+/* Carimbo de hora da última atualização. */
+.carimbo { position: absolute; z-index: 600; top: 40px; left: 40px; padding: 8px 12px; font: 500 1rem/1.3 var(--f-dado); color: var(--tinta); background: var(--sobreposicao); border: 1px solid var(--tinta); }
+
+/* ------------------------------------------------------------- marcadores */
+/* Anel na cor do estado (cheio, tracejado, vazado), seta na cor do time girada pelo rumo. */
+.mk-leaflet { background: none; border: 0; }
+.mk { position: relative; width: 36px; height: 36px; }
+.mk-anel { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 4px solid var(--sem-sinal); border-radius: 50%; background: color-mix(in srgb, var(--superficie) 90%, transparent); }
+.mk-anel.estado-ativo { border-color: var(--ativo); }
+.mk-anel.estado-atrasado { border-color: var(--atrasado); border-style: dashed; }
+.mk-anel { outline: 1.5px solid var(--moldura); }     /* contorno quase preto nos dois temas: o âmbar e o verde não somem na terra */
+.mk-anel.estado-perdido { border-color: var(--perdido); background: color-mix(in srgb, var(--moldura) 70%, transparent); }   /* vazado: dá para ver o mapa pelo véu */
+.mk-seta { width: 22px; height: 22px; }
+.mk-seta polygon { stroke: var(--tinta); stroke-width: 1.5; stroke-linejoin: round; }
+.mk-anel.estado-perdido .mk-seta { opacity: 0.55; }    /* a última direção conhecida */
+.mk-apelido { position: absolute; top: 6px; left: 42px; padding: 2px 6px; font: 600 1rem/1.2 var(--f-dado); text-transform: uppercase; white-space: nowrap; color: var(--tinta); background: var(--sobreposicao); border: 1px solid var(--fio); }
+.mk-sep { white-space: pre; }
+.mk-apelido.curto .mk-sep2, .mk-apelido.curto .mk-tempo { display: none; }   /* "Coruja · perdido": a variante curta do perdido */
+.mk.estado-perdido { --alvo-cor: var(--perdido); --alvo-braco: 12px; --alvo-traco: 3px; --alvo-fora: 12px; }
+.mk.estado-perdido .mk-apelido { color: var(--perdido-tx); background: var(--perdido); border-color: var(--perdido); }
+
+/* -------------------------------------------------------------- responsivo */
+@media (min-width: 1024px) {
+  /* A página é uma coluna que ocupa a janela; o mapa e a lista ficam com o espaço que sobra (mínimo de 420 px). */
+  .pagina-mapa { display: flex; flex-direction: column; }
+  .pagina-mapa > main { flex: 1 1 auto; display: flex; flex-direction: column; }
+  .mapa-pagina { flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) 580px; grid-template-rows: minmax(420px, 1fr); align-items: stretch; }
+  .mapa { height: auto; min-height: 420px; }
+  .painel { min-height: 0; }
+  .lista-rolavel { flex: 0 1 auto; min-height: 0; }
+}
+
+@media (max-width: 719px) {
+  /* Rótulo do perdido em duas linhas ("Coruja · perdido" e "último sinal há X"), com largura máxima. */
+  .mk-apelido { width: max-content; max-width: 18rem; white-space: normal; }
+  .mk-sep2 { display: none; }
+  .mk-tempo { display: block; }
+  /* Lista do mapa sem a coluna Time: as quatro que sobram cabem sem rolar de lado. */
+  .lista-operadores th:nth-child(2), .lista-operadores td:nth-child(2) { display: none; }
+  .lista-operadores th, .lista-operadores td { padding: 10px 6px; }
+  .lista-operadores th:first-child, .lista-operadores td:first-child { padding-left: 10px; }
+  .lista-operadores th:last-child, .lista-operadores td:last-child { padding-right: 10px; }
+  .lista-operadores td.num { white-space: normal; }       /* "12 min 46 s" quebra em duas linhas em vez de rolar */
+  .faixa { display: grid; grid-template-columns: repeat(3, auto); }
+  .faixa dt { letter-spacing: 0; }
+  .faixa-celula { min-width: auto; padding: 10px 4px 10px 8px; border-bottom: 1px solid var(--fio); }
+  .faixa-celula:nth-child(3n) { border-right: 0; }
+  .faixa-celula:nth-child(n+4) { border-bottom: 0; }
+  .faixa-fim { margin-left: 0; border-left: 0; border-right: 0; }
+}

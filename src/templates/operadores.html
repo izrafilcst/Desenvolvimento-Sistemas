@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Operadores · MeshTracker Central{% endblock %}
+{% block conteudo %}
+<h1>Operadores</h1>
+{% include "_mensagens.html" %}
+<div class="duas-colunas{% if not current_user.eh_organizador %} so-tabela{% endif %}">
+  <section class="bloco" aria-label="Operadores cadastrados">
+    {% if operadores %}
+    <div class="tabela-rolavel">
+      <table>
+        <thead>
+          <tr><th scope="col">Apelido</th><th scope="col">Nome</th></tr>
+        </thead>
+        <tbody>
+          {% for o in operadores %}
+          <tr><th scope="row">{{ o.apelido }}</th><td class="quebra">{{ o.nome }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="vazio">Nenhum operador cadastrado.</p>
+    {% endif %}
+  </section>
+
+  {% if current_user.eh_organizador %}
+  <section class="bloco" id="cadastrar" aria-labelledby="titulo-cadastrar">
+    <header><h2 id="titulo-cadastrar">Cadastrar operador</h2></header>
+    <form class="corpo" method="post" action="{{ url_for('paginas.operadores_criar') }}">
+      {% include "_recusa.html" %}
+      <p class="nota">O cadastro é feito uma vez só. Depois, o operador é inscrito em cada operação sem novo cadastro.</p>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="campo"><span>Apelido</span>
+        <input name="apelido" required maxlength="32" value="{{ valores.get('apelido', '') }}"{% if 'apelido' in erro_campos %} aria-invalid="true" autofocus{% endif %}>
+      </label>
+      <label class="campo"><span>Nome</span>
+        <input name="nome" required maxlength="100" value="{{ valores.get('nome', '') }}"{% if 'nome' in erro_campos %} aria-invalid="true"{% if 'apelido' not in erro_campos %} autofocus{% endif %}{% endif %}>
+      </label>
+      <button type="submit" class="botao cheio">Cadastrar</button>
+    </form>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

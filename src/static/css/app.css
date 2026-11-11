@@ -1,0 +1,313 @@
+/* MeshTracker Central: briefing de campo sobre papel suíço.
+ * Tokens, base própria (sem Pico), moldura e componentes das páginas comuns. O contrato é o DESIGN.md.
+ * O mapa tem o próprio arquivo (mapa.css). Sem build: o que você salva é o que o navegador recebe. */
+
+@font-face { font-family: 'Archivo'; src: url('../vendor/fonts/archivo-latin.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Chivo Mono'; src: url('../vendor/fonts/chivo-mono-latin.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+/* ------------------------------------------------------------------ tokens */
+:root {
+  color-scheme: light dark;
+
+  /* Estados do operador (R9): a mesma tabela no mapa, na lista, no deck e no DESIGN.md. */
+  --ativo: #1a7f37;     --ativo-tx: #ffffff;
+  --atrasado: #d4a72c;  --atrasado-tx: #0b0b0b;
+  --perdido: #d1242f;   --perdido-tx: #ffffff;
+  --sem-sinal: #6e7781; --sem-sinal-tx: #ffffff;
+
+  /* Moldura preta: igual em todos os temas. */
+  --moldura: #0b0b0b; --moldura-tinta: #f4f4f1; --moldura-tinta-2: #b9b9b3; --moldura-fio: rgba(244, 244, 241, 0.5);
+
+  /* Tema (claro, escuro). light-dark() escolhe pelo color-scheme de quem usa a variável. */
+  --chao: light-dark(#ecebe6, #0c0d0d);
+  --superficie: light-dark(#ffffff, #151717);
+  --superficie-2: light-dark(#f5f5f2, #1c1f1f);
+  --tinta: light-dark(#0b0b0b, #ecebe6);
+  --tinta-2: light-dark(#4a4a46, #a5a6a0);
+  --fio: light-dark(rgba(11, 11, 11, 0.16), rgba(236, 235, 230, 0.16));
+  --grade: light-dark(rgba(11, 11, 11, 0.06), rgba(236, 235, 230, 0.05));
+  --vermelho-texto: light-dark(#d1242f, #ff6b5e);
+  --vermelho-fundo: light-dark(rgba(209, 36, 47, 0.06), rgba(255, 107, 94, 0.1));
+  --linha-perdido: light-dark(rgba(209, 36, 47, 0.09), rgba(209, 36, 47, 0.16));
+  --linha-atrasado: light-dark(rgba(212, 167, 44, 0.14), rgba(212, 167, 44, 0.12));
+  --mapa-liso: light-dark(#d9d9d4, #393939);
+  --botao: var(--tinta);
+  --botao-tx: var(--superficie);
+  --botao-hover: color-mix(in srgb, var(--botao), #ffffff 20%);
+  --sobreposicao: color-mix(in srgb, var(--superficie) 92%, transparent);
+
+  --f-ui: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --f-dado: 'Chivo Mono', ui-monospace, Consolas, monospace;
+  --e1: 4px; --e2: 8px; --e3: 12px; --e4: 16px; --e5: 24px; --e6: 32px; --e7: 48px; --e8: 64px;
+  --moldura-alt: 56px;
+}
+
+/* Modo Sistema (padrão): o esquema do sistema decide, e a tela do mapa é sempre escura.
+ * "Claro" e "Escuro" vêm de static/js/tema.js, que marca data-tema no <html>. */
+:root[data-tema="claro"] { color-scheme: light; }
+:root[data-tema="escuro"],
+:root:not([data-tema="claro"]):has(.pagina-mapa) { color-scheme: dark; }
+
+/* -------------------------------------------------------------------- base */
+*, ::before, ::after { box-sizing: border-box; }
+html { font-size: 100%; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--chao);
+  /* Textura de papel milimetrado, sem dado: colunas de 160 px e quadrícula de 32 px. */
+  background-image:
+    repeating-linear-gradient(to right, var(--grade) 0 1px, transparent 1px 160px),
+    repeating-linear-gradient(to bottom, var(--grade) 0 1px, transparent 1px 32px);
+  color: var(--tinta);
+  font: 400 1rem/1.5 var(--f-ui);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, p, dl, dd { margin: 0; }
+::selection { background: var(--tinta); color: var(--chao); }
+:focus-visible { outline: 2px solid var(--foco, var(--tinta)); outline-offset: 2px; }
+a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+button, input, select { font: inherit; color: inherit; margin: 0; }
+b, strong { font-weight: 700; }
+[hidden] { display: none !important; }
+
+h1 {
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: var(--e5);
+  font: 900 2.25rem/1 var(--f-ui);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  /* Digitação só no título (nunca em dado que muda), só em CSS. O texto inteiro está no HTML. */
+  animation: digitar 450ms steps(16, end) backwards;
+}
+@keyframes digitar { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+body:has(:target) h1 { animation: none; }       /* volta de um redirect com âncora: o título não digita de novo */
+h2 { font: 800 1.25rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; }
+
+.rotulo { font: 700 1rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; color: var(--tinta-2); }
+.dado { font-family: var(--f-dado); font-variant-numeric: tabular-nums; }
+.nota { max-width: 70ch; color: var(--tinta-2); }
+.corpo > .nota { margin-bottom: var(--e4); }
+.nowrap { white-space: nowrap; }
+.quebra { overflow-wrap: anywhere; }
+.num { text-align: right; }
+
+/* ------------------------------------------------------- moldura e seletor */
+.moldura {
+  --foco: var(--moldura-tinta);
+  display: flex;
+  align-items: center;
+  gap: var(--e6);
+  min-height: var(--moldura-alt);
+  padding: 0 var(--e6);
+  background: var(--moldura);
+  color: var(--moldura-tinta);
+  border-bottom: 1px solid rgba(244, 244, 241, 0.14);
+  color-scheme: dark;
+}
+.marca { display: flex; align-items: center; gap: var(--e3); font: 900 1.125rem/1 var(--f-ui); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.marca-nome span { font-weight: 500; letter-spacing: 0.14em; color: var(--moldura-tinta-2); }
+.pontos { position: relative; width: 28px; height: 28px; flex: none; }
+.pontos i { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--moldura-tinta); }
+.pontos i:nth-child(1) { left: 2px; top: 4px; }
+.pontos i:nth-child(2) { left: 12px; top: 1px; }
+.pontos i:nth-child(3) { left: 5px; top: 15px; }
+.pontos i:nth-child(4) { left: 15px; top: 13px; }
+.pontos i.parado { left: 19px; top: 19px; width: 9px; height: 9px; background: none; border: 2px solid var(--moldura-tinta); }
+
+.moldura-menu { display: contents; }
+.moldura nav { display: flex; gap: var(--e5); margin-left: var(--e4); }
+.moldura nav a { display: block; padding: var(--e2) 0; font: 700 1rem/1 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; color: var(--moldura-tinta-2); border-bottom: 2px solid transparent; }
+.moldura nav a:hover { color: var(--moldura-tinta); }
+.moldura nav a[aria-current="page"] { color: var(--moldura-tinta); border-bottom-color: var(--moldura-tinta); }
+
+.seletor-tema { display: flex; margin-left: auto; border: 1px solid var(--moldura-fio); }
+.seletor-tema button { padding: 7px 12px; font: 500 1rem/1 var(--f-ui); background: none; color: var(--moldura-tinta-2); border: 0; border-left: 1px solid var(--moldura-fio); border-radius: 0; cursor: pointer; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.seletor-tema button:first-child { border-left: 0; }
+.seletor-tema button:hover { color: var(--moldura-tinta); }
+.seletor-tema button[aria-pressed="true"] { background: var(--moldura-tinta); color: var(--moldura); font-weight: 700; }
+
+.sessao { display: flex; align-items: center; gap: var(--e4); font: 400 1rem/1 var(--f-dado); color: var(--moldura-tinta-2); }
+.sessao b { color: var(--moldura-tinta); font-weight: 500; }
+.sessao-quem { white-space: nowrap; }
+.somente-leitura { padding: 7px 10px 6px; font: 700 1rem/1 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; color: var(--moldura-tinta); border: 1px solid var(--moldura-fio); }
+/* Lista nativa do tema: só no celular, onde os três botões não cabem ao lado do menu. */
+.tema-lista { display: none; width: 92px; height: 44px; padding: 0 24px 0 8px; font: 500 1rem/1 var(--f-ui); color: var(--moldura-tinta); background-color: var(--moldura); border: 1px solid var(--moldura-fio); border-radius: 0; background-image: linear-gradient(45deg, transparent 50%, var(--moldura-tinta) 50%), linear-gradient(135deg, var(--moldura-tinta) 50%, transparent 50%); background-position: calc(100% - 14px) 19px, calc(100% - 8px) 19px; }
+.form-sair { margin: 0; }
+.sair { padding: 9px 14px; font: 700 1rem/1 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; background: none; color: var(--moldura-tinta); border: 1px solid var(--moldura-fio); border-radius: 0; cursor: pointer; transition: border-color 150ms ease-out; }
+.sair:hover { border-color: var(--moldura-tinta); }
+
+/* ------------------------------------------------------------------ página */
+.pagina { width: 100%; max-width: calc(1280px + 2 * var(--e6)); margin: 0 auto; padding: var(--e6); }
+.pagina-larga { max-width: none; }
+.pagina-estreita { max-width: calc(28rem + 2 * var(--e6)); }
+.voltar { margin-bottom: var(--e4); }
+.voltar a { color: var(--tinta-2); }
+.cabeca { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--e3) var(--e5); margin-bottom: var(--e5); }
+.cabeca h1 { margin-bottom: 0; }
+.meta { font: 400 1rem/1.4 var(--f-dado); color: var(--tinta-2); }
+.cabeca-link { margin-left: auto; color: var(--tinta-2); }
+
+.duas-colunas { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--e6); align-items: start; }
+
+/* ------------------------------------------------------- bloco e tabela */
+.bloco { background: var(--superficie); border: 1px solid var(--tinta); }
+.bloco > header { padding: var(--e4) var(--e5); border-bottom: 2px solid var(--tinta); }
+.bloco > header h2 { display: flex; align-items: baseline; gap: var(--e3); }
+.contagem { font: 500 1rem/1 var(--f-dado); color: var(--tinta-2); }
+.corpo { padding: var(--e5); }
+.vazio { padding: var(--e5); color: var(--tinta-2); }
+/* Pista de rolagem: uma barra de 3 px na borda em que ainda há tabela para ver. Os dois primeiros planos
+ * (attachment local) escondem a barra quando a rolagem chega ao fim; as barras ficam fixas na caixa. */
+.tabela-rolavel, .lista-rolavel { overflow-x: auto; background: linear-gradient(var(--superficie), var(--superficie)) left center / 12px 100% local no-repeat, linear-gradient(var(--superficie), var(--superficie)) right center / 12px 100% local no-repeat, linear-gradient(var(--tinta), var(--tinta)) left center / 3px 100% scroll no-repeat, linear-gradient(var(--tinta), var(--tinta)) right center / 3px 100% scroll no-repeat; background-color: var(--superficie); }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--fio); }
+thead th { font: 700 1rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; color: var(--tinta-2); background: var(--superficie-2); border-bottom: 2px solid var(--tinta); white-space: nowrap; }
+tbody th { font-weight: 700; }
+tbody tr:last-child > * { border-bottom: 0; }
+th.num, td.num { text-align: right; }
+.bloco th:first-child, .bloco td:first-child { padding-left: var(--e5); }
+.bloco th:last-child, .bloco td:last-child { padding-right: var(--e5); }
+td a, th a { text-decoration-thickness: 1px; }
+.tabela-inscritos td:nth-child(4) { font-family: var(--f-dado); font-variant-numeric: tabular-nums; white-space: nowrap; }   /* dispositivo */
+.tabela-operacoes td:nth-child(2), .tabela-operacoes td:nth-child(5) { font-family: var(--f-dado); font-variant-numeric: tabular-nums; white-space: nowrap; }   /* data e inscritos */
+.tabela-operacoes th:nth-child(5), .tabela-operacoes td:nth-child(5) { text-align: right; }
+.tabela-operacoes td:nth-child(3) { min-width: 9rem; }
+
+.amostra-cor { display: inline-block; width: 12px; height: 12px; margin-right: 8px; vertical-align: -1px; outline: 1px solid var(--fio); }
+
+/* Situação da operação (texto + forma, nunca só cor). */
+.situacao { display: inline-block; padding: 4px 10px 3px; font: 700 1rem/1.1 var(--f-ui); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; border: 2px solid var(--tinta); }
+.situacao-em-curso { background: var(--tinta); color: var(--chao); }
+.situacao-encerrada { color: var(--tinta-2); border-color: var(--tinta-2); }
+
+/* ---------------------------------------------------------------- mensagens */
+/* O HTML traz só a mensagem; a etiqueta (Recusa, Feito, Aviso) vem do CSS. */
+.mensagem { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; margin-bottom: var(--e5); padding: 12px 14px; color: var(--tinta); background: var(--superficie); border: 1px solid var(--tinta); }
+.mensagem::before { padding: 3px 8px 2px; font: 700 1rem/1.15 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; }
+.mensagem-erro { background: var(--vermelho-fundo); border-color: var(--perdido); }
+.mensagem-erro::before { content: "Recusa"; background: var(--perdido); color: var(--perdido-tx); }
+.mensagem-sucesso::before { content: "Feito"; background: var(--ativo); color: var(--ativo-tx); }
+.mensagem-aviso::before { content: "Aviso"; background: var(--atrasado); color: var(--atrasado-tx); }
+
+/* ------------------------------------------------ botões, campos e controles */
+.botao { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--e5); font: 700 1rem/1 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; color: var(--botao-tx); background: var(--botao); border: 2px solid var(--botao); border-radius: 0; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out; }
+.botao:hover { background: var(--botao-hover); border-color: var(--botao-hover); }
+.botao.secundario { color: var(--tinta); background: transparent; border-color: var(--tinta); }
+.botao.secundario:hover { background: var(--superficie-2); border-color: var(--tinta); }
+.botao:disabled { opacity: 0.4; cursor: default; }
+.botao.cheio { width: 100%; }
+
+.campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--e4); }
+.campo > span { font: 700 1rem/1.2 var(--f-ui); letter-spacing: 0.04em; text-transform: uppercase; color: var(--tinta-2); }
+input:not([type="checkbox"]), select { width: 100%; height: 44px; padding: 0 12px; font: 400 1rem/1 var(--f-ui); color: var(--tinta); background-color: var(--superficie); border: 1px solid var(--tinta-2); border-radius: 0; transition: border-color 150ms ease-out; }
+input.dado { font-family: var(--f-dado); font-weight: 500; }
+.dica { font: 400 1rem/1.4 var(--f-ui); color: var(--tinta-2); }
+/* Campo que a recusa aponta: borda vermelha de 2 px (o texto da recusa fica no topo do formulário). */
+input[aria-invalid="true"], select[aria-invalid="true"] { padding-left: 11px; border: 2px solid var(--vermelho-texto); }
+select[aria-invalid="true"] { padding-right: 35px; }
+.consentimento input[aria-invalid="true"] { outline: 2px solid var(--vermelho-texto); outline-offset: 2px; }
+input::placeholder { color: var(--tinta-2); opacity: 1; }
+input:not([type="checkbox"]):focus-visible, select:focus-visible { outline-offset: 0; border-color: var(--tinta); }
+input[aria-invalid="true"]:focus-visible, select[aria-invalid="true"]:focus-visible { border-color: var(--vermelho-texto); }   /* o foco não apaga o vermelho */
+input:-webkit-autofill { -webkit-text-fill-color: var(--tinta); box-shadow: 0 0 0 100px var(--superficie) inset; }
+select { appearance: none; padding-right: 36px; background-image: linear-gradient(45deg, transparent 50%, var(--tinta) 50%), linear-gradient(135deg, var(--tinta) 50%, transparent 50%); background-position: calc(100% - 18px) 19px, calc(100% - 12px) 19px; background-size: 6px 6px; background-repeat: no-repeat; }
+.par { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--e3); }
+.consentimento { display: flex; align-items: flex-start; gap: 12px; margin: var(--e2) 0 var(--e5); line-height: 1.4; }
+.consentimento input { flex: none; width: 22px; height: 22px; margin-top: 1px; accent-color: var(--tinta); }
+
+.alterar summary { display: inline-block; padding: 4px 0; font: 600 1rem/1.2 var(--f-ui); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; list-style: none; }
+.alterar summary::-webkit-details-marker { display: none; }
+.form-linha { display: flex; flex-direction: column; gap: var(--e2); min-width: 12rem; margin: var(--e2) 0 0; }
+.form-linha .botao { min-height: 40px; }
+.form-linha .mensagem { grid-template-columns: 1fr; margin-bottom: 0; }
+
+/* ----------------------------------------------- colchetes de alvo e dossiê */
+/* A assinatura: quatro cantos em L, só no quadro do mapa, no dossiê e no operador perdido. */
+.alvo { position: relative; }
+.alvo::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--alvo-fora, 9px));
+  pointer-events: none;
+  --c: var(--alvo-cor, var(--tinta));
+  --l: var(--alvo-braco, 18px);
+  --t: var(--alvo-traco, 2px);
+  background:
+    linear-gradient(var(--c), var(--c)) left top / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) left top / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / var(--t) var(--l) no-repeat;
+}
+
+.dossie { display: flex; flex-wrap: wrap; align-items: start; gap: var(--e5) var(--e7); margin: var(--e6) 0; padding: var(--e5); background: var(--superficie); border: 1px solid var(--tinta); }
+.dossie-item { display: flex; flex-direction: column; gap: 6px; }
+.dossie-valor { font: 700 1.25rem/1.2 var(--f-ui); overflow-wrap: anywhere; }
+.dossie-valor.dado { font: 500 1.125rem/1.2 var(--f-dado); }
+.dossie-acoes { display: flex; flex-wrap: wrap; align-items: flex-start; align-self: end; gap: var(--e3); margin-left: auto; }
+.dossie-acoes form { margin: 0; }
+/* Encerrar não tem volta: o resumo parece um botão secundário e o painel explica a consequência. */
+.encerrar summary { list-style: none; }
+.encerrar summary::-webkit-details-marker { display: none; }
+.encerrar[open] { flex: 1 0 100%; }
+.dossie-acoes:has(.encerrar[open]) { flex: 1 0 100%; margin-left: 0; }     /* aberto: as ações ocupam a linha toda, sob os dados */
+.encerrar-corpo { max-width: 34rem; margin-top: var(--e2); padding: var(--e4); background: var(--superficie); border: 1px solid var(--tinta); }
+.encerrar-corpo p:not(.mensagem) { max-width: 60ch; margin-bottom: var(--e4); }
+.encerrar-corpo .mensagem { margin-bottom: var(--e4); }
+.nota-pagina { margin: calc(-1 * var(--e3)) 0 var(--e5); }
+
+/* -------------------------------------------------------------- responsivo */
+@media (min-width: 1024px) {
+  .duas-colunas { grid-template-columns: minmax(0, 1fr) 400px; }
+  .duas-colunas.so-tabela { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Moldura em uma linha a partir de 1280 px. Até 1359 px os espaços diminuem. */
+@media (max-width: 1359px) {
+  .moldura { gap: var(--e5); padding: 0 var(--e5); }
+  .moldura nav { margin-left: 0; }
+}
+
+@media (max-width: 1279px) {
+  /* Duas linhas: marca, etiqueta de leitura e Sair em cima; menu e seletor de tema embaixo. */
+  .moldura { flex-wrap: wrap; gap: var(--e2) var(--e3); padding: var(--e2) var(--e5); }
+  .marca { order: 1; flex: 1 1 auto; }
+  .somente-leitura { order: 2; }
+  .sessao { order: 3; }
+  .moldura-menu { order: 4; flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e2) var(--e4); }
+  .seletor-tema { margin-left: 0; }
+}
+
+@media (max-width: 719px) {
+  .moldura { padding: var(--e2) var(--e3); }
+  .moldura-menu { gap: var(--e2); }
+  .marca { gap: var(--e2); font-size: 1rem; letter-spacing: 0.02em; }
+  .marca-nome span { letter-spacing: 0.04em; }
+  .sessao-quem { display: none; }
+  /* Alvos de toque de 44 px. Os três botões do tema dão lugar à lista nativa, para o menu e o tema caberem em uma linha. */
+  .sair { min-height: 44px; padding: 0 12px; }
+  .moldura nav { gap: var(--e2); }
+  .moldura nav a { display: flex; align-items: center; min-height: 44px; padding: 0; letter-spacing: 0.02em; }
+  .seletor-tema { border: 0; }
+  .seletor-tema button { display: none; }
+  .tema-lista { display: block; }
+  .somente-leitura { order: 5; flex: 1 0 100%; margin: 0 calc(-1 * var(--e3)) calc(-1 * var(--e2)); padding: 4px var(--e3); border: 0; border-top: 1px solid rgba(244, 244, 241, 0.14); }
+  .alterar summary { display: inline-flex; align-items: center; min-height: 44px; }
+  .pagina { padding: var(--e5) var(--e4); }
+  .dossie { gap: var(--e4) var(--e5); padding: var(--e4); }
+  .dossie-acoes { width: 100%; margin-left: 0; }
+  .corpo { padding: var(--e4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  h1 { animation: none; }
+  *, ::before, ::after { transition: none !important; }
+}

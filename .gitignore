@@ -7,3 +7,6 @@ docs/*.docx
 # Ambiente virtual e cache do Python
 .venv/
 __pycache__/
+
+# Banco, chave de sessão e dados locais do app
+instance/

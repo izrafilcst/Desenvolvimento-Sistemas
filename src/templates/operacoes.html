@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block titulo %}Operações · MeshTracker Central{% endblock %}
+{% block conteudo %}
+<h1>Operações</h1>
+{% include "_mensagens.html" %}
+<div class="duas-colunas{% if not current_user.eh_organizador %} so-tabela{% endif %}">
+  <section class="bloco" aria-label="Operações">
+    {% if operacoes %}
+    <div class="tabela-rolavel">
+      <table class="tabela-operacoes">
+        <thead>
+          <tr>
+            <th scope="col">Operação</th>
+            <th scope="col">Data</th>
+            <th scope="col">Local</th>
+            <th scope="col">Situação</th>
+            <th scope="col">Inscritos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in operacoes %}
+          <tr>
+            <th scope="row" class="quebra"><a href="{{ url_for('paginas.operacao', operacao_id=o.id) }}">{{ o.nome }}</a></th>
+            <td>{{ o.data|data_br }}</td>
+            <td class="quebra">{{ o.local }}</td>
+            <td><span class="situacao situacao-{{ o.situacao|replace('_', '-') }}">{{ o.situacao|rotulo_situacao }}</span></td>
+            <td>{{ o.inscritos }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="vazio">Nenhuma operação criada.</p>
+    {% endif %}
+  </section>
+
+  {% if current_user.eh_organizador %}
+  <section class="bloco" id="criar" aria-labelledby="titulo-criar">
+    <header><h2 id="titulo-criar">Criar operação</h2></header>
+    <form class="corpo" method="post" action="{{ url_for('paginas.operacoes_criar') }}">
+      {% include "_recusa.html" %}
+      <p class="nota">A operação começa planejada. Sem centro do mapa, usa Brasília.</p>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="campo"><span>Nome</span>
+        <input name="nome" required maxlength="100" value="{{ valores.get('nome', '') }}"{% if 'nome' in erro_campos %} aria-invalid="true" autofocus{% endif %}>
+      </label>
+      <label class="campo"><span>Data</span>
+        <input type="date" name="data" required value="{{ valores.get('data', '') }}"{% if 'data' in erro_campos %} aria-invalid="true"{% if 'nome' not in erro_campos %} autofocus{% endif %}{% endif %}>
+      </label>
+      <label class="campo"><span>Local</span>
+        <input name="local" required maxlength="100" value="{{ valores.get('local', '') }}"{% if 'local' in erro_campos %} aria-invalid="true"{% if 'nome' not in erro_campos and 'data' not in erro_campos %} autofocus{% endif %}{% endif %}>
+      </label>
+      <div class="campo">
+        <label class="rotulo" for="centro_lat">Latitude do centro (opcional)</label>
+        <input id="centro_lat" name="centro_lat" class="dado" inputmode="decimal" aria-describedby="dica-lat" value="{{ valores.get('centro_lat', '') }}"{% if 'centro_lat' in erro_campos %} aria-invalid="true"{% if 'nome' not in erro_campos and 'data' not in erro_campos and 'local' not in erro_campos %} autofocus{% endif %}{% endif %}>
+        <small class="dica" id="dica-lat">ex.: -15.7939 (use ponto)</small>
+      </div>
+      <div class="campo">
+        <label class="rotulo" for="centro_lon">Longitude do centro (opcional)</label>
+        <input id="centro_lon" name="centro_lon" class="dado" inputmode="decimal" aria-describedby="dica-lon" value="{{ valores.get('centro_lon', '') }}"{% if 'centro_lon' in erro_campos %} aria-invalid="true"{% if 'nome' not in erro_campos and 'data' not in erro_campos and 'local' not in erro_campos and 'centro_lat' not in erro_campos %} autofocus{% endif %}{% endif %}>
+        <small class="dica" id="dica-lon">ex.: -47.8828 (use ponto)</small>
+      </div>
+      <button type="submit" class="botao cheio">Criar operação</button>
+    </form>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
